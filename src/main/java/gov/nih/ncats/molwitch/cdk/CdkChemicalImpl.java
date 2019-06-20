@@ -71,24 +71,24 @@ import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.openscience.cdk.tools.periodictable.PeriodicTable;
 
-import gov.nih.ncats.witch.Atom;
-import gov.nih.ncats.witch.AtomCoordinates;
-import gov.nih.ncats.witch.Bond;
-import gov.nih.ncats.witch.Bond.BondType;
-import gov.nih.ncats.witch.SGroup.SGroupBracket;
-import gov.nih.ncats.witch.SGroup.SGroupType;
-import gov.nih.ncats.witch.Stereocenter;
-import gov.nih.ncats.witch.BondTable;
-import gov.nih.ncats.witch.ChemicalSource;
-import gov.nih.ncats.witch.ChemkitException;
-import gov.nih.ncats.witch.Chirality;
-import gov.nih.ncats.witch.DoubleBondStereochemistry;
-import gov.nih.ncats.witch.ExtendedTetrahedralChirality;
-import gov.nih.ncats.witch.GraphInvariant;
-import gov.nih.ncats.witch.SGroup;
-import gov.nih.ncats.witch.TetrahedralChirality;
-import gov.nih.ncats.witch.isotopes.Isotope;
-import gov.nih.ncats.witch.spi.ChemicalImpl;
+import gov.nih.ncats.molwitch.Atom;
+import gov.nih.ncats.molwitch.AtomCoordinates;
+import gov.nih.ncats.molwitch.Bond;
+import gov.nih.ncats.molwitch.Bond.BondType;
+import gov.nih.ncats.molwitch.SGroup.SGroupBracket;
+import gov.nih.ncats.molwitch.SGroup.SGroupType;
+import gov.nih.ncats.molwitch.Stereocenter;
+import gov.nih.ncats.molwitch.BondTable;
+import gov.nih.ncats.molwitch.ChemicalSource;
+import gov.nih.ncats.molwitch.ChemkitException;
+import gov.nih.ncats.molwitch.Chirality;
+import gov.nih.ncats.molwitch.DoubleBondStereochemistry;
+import gov.nih.ncats.molwitch.ExtendedTetrahedralChirality;
+import gov.nih.ncats.molwitch.GraphInvariant;
+import gov.nih.ncats.molwitch.SGroup;
+import gov.nih.ncats.molwitch.TetrahedralChirality;
+import gov.nih.ncats.molwitch.isotopes.Isotope;
+import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import gov.nih.ncats.common.util.CachedSupplier;
 
 public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
@@ -182,8 +182,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public void flipChirality(Stereocenter s) {
 		for(Atom a : s.getPeripheralAtoms()) {
 			for(Bond b : a.getBonds()) {
-				gov.nih.ncats.witch.Bond.Stereo oldStereo = b.getStereo();
-				gov.nih.ncats.witch.Bond.Stereo newStereo = oldStereo.flip();
+				gov.nih.ncats.molwitch.Bond.Stereo oldStereo = b.getStereo();
+				gov.nih.ncats.molwitch.Bond.Stereo newStereo = oldStereo.flip();
 				
 				if(oldStereo !=newStereo) {
 					IAtom center = CdkAtom.getIAtomFor(s.getCenterAtom());

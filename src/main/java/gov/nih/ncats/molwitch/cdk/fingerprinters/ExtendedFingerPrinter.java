@@ -26,11 +26,11 @@ import java.util.Set;
 
 import org.openscience.cdk.fingerprint.ExtendedFingerprinter;
 
-import gov.nih.ncats.witch.fingerprint.Fingerprinter;
-import gov.nih.ncats.witch.fingerprint.Fingerprinters;
-import gov.nih.ncats.witch.fingerprint.Fingerprinters.FingerprintSpecification;
-import gov.nih.ncats.witch.fingerprint.Fingerprinters.PathBasedSpecification;
-import gov.nih.ncats.witch.spi.FingerprinterImpl;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinter;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinters;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.FingerprintSpecification;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.PathBasedSpecification;
+import gov.nih.ncats.molwitch.spi.FingerprinterImpl;
 
 public class ExtendedFingerPrinter implements FingerprinterImpl{
 

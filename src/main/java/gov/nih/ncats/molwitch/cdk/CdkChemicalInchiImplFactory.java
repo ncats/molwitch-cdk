@@ -31,13 +31,13 @@ import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import gov.nih.ncats.witch.Chemical;
-import gov.nih.ncats.witch.ChemicalBuilder;
-import gov.nih.ncats.witch.ChemicalSource.Type;
-import gov.nih.ncats.witch.inchi.InChiResult;
-import gov.nih.ncats.witch.inchi.InChiResult.Status;
-import gov.nih.ncats.witch.internal.source.StringSource;
-import gov.nih.ncats.witch.spi.InchiImplFactory;
+import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.ChemicalBuilder;
+import gov.nih.ncats.molwitch.ChemicalSource.Type;
+import gov.nih.ncats.molwitch.inchi.InChiResult;
+import gov.nih.ncats.molwitch.inchi.InChiResult.Status;
+import gov.nih.ncats.molwitch.internal.source.StringSource;
+import gov.nih.ncats.molwitch.spi.InchiImplFactory;
 import net.sf.jniinchi.INCHI_RET;
 
 public class CdkChemicalInchiImplFactory implements InchiImplFactory{

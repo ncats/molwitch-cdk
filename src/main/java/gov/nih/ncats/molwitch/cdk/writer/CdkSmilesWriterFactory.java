@@ -39,13 +39,13 @@ import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import gov.nih.ncats.witch.io.ChemFormat.ChemFormatWriterSpecification;
-import gov.nih.ncats.witch.io.ChemFormat.HydrogenEncoding;
-import gov.nih.ncats.witch.io.ChemFormat.KekulizationEncoding;
-import gov.nih.ncats.witch.io.ChemFormat.SmilesFormatWriterSpecification;
-import gov.nih.ncats.witch.spi.ChemicalImpl;
-import gov.nih.ncats.witch.spi.ChemicalWriterImpl;
-import gov.nih.ncats.witch.spi.ChemicalWriterImplFactory;
+import gov.nih.ncats.molwitch.io.ChemFormat.ChemFormatWriterSpecification;
+import gov.nih.ncats.molwitch.io.ChemFormat.HydrogenEncoding;
+import gov.nih.ncats.molwitch.io.ChemFormat.KekulizationEncoding;
+import gov.nih.ncats.molwitch.io.ChemFormat.SmilesFormatWriterSpecification;
+import gov.nih.ncats.molwitch.spi.ChemicalImpl;
+import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
+import gov.nih.ncats.molwitch.spi.ChemicalWriterImplFactory;
 
 public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 

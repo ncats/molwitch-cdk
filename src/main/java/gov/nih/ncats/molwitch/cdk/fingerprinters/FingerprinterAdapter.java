@@ -36,10 +36,10 @@ import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.isomorphism.matchers.QueryAtom;
 import org.openscience.cdk.isomorphism.matchers.QueryBond;
 
-import gov.nih.ncats.witch.Chemical;
-import gov.nih.ncats.witch.fingerprint.Fingerprint;
-import gov.nih.ncats.witch.fingerprint.Fingerprinter;
-import gov.nih.ncats.witch.spi.FingerprinterImpl;
+import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprint;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinter;
+import gov.nih.ncats.molwitch.spi.FingerprinterImpl;
 
 /**
  * Adapter to wrap a {@link FingerprinterImpl} from the SPI

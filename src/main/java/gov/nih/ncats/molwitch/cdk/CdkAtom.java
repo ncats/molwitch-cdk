@@ -46,10 +46,10 @@ import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 import org.openscience.cdk.isomorphism.matchers.RGroupQuery;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import gov.nih.ncats.witch.Atom;
-import gov.nih.ncats.witch.AtomCoordinates;
-import gov.nih.ncats.witch.Bond;
-import gov.nih.ncats.witch.Chirality;
+import gov.nih.ncats.molwitch.Atom;
+import gov.nih.ncats.molwitch.AtomCoordinates;
+import gov.nih.ncats.molwitch.Bond;
+import gov.nih.ncats.molwitch.Chirality;
 import uk.ac.ebi.beam.Element;
 
 public class CdkAtom implements Atom{

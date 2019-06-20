@@ -31,14 +31,14 @@ import java.io.Reader;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import gov.nih.ncats.witch.ChemicalSource;
-import gov.nih.ncats.witch.SmartsSource;
-import gov.nih.ncats.witch.ChemicalSource.CommonProperties;
-import gov.nih.ncats.witch.SmilesSource;
-import gov.nih.ncats.witch.io.ChemFormat.MolFormatSpecification;
-import gov.nih.ncats.witch.io.ChemFormat.SdfFormatSpecification;
-import gov.nih.ncats.witch.io.ChemFormat.SmilesFormatWriterSpecification;
-import gov.nih.ncats.witch.internal.source.MolStringSource;
+import gov.nih.ncats.molwitch.ChemicalSource;
+import gov.nih.ncats.molwitch.SmartsSource;
+import gov.nih.ncats.molwitch.ChemicalSource.CommonProperties;
+import gov.nih.ncats.molwitch.SmilesSource;
+import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification;
+import gov.nih.ncats.molwitch.io.ChemFormat.SdfFormatSpecification;
+import gov.nih.ncats.molwitch.io.ChemFormat.SmilesFormatWriterSpecification;
+import gov.nih.ncats.molwitch.internal.source.MolStringSource;
 
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
 import org.openscience.cdk.exception.InvalidSmilesException;
@@ -53,9 +53,9 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import gov.nih.ncats.witch.spi.ChemicalImpl;
-import gov.nih.ncats.witch.spi.ChemicalImplFactory;
-import gov.nih.ncats.witch.spi.ChemicalImplReader;
+import gov.nih.ncats.molwitch.spi.ChemicalImpl;
+import gov.nih.ncats.molwitch.spi.ChemicalImplFactory;
+import gov.nih.ncats.molwitch.spi.ChemicalImplReader;
 import gov.nih.ncats.common.io.InputStreamSupplier;
 
 public class CdkChemical2FactoryImpl implements ChemicalImplFactory{

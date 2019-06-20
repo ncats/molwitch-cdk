@@ -26,8 +26,8 @@ import java.io.IOException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.IChemObjectWriter;
 
-import gov.nih.ncats.witch.spi.ChemicalImpl;
-import gov.nih.ncats.witch.spi.ChemicalWriterImpl;
+import gov.nih.ncats.molwitch.spi.ChemicalImpl;
+import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 
 public class CdkChemicalWriter implements ChemicalWriterImpl{

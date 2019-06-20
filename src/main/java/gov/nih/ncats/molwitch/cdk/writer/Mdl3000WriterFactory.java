@@ -28,7 +28,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.io.IChemObjectWriter;
 import org.openscience.cdk.io.MDLV3000Writer;
 
-import gov.nih.ncats.witch.io.ChemFormat.MolFormatSpecification.Version;
+import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification.Version;
 
 public class Mdl3000WriterFactory extends AbstractMdlWriterFactory{
 

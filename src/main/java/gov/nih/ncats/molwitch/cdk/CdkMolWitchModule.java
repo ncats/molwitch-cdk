@@ -21,7 +21,7 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import gov.nih.ncats.witch.spi.WitchModule;
+import gov.nih.ncats.molwitch.spi.WitchModule;
 
 public class CdkMolWitchModule implements WitchModule{
 

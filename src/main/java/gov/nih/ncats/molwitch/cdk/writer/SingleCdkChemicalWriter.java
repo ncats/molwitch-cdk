@@ -25,7 +25,7 @@ import java.io.IOException;
 
 import org.openscience.cdk.io.IChemObjectWriter;
 
-import gov.nih.ncats.witch.spi.ChemicalImpl;
+import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 
 public class SingleCdkChemicalWriter extends CdkChemicalWriter{
 

@@ -29,12 +29,12 @@ import java.util.Set;
 
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
 
-import gov.nih.ncats.witch.fingerprint.Fingerprinter;
-import gov.nih.ncats.witch.fingerprint.Fingerprinters;
-import gov.nih.ncats.witch.fingerprint.Fingerprinters.AbstractCfpOptions;
-import gov.nih.ncats.witch.fingerprint.Fingerprinters.EcfpSpecification;
-import gov.nih.ncats.witch.fingerprint.Fingerprinters.FingerprintSpecification;
-import gov.nih.ncats.witch.spi.FingerprinterImpl;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinter;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinters;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.AbstractCfpOptions;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.EcfpSpecification;
+import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.FingerprintSpecification;
+import gov.nih.ncats.molwitch.spi.FingerprinterImpl;
 
 public class EcfpFingerPrinter implements FingerprinterImpl{
 

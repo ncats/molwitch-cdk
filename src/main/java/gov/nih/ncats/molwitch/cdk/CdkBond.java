@@ -29,8 +29,8 @@ import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IBond.Order;
 import org.openscience.cdk.isomorphism.matchers.IQueryBond;
 
-import gov.nih.ncats.witch.Atom;
-import gov.nih.ncats.witch.Bond;
+import gov.nih.ncats.molwitch.Atom;
+import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.common.sneak.Sneak;
 
 public class CdkBond implements Bond{

@@ -21,7 +21,7 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import gov.nih.ncats.witch.GraphInvariant;
+import gov.nih.ncats.molwitch.GraphInvariant;
 
 public class CdkGraphInvariant implements GraphInvariant {
 

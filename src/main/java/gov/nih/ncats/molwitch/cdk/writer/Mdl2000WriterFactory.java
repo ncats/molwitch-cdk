@@ -26,7 +26,7 @@ import java.io.OutputStream;
 import org.openscience.cdk.io.IChemObjectWriter;
 import org.openscience.cdk.io.MDLV2000Writer;
 
-import gov.nih.ncats.witch.io.ChemFormat.MolFormatSpecification.Version;
+import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification.Version;
 
 public class Mdl2000WriterFactory extends AbstractMdlWriterFactory{
 

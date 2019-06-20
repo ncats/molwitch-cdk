@@ -24,8 +24,8 @@ package gov.nih.ncats.molwitch.cdk.writer;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import gov.nih.ncats.witch.io.ChemFormat.ChemFormatWriterSpecification;
-import gov.nih.ncats.witch.io.WriterOptions;
+import gov.nih.ncats.molwitch.io.ChemFormat.ChemFormatWriterSpecification;
+import gov.nih.ncats.molwitch.io.WriterOptions;
 
 public class CdkWriterOptionUtils {
 

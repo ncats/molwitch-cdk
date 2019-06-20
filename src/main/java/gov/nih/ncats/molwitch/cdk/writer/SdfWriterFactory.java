@@ -28,12 +28,12 @@ import java.util.Properties;
 import org.openscience.cdk.io.SDFWriter;
 import org.openscience.cdk.io.listener.PropertiesListener;
 
-import gov.nih.ncats.witch.io.ChemFormat.ChemFormatWriterSpecification;
-import gov.nih.ncats.witch.io.ChemFormat.KekulizationEncoding;
-import gov.nih.ncats.witch.io.ChemFormat.MolFormatSpecification.Version;
-import gov.nih.ncats.witch.io.ChemFormat.SdfFormatSpecification;
-import gov.nih.ncats.witch.spi.ChemicalWriterImpl;
-import gov.nih.ncats.witch.spi.ChemicalWriterImplFactory;
+import gov.nih.ncats.molwitch.io.ChemFormat.ChemFormatWriterSpecification;
+import gov.nih.ncats.molwitch.io.ChemFormat.KekulizationEncoding;
+import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification.Version;
+import gov.nih.ncats.molwitch.io.ChemFormat.SdfFormatSpecification;
+import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
+import gov.nih.ncats.molwitch.spi.ChemicalWriterImplFactory;
 
 public class SdfWriterFactory implements ChemicalWriterImplFactory{
 

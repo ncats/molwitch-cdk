@@ -1,0 +1,4 @@
+gov.nih.ncats.molwitch.cdk.writer.CdkSmilesWriterFactory
+gov.nih.ncats.molwitch.cdk.writer.Mdl2000WriterFactory
+gov.nih.ncats.molwitch.cdk.writer.Mdl3000WriterFactory
+gov.nih.ncats.molwitch.cdk.writer.SdfWriterFactory

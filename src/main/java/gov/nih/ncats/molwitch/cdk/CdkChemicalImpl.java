@@ -289,6 +289,14 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		perceiveAtomTypesOfNonQueryAtoms.resetCache();
 	}
 
+	@Override
+	public int getSGroupCount() {
+		Collection<?> sgroups = getCdkSgroups();
+		if(sgroups==null){
+			return 0;
+		}
+		return sgroups.size();
+	}
 
 	@Override
 	public void makeHydrogensExplicit() {
@@ -697,9 +705,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	//where sgroupCpyList is a Set<SGroup> 
 	@Override
 	public List<SGroup> getSGroups(){
-		//TODO CDK may deprecate this and add normal accessor in future version.
-		List<Sgroup> sgroups = container.getProperty(CDKConstants.CTAB_SGROUPS);
-		
+		List<Sgroup> sgroups = getCdkSgroups();
+
+
 		if(sgroups ==null) {
 			return Collections.emptyList();
 		}
@@ -709,11 +717,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 		return chemkitGroups;
 	}
-	
-	
+
+	private List<Sgroup> getCdkSgroups() {
+		//TODO CDK may deprecate this and add normal accessor in future version.
+		return container.getProperty(CDKConstants.CTAB_SGROUPS);
+	}
+
+
 	@Override
 	public void removeSGroup(SGroup sgroup) {
-		List<Sgroup> sgroups = container.getProperty(CDKConstants.CTAB_SGROUPS);
+		List<Sgroup> sgroups = getCdkSgroups();
 		if(sgroups ==null) {
 			return;
 		}
@@ -723,7 +736,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	@Override
 	public SGroup addSgroup(SGroupType type) {
 		SGroupType typeToUse = type==null? SGroupType.GENERIC : type;
-		List<Sgroup> sgroups = container.getProperty(CDKConstants.CTAB_SGROUPS);
+		List<Sgroup> sgroups = getCdkSgroups();
 		if(sgroups ==null) {
 			sgroups = new ArrayList<>();
 			container.setProperty(CDKConstants.CTAB_SGROUPS, sgroups);
@@ -735,7 +748,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	@Override
 	public boolean hasSGroups() {
-		Set<Sgroup> sgroups = container.getProperty(CDKConstants.CTAB_SGROUPS);
+		List<Sgroup> sgroups = getCdkSgroups();
 		return !(sgroups == null || sgroups.isEmpty());
 	}
 	@Override
@@ -913,9 +926,22 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			
 			stereoType = convertCdkStereoToChirality(extendedTetrahedral.winding());
 		}
-		
-		
-		
+
+		@Override
+		public boolean isDefined() {
+			//check if any terminal atoms have wedge or hash?
+			for(Atom a : terminalAtoms){
+
+				for(Bond b : a.getBonds()){
+					//make sure it's to the peripheral atom
+					if(peripheralAtoms.contains(b.getOtherAtom(a)) && b.getStereo() !=Bond.Stereo.NONE){
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
 		@Override
 		public Set<Stereocenters.Stereocenter> removeStereoCenterFrom(
 				IAtomContainer container) {
@@ -997,6 +1023,18 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		public CdkTetrahedralChirality(ITetrahedralChirality chirality) {
 			this.chirality = chirality;
 			ligands = chirality.getLigands();
+		}
+
+		@Override
+		public boolean isDefined() {
+			//let's just assume if any hash or wedge bonds
+			//are set then it's defined...
+			for(IBond b : chirality.getChiralAtom().bonds()){
+				if(b.getStereo() != IBond.Stereo.NONE){
+					return true;
+				}
+			}
+			return false;
 		}
 
 		@Override
@@ -1349,8 +1387,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		return ret.toString();
 	}
 
-	
 
+	@Override
+	public void removeProperty(String name) {
+		container.removeProperty(name);
+	}
 
 	@Override
 	public void setProperty(String key, String value) {

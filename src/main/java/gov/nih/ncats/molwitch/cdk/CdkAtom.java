@@ -35,13 +35,11 @@ import javax.vecmath.Point3d;
 
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.CDKConstants;
+import org.openscience.cdk.SingleElectron;
 import org.openscience.cdk.config.IsotopeFactory;
 import org.openscience.cdk.config.Isotopes;
 import org.openscience.cdk.graph.Cycles;
-import org.openscience.cdk.interfaces.IAtom;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IPseudoAtom;
-import org.openscience.cdk.interfaces.IRingSet;
+import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 import org.openscience.cdk.isomorphism.matchers.RGroupQuery;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -188,6 +186,11 @@ public class CdkAtom implements Atom{
 	}
 
 	@Override
+	public void setAtomicNumber(int atomicNumber) {
+		atom.setAtomicNumber(atomicNumber);
+	}
+
+	@Override
 	public boolean hasAromaticBond() {
 		return atom.isAromatic();
 	}
@@ -222,6 +225,29 @@ public class CdkAtom implements Atom{
 			return 0;
 		}
 		return charge.intValue();
+	}
+
+	@Override
+	public int getRadical() {
+		List<ISingleElectron> list = parent.getContainer().getConnectedSingleElectronsList(atom);
+		if(list.isEmpty()) {
+			return 0;
+		}
+		return list.stream().map(ise -> ise.getElectronCount()).filter(Objects::nonNull).mapToInt(Integer::intValue).sum();
+	}
+
+	@Override
+	public void setRadical(int radical) {
+
+		ISingleElectron ise = new SingleElectron(atom);
+		ise.setElectronCount(radical);
+
+		IAtomContainer container = parent.getContainer();
+		container.getConnectedSingleElectronsList(atom)
+								.forEach(container::removeSingleElectron);
+
+		container.addSingleElectron(ise);
+
 	}
 
 
@@ -268,6 +294,11 @@ public class CdkAtom implements Atom{
 			return Chirality.S;
 		}
 		return Chirality.Non_Chiral;
+	}
+
+	@Override
+	public void setChirality(Chirality chirality) {
+
 	}
 
 	@Override

@@ -21,6 +21,7 @@
 
 package gov.nih.ncats.molwitch.cdk.writer;
 
+import gov.nih.ncats.molwitch.io.ChemFormat;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
@@ -36,22 +37,26 @@ public class CdkWriterOptionUtils {
 	}
 	public static IAtomContainer createManipulatedContainer(ChemFormatWriterSpecification spec, IAtomContainer container, boolean clonedContainer) {
 		IAtomContainer ret = container;
+		if(spec instanceof ChemFormat.HydrogenAwareChemFormatWriterSpecification){
 		//order of options in specific order to limit the number of clones
 		//DON'T CHANGE ORDER UNLESS YOU KNOW WHAT YOU'RE DOING
-		switch(spec.getHydrogenEncoding()) {
-		case AS_IS : break;
-		case MAKE_IMPLICIT: ret = AtomContainerManipulator.removeHydrogens(ret);
-							break;
-		case MAKE_EXPLICIT: {
-			if(!clonedContainer){
-				try {
-				ret = ret.clone();
-				} catch (CloneNotSupportedException e) {
-					throw new IllegalStateException("could not make clone",e);
+		switch( ((ChemFormat.HydrogenAwareChemFormatWriterSpecification)spec).getHydrogenEncoding()) {
+			case AS_IS:
+				break;
+			case MAKE_IMPLICIT:
+				ret = AtomContainerManipulator.removeHydrogens(ret);
+				break;
+			case MAKE_EXPLICIT: {
+				if (!clonedContainer) {
+					try {
+						ret = ret.clone();
+					} catch (CloneNotSupportedException e) {
+						throw new IllegalStateException("could not make clone", e);
+					}
 				}
+				AtomContainerManipulator.convertImplicitToExplicitHydrogens(container);
+				break;
 			}
-			AtomContainerManipulator.convertImplicitToExplicitHydrogens(container);
-			break;
 		}
 							
 		}

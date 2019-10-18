@@ -1085,6 +1085,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 
 		@Override
+		public Optional<String> getSuperatomLabel() {
+			return Optional.empty();
+		}
+
+		@Override
 		public Stream<Atom> getAtoms() {
 			return sgroup.getAtoms().stream().map(a-> getCdkAtomFor(a));
 		}

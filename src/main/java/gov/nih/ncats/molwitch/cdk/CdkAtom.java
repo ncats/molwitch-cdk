@@ -350,7 +350,9 @@ public class CdkAtom implements Atom{
 		Integer ret = atom.getImplicitHydrogenCount();
 		if(ret ==null){
 			//bug in hydrogen count
-			
+			if(isQueryAtom()){
+				return 0;
+			}
 			//compute it
 			return parent.setImplicitHydrogens(atom);
 			

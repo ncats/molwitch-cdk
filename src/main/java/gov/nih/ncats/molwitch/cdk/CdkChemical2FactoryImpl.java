@@ -21,16 +21,13 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import gov.nih.ncats.common.functions.ThrowableFunction;
 import gov.nih.ncats.molwitch.ChemicalSource;
 import gov.nih.ncats.molwitch.SmartsSource;
 import gov.nih.ncats.molwitch.ChemicalSource.CommonProperties;
@@ -45,6 +42,8 @@ import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomType;
+import org.openscience.cdk.io.FormatFactory;
+import org.openscience.cdk.io.formats.*;
 import org.openscience.cdk.io.iterator.IIteratingChemObjectReader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
@@ -62,13 +61,16 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
 	private SmilesParser preserveAromaticSmilesParser;
 	private SmilesParser kekuleSmilesParser;
-	
+
+
+
 	public CdkChemical2FactoryImpl(){
 		
 		 preserveAromaticSmilesParser = new SmilesParser(CdkUtil.getChemObjectBuilder());
 		 //make aromatic
 		 preserveAromaticSmilesParser.kekulise(false);
 		 kekuleSmilesParser = new SmilesParser(CdkUtil.getChemObjectBuilder());
+
 	}
 	
 	@Override
@@ -164,8 +166,27 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			throw new IOException("error parsing smiles : " + smiles, e);
 		}
 	}
-	
-	
+
+	@Override
+	public ChemicalImpl create(String unknownFormattedInput) throws IOException {
+		if(new BufferedReader(new StringReader(unknownFormattedInput.trim())).lines().count() == 1){
+//			//only 1 line assume smarts or smiles query?
+//
+			if(unknownFormattedInput.indexOf('~') > -1 || unknownFormattedInput.indexOf('*') > -1){
+				//has wildcards
+				return createFromSmarts(unknownFormattedInput);
+			}
+			return createFromSmiles(unknownFormattedInput);
+		}
+		try(ChemicalImplReader reader = createFrom(new BufferedReader(new StringReader(unknownFormattedInput)), null)){
+			return reader.read();
+		}
+	}
+
+	@Override
+	public boolean isFormatAgnostic() {
+		return true;
+	}
 
 	@Override
 	public ChemicalImpl createFromSmarts(String smarts) throws IOException{
@@ -190,7 +211,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 	
 	@Override
 	public ChemicalImplReader create(String format, InputStreamSupplier in) throws IOException {
-		return create(in.get());
+		return createFrom(computeFormatFromString(format), new InputStreamReader(in.get()), null);
 	}
 
 	@Override
@@ -200,12 +221,33 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
 	@Override
 	public ChemicalImplReader create(String format, InputStream in) throws IOException {
-		return create(in);
+		return createFrom(computeFormatFromString(format), new InputStreamReader(in), null);
 	}
 
+	private IChemFormat computeFormatFromString(String format){
+    	if(format ==null){
+    		return null;
+		}
+    	if(SmilesFormatWriterSpecification.NAME.equalsIgnoreCase(format)){
+    		return (IChemFormat) SMILESFormat.getInstance();
+		}
+    	if(MolFormatSpecification.NAME.equalsIgnoreCase(format)){
+			return (IChemFormat) MDLV2000Format.getInstance();
+		}
+		if(SdfFormatSpecification.NAME.equalsIgnoreCase(format)){
+			return (IChemFormat) SDFFormat.getInstance();
+		}
+		return null;
+	}
 	@Override
 	public ChemicalImplReader create(String format, File file) throws IOException {
-		return create(file);
+		return createFrom(computeFormatFromString(format),
+				new InputStreamReader(InputStreamSupplier.forFile(file).get()),
+				source -> {
+					source.getProperties().put(CommonProperties.Filename, file.getName());
+					source.getProperties().put(CommonProperties.Filepath, file.getAbsolutePath());
+					source.getProperties().put(CommonProperties.Filesize, Long.toString(file.length()));
+				});
 	}
 
 	@Override
@@ -230,8 +272,16 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		//needs to be buffered because the reader factory
 		//tries to go back and re-read!
 		
-		ReaderFactory readerFactory = new ReaderFactory();
-		ReaderFactory.GuessResult guessedReader = readerFactory.guessReaderFor(new BufferedReader(reader));
+
+		ReaderFactory.GuessResult guessedReader = ReaderFactory.guessReaderFor(new BufferedReader(reader));
+		return new CdkChemicalImplReader(guessedReader.cdkReader, guessedReader.savedBufferedReader, sourceConsumer);
+	}
+
+	private ChemicalImplReader createFrom(IChemFormat format, Reader reader, Consumer<ChemicalSource> sourceConsumer) throws IOException {
+		//needs to be buffered because the reader factory
+		//tries to go back and re-read!
+
+		ReaderFactory.GuessResult guessedReader = ReaderFactory.create(new BufferedReader(reader), format);
 		return new CdkChemicalImplReader(guessedReader.cdkReader, guessedReader.savedBufferedReader, sourceConsumer);
 	}
 	
@@ -267,7 +317,8 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 				try {
 				ChemicalImpl impl= new CdkChemicalImpl(iter.next(),()->{
 					String data = savedReader.getBufferedLines();
-					
+					System.out.println(data);
+					System.out.println("type = " + type);
 					if(type == ChemicalSource.Type.SMILES){
 						//only trim smiles
 						//mol +sd files white space in header matters

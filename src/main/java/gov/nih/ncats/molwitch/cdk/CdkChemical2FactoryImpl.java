@@ -317,8 +317,8 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 				try {
 				ChemicalImpl impl= new CdkChemicalImpl(iter.next(),()->{
 					String data = savedReader.getBufferedLines();
-					System.out.println(data);
-					System.out.println("type = " + type);
+//					System.out.println(data);
+//					System.out.println("type = " + type);
 					if(type == ChemicalSource.Type.SMILES){
 						//only trim smiles
 						//mol +sd files white space in header matters

@@ -223,6 +223,9 @@ public class CdkBond implements Bond{
 		if("E".equals(value)) {
 			 return DoubleBondStereo.E_TRANS;
 		}
+		if(bond.getStereo()== IBond.Stereo.E_OR_Z){
+			return DoubleBondStereo.E_OR_Z;
+		}
 		return DoubleBondStereo.NONE;
 		
 		

@@ -44,7 +44,7 @@ public class QueryAtomPerceptor {
 			IAtom deref = AtomRef.deref(atom);
 			if(deref instanceof QueryAtom ){
 				Expr expr= ((QueryAtom)deref).getExpression();
-				System.out.println(expr.type());
+//				System.out.println(expr.type());
 				if(expr.type() == Expr.Type.ELEMENT || expr.type() == Expr.Type.ALIPHATIC_ELEMENT || expr.type() == Expr.Type.AROMATIC_ELEMENT){
 					int atomicNumber = expr.value();
 					IElement element = Isotopes.getInstance().getElement(atomicNumber);
@@ -59,10 +59,10 @@ public class QueryAtomPerceptor {
 		
 		for(IBond bond : container.bonds()){
 			IBond deref = BondRef.deref(bond);
-			System.out.println(deref);
+//			System.out.println(deref);
 			if(deref instanceof QueryBond){
 				Expr expr = ((QueryBond)deref).getExpression();
-				System.out.println("\t" + expr);
+//				System.out.println("\t" + expr);
 				if(expr.type() == Expr.Type.ALIPHATIC_ORDER || expr.type() == Expr.Type.ORDER){
 					switch(expr.value()){
 						case 1: bond.setOrder(Order.SINGLE);

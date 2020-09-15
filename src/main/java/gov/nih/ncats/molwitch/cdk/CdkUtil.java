@@ -21,12 +21,31 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
+import gov.nih.ncats.molwitch.Chemical;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smarts.Smarts;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-class CdkUtil {
+import java.io.IOException;
 
+public class CdkUtil {
+
+	public static IAtomContainer toAtomContainer(Chemical chemical){
+		return (IAtomContainer) chemical.getImpl().getWrappedObject();
+	}
 	public static IChemObjectBuilder getChemObjectBuilder() {
 		return SilentChemObjectBuilder.getInstance();
+	}
+
+	public static IAtomContainer parseSmarts(String smarts) throws CDKException, IOException {
+		IAtomContainer container = CdkUtil.getChemObjectBuilder().newAtomContainer();
+		Smarts.parse(container, smarts);
+
+		AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
+		QueryAtomPerceptor.percieve(container);
+		return container;
 	}
 }

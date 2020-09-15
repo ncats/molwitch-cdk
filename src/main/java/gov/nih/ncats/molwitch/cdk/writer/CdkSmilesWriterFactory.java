@@ -60,7 +60,7 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 		SmilesFormatWriterSpecification smilesSpec = (SmilesFormatWriterSpecification) spec;
 		int options =SmiFlavor.Generic;
 		if(smilesSpec.getCanonization() == SmilesFormatWriterSpecification.CanonicalizationEncoding.CANONICAL) {
-			options |= SmiFlavor.Canonical;
+			options = SmiFlavor.Canonical;
 		}
 		if(smilesSpec.getEncodeStereo() == SmilesFormatWriterSpecification.StereoEncoding.INCLUDE_STEREO) {
 			options |= SmiFlavor.Stereo;
@@ -166,6 +166,11 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 
 		@Override
 		public void write(ChemicalImpl chemicalImpl) throws IOException {
+			//smiles writer has problems with empty
+			if(chemicalImpl.getAtomCount() ==0){
+				out.println("");
+				return;
+			}
 			try {
 				out.println(sg.create(modificationFunction.apply((IAtomContainer)chemicalImpl.getWrappedObject())));
 			} catch (CDKException e) {

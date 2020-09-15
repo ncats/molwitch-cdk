@@ -22,10 +22,15 @@
 package gov.nih.ncats.molwitch.cdk.writer;
 
 import java.io.IOException;
+import java.util.List;
 
+import org.openscience.cdk.CDKConstants;
+import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.IChemObjectWriter;
 
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
+import org.openscience.cdk.sgroup.Sgroup;
+import org.openscience.cdk.sgroup.SgroupKey;
 
 public class SingleCdkChemicalWriter extends CdkChemicalWriter{
 
@@ -40,7 +45,15 @@ public class SingleCdkChemicalWriter extends CdkChemicalWriter{
 		if(writtenAlready){
 			throw new OnlyOneChemicalAllowedException("already wrote a Chemical to this writer");
 		}
-		super.write(impl);
+		try {
+			super.write(impl);
+		}catch(Throwable t){
+			List<Sgroup> sgroups = (List<Sgroup>)((IAtomContainer)impl.getWrappedObject()).getProperty(CDKConstants.CTAB_SGROUPS);
+			for(Sgroup sgroup: sgroups){
+				System.out.println("SGROUP SPA prop =" + sgroup.getValue(SgroupKey.CtabParentAtomList));
+			}
+			throw t;
+		}
 		writtenAlready=true;
 	}
 

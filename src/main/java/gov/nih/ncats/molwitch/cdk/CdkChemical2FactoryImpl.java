@@ -38,15 +38,16 @@ import gov.nih.ncats.molwitch.io.ChemFormat.SmilesFormatWriterSpecification;
 import gov.nih.ncats.molwitch.internal.source.MolStringSource;
 
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomType;
-import org.openscience.cdk.io.FormatFactory;
 import org.openscience.cdk.io.formats.*;
 import org.openscience.cdk.io.iterator.IIteratingChemObjectReader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smarts.Smarts;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
@@ -102,8 +103,9 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 //		}
 		IAtomContainer mol = tryCreate(smiles);
 //		 addImplicitHydrogens(mol);
+// configure atom types
 		AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(mol);
-
+		CDKHydrogenAdder.getInstance(mol.getBuilder()).addImplicitHydrogens(mol);
 
 
 
@@ -122,8 +124,23 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			return kekuleSmilesParser.parseSmiles(smiles);
 		} catch (InvalidSmilesException e) {
 //			e.printStackTrace();
-			
-			return preserveAromaticSmilesParser.parseSmiles(smiles);
+			/* From the CDK smiles parser docks:
+			If a kekulé structure could not be assigned this is considered an error.
+			The most common example is the omission of hydrogens on aromatic nitrogens
+			(aromatic pyrrole is specified as '[nH]1cccc1' not 'n1cccc1').
+			These structures can not be corrected without modifying their formula.
+			If there are multiple locations a hydrogen could be placed the returned
+			structure would differ depending on the atom input order.
+			If you wish to skip the kekulistation (not recommended) then it can be disabled with kekulise.
+			 */
+			try {
+				String fixed = smiles.replace("[n]", "[nH]");
+//				System.out.println("trying " + fixed);
+				return kekuleSmilesParser.parseSmiles(fixed);
+			} catch (InvalidSmilesException e2) {
+				e2.printStackTrace();
+				return preserveAromaticSmilesParser.parseSmiles(smiles);
+			}
 		}
 		
 	}
@@ -169,6 +186,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
 	@Override
 	public ChemicalImpl create(String unknownFormattedInput) throws IOException {
+//    	System.out.println("trying to parse '"+unknownFormattedInput +"'");
 		if(new BufferedReader(new StringReader(unknownFormattedInput.trim())).lines().count() == 1){
 //			//only 1 line assume smarts or smiles query?
 //
@@ -191,11 +209,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 	@Override
 	public ChemicalImpl createFromSmarts(String smarts) throws IOException{
 		try{
-			IAtomContainer container = CdkUtil.getChemObjectBuilder().newAtomContainer();
-			Smarts.parse(container, smarts);
-			
-			AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
-			QueryAtomPerceptor.percieve(container);
+			IAtomContainer container = CdkUtil.parseSmarts(smarts);
 			return new CdkChemicalImpl(container, new SmartsSource(smarts));
 		}catch(Exception e){
 			e.printStackTrace();
@@ -203,15 +217,25 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		}
 	}
 
+
+
 	@Override
 	public ChemicalImplReader create(byte[] molBytes, int start, int length) throws IOException {
 		return create(new ByteArrayInputStream(molBytes, start, length));
+	}
+	@Override
+	public ChemicalImplReader create(String format, byte[] molBytes, int start, int length) throws IOException {
+		return createFrom(computeFormatFromString(format),
+				new InputStreamReader(new ByteArrayInputStream(molBytes, start, length)),
+				null);
+//    	return create(new ByteArrayInputStream(molBytes, start, length));
 	}
 
 	
 	@Override
 	public ChemicalImplReader create(String format, InputStreamSupplier in) throws IOException {
-		return createFrom(computeFormatFromString(format), new InputStreamReader(in.get()), null);
+
+    	return createFrom(computeFormatFromString(format), new InputStreamReader(in.get()), null);
 	}
 
 	@Override

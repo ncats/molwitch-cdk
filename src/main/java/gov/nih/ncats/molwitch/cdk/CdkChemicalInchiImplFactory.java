@@ -24,11 +24,15 @@ package gov.nih.ncats.molwitch.cdk;
 import java.io.IOException;
 import java.util.Collections;
 
+import gov.nih.ncats.molwitch.Atom;
+import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.PseudoAtom;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import gov.nih.ncats.molwitch.Chemical;
@@ -39,6 +43,8 @@ import gov.nih.ncats.molwitch.inchi.InChiResult.Status;
 import gov.nih.ncats.molwitch.internal.source.StringSource;
 import gov.nih.ncats.molwitch.spi.InchiImplFactory;
 import net.sf.jniinchi.INCHI_RET;
+import org.openscience.cdk.interfaces.IPseudoAtom;
+import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 
 public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 
@@ -52,25 +58,51 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		}
 		
 	}
+	private Chemical handleQueryAtoms(Chemical m) throws IOException {
+
+		if(!m.atoms().filter(CdkChemicalInchiImplFactory::isAtomThatMessesUpInchi).findAny().isPresent()){
+			//no query atoms do nothing
+			return m;
+		}
+		Chemical copy = Chemical.parseMol(m.toMol());
+		for (Atom a : copy.getAtoms()) {
+			if (isAtomThatMessesUpInchi(a)) {
+				// this is what marvinjs specifies for atom *
+				a.setAtomicNumber(2); // force this to be helium
+
+			}
+		}
+
+		return copy;
+	}
+
+	private static boolean isAtomThatMessesUpInchi(Atom atom) {
+		IAtom a = AtomRef.deref(CdkAtom.getIAtomFor(atom));
+		boolean ret =  a instanceof IPseudoAtom || a instanceof IQueryAtom;
+		return ret;
+	}
+
 	@Override
 	public InChiResult asStdInchi(Chemical chemical, boolean trustCoordinates) throws IOException {
 		
 		try {
 			//need to pass list options (even empty) to get AuxInfo...
-			InChIGenerator gen = factory.getInChIGenerator((IAtomContainer)chemical.getImpl().getWrappedObject(), Collections.emptyList());
+//			System.out.println("computing inchi for " + (chemical.getSource().isPresent()? chemical.getSource().get().getData() : "NO SOURCE"));
+			InChIGenerator gen = factory.getInChIGenerator(CdkUtil.toAtomContainer(handleQueryAtoms(chemical)), Collections.emptyList());
 		
 			InChiResult.Status status = toChemkitStatus(gen.getReturnStatus());
-			
+//			System.out.println("INCHI STATUS =  " + status);
 			return new InChiResult.Builder(status)
-						.setAuxInfo(gen.getAuxInfo())
+						.setAuxInfo(gen.getAuxInfo()==null?"":gen.getAuxInfo())
 						.setInchi(gen.getInchi())
 						.setKey(gen.getInchiKey())
 						.setMessage(gen.getLog())
 						.build();
 			
 		
-		} catch (CDKException e) {
-			throw new IOException("error computing Inchi", e);
+		} catch (Throwable e) {
+			e.printStackTrace();
+			throw new IOException("error computing Inchi for " + chemical.toSmiles(), e);
 		} 
 	}
 
@@ -88,7 +120,7 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		try {
 			InChIToStructure toStruc= factory.getInChIToStructure(inchi, DefaultChemObjectBuilder.getInstance());
 		
-			System.out.println(toStruc.getReturnStatus() + "  " + toStruc.getMessage());
+//			System.out.println(toStruc.getReturnStatus() + "  " + toStruc.getMessage());
 			if(toStruc.getReturnStatus() == INCHI_RET.OKAY || toStruc.getReturnStatus() == INCHI_RET.WARNING) {
 				
 				return ChemicalBuilder._fromImpl(new CdkChemicalImpl( toStruc.getAtomContainer(), new StringSource(inchi, Type.INCHI)))

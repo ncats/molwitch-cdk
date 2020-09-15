@@ -37,7 +37,8 @@ public class CdkBond implements Bond{
 
 	private final IBond bond;
 	private final CdkChemicalImpl parent;
-	
+
+
 	public CdkBond(IBond bond, CdkChemicalImpl parent) {
 		this.bond = bond;
 		this.parent = parent;

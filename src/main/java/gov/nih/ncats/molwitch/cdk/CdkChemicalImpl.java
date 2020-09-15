@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
+import gov.nih.ncats.common.util.CachedSupplierGroup;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
@@ -101,12 +102,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	private boolean isAromatic;
 	
-	CDKHydrogenAdder hydrogenAdder = CDKHydrogenAdder.getInstance(SilentChemObjectBuilder.getInstance());
-	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
+	private CDKHydrogenAdder hydrogenAdder;
+//	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
 
     Map<Integer, Map<Integer, CdkBond>> bondMap = new HashMap<>();
 
-    
+
     CachedSupplier<Void> perceiveAtomTypesOfNonQueryAtoms = CachedSupplier.of(()->{
     	try {
     		percieveAtomTypeAndConfigureNonQueryAtoms();
@@ -147,7 +148,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    	
 		
     });
-    
+	private final CachedSupplierGroup cachedSupplierGroup = new CachedSupplierGroup();
 	private final ChemicalSource source;
 	public CdkChemicalImpl(IAtomContainer container, Supplier<? extends ChemicalSource> source) {
 		this(container, source.get());
@@ -155,8 +156,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public CdkChemicalImpl(IAtomContainer container, ChemicalSource source) {
 		this.container = container;
 		this.source = source;
-        
-		   for (IAtom atom : container.atoms()) {
+		hydrogenAdder = CDKHydrogenAdder.getInstance(container.getBuilder());
+		cachedSupplierGroup.add(ringsSearcherSupplier);
+		cachedSupplierGroup.add(cahnIngoldPrelogSupplier);
+		cachedSupplierGroup.add(perceiveAtomTypesOfNonQueryAtoms);
+
+		   /*for (IAtom atom : container.atoms()) {
 			   //query atoms don't have everything set
 			   //so ignore them for now
 			   if(atom instanceof IQueryAtom) {
@@ -168,8 +173,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			} catch (CDKException e) {
 				throw new IllegalStateException("error matching type", e);
 			}
+
 		     AtomTypeManipulator.configure(atom, type);
-		   }
+		   }*/
 		   
 	}
 	
@@ -284,9 +290,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 
 	private void setDirty() {
-		ringsSearcherSupplier.resetCache();
-		cahnIngoldPrelogSupplier.resetCache();
-		perceiveAtomTypesOfNonQueryAtoms.resetCache();
+
+		cachedSupplierGroup.resetCache();
 	}
 
 	@Override
@@ -488,8 +493,14 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	@Override
 	public void aromatize() {
+		//CDK errors out if there are no atoms
+		//so skip this function
+		if(container.isEmpty()){
+			isAromatic = true;
+			return;
+		}
 		try {
-			
+			perceiveAtomTypesOfNonQueryAtoms.get();
 //			fix();
 			 new Aromaticity(ElectronDonation.daylight(),
                      Cycles.all())
@@ -1225,7 +1236,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			return brackets.stream().map(SGroupBracketImpl::new).collect(Collectors.toList());
 		}
 
-		@Override
+        @Override
+        public Optional<String> getSruLabel() {
+			//NCATS/FDA often use SMT as the SRU label which CDK reads as subscript property
+		    return getSubscript();
+        }
+
+        @Override
 		public boolean bracketsSupported() {
 			return true;
 		}
@@ -1389,6 +1406,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if(ret==null){
 			return null;
 		}
+		if(key.equals(CDKConstants.CTAB_SGROUPS)){
+			System.out.println("here!!!!!!");
+			new Exception("getting sgroup as string").printStackTrace();
+		}
 		return ret.toString();
 	}
 
@@ -1411,15 +1432,33 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		return new Iterator<Entry<String, String>>(){
 			Iterator<Entry<Object,Object>> iter = container.getProperties().entrySet().iterator();
 
-			@Override
-			public boolean hasNext() {
-				return iter.hasNext();
-			}
+			Entry<Object,Object> next = getNextRealProperty();
 
 			@Override
+			public boolean hasNext() {
+				return next !=null;
+			}
+
+			private Entry<Object, Object> getNextRealProperty(){
+				while(iter.hasNext()){
+					Entry<Object, Object> next = iter.next();
+					//CDK stores some objects like Sgroups as properties we don't want to expose those
+					if(CDKConstants.CTAB_SGROUPS.equals(next.getKey())){
+						//don't include this!!
+					}else{
+						return next;
+					}
+				}
+				return null;
+			}
+			@Override
 			public Entry<String, String> next() {
-				final Entry<Object,Object> next = iter.next();
-				
+				if(!hasNext()){
+					throw new NoSuchElementException();
+				}
+
+				final Entry<Object,Object> retNext = this.next;
+				this.next=getNextRealProperty();
 				return new Entry<String,String>() {
 					
 					@Override
@@ -1429,7 +1468,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					
 					@Override
 					public String getValue() {
-						Object v = next.getValue();
+						Object v = retNext.getValue();
 						if(v ==null){
 							return null;
 						}
@@ -1438,7 +1477,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					
 					@Override
 					public String getKey() {
-						return next.getKey().toString();
+						return retNext.getKey().toString();
 					}
 				};
 			}

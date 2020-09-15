@@ -410,6 +410,12 @@ public class CdkAtom implements Atom{
 	}
 
 	@Override
+	public boolean isPseudoAtom() {
+		IAtom deref = AtomRef.deref(atom);
+		return deref instanceof IPseudoAtom;
+	}
+
+	@Override
 	public OptionalInt getRGroupIndex() {
 		
 		return getPseudoAtomField(iPseudoAtom -> {
@@ -436,8 +442,9 @@ public class CdkAtom implements Atom{
 	}
 
 	private <T> T getPseudoAtomField(Function<IPseudoAtom, T> function, Supplier<T> emptySupplier) {
-		if(atom instanceof IPseudoAtom) {
-			IPseudoAtom iPseudoAtom = (IPseudoAtom)atom;
+		IAtom deref = AtomRef.deref(atom);
+		if(deref instanceof IPseudoAtom) {
+			IPseudoAtom iPseudoAtom = (IPseudoAtom)deref;
 			return function.apply(iPseudoAtom);
 		}
 		return emptySupplier.get();

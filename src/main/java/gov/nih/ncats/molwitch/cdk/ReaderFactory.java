@@ -75,13 +75,22 @@ public class ReaderFactory {
 		try {
 			format = new FormatFactory().guessFormat(reader);
 		}catch(Throwable e){
+			e.printStackTrace();
 			//TODO should probably make a smiles or smarts reader...
 
 			format = SMILESFormat.getInstance();
 		}
 		if(format ==null){
-			//default to smiles?
-			format = SMILESFormat.getInstance();
+			//if more than 1 line default to mol otherwise smiles
+			reader.reset();
+			reader.readLine();
+			if(reader.readLine() !=null){
+				//more than 1 line assume mol ?
+				format = MDLV2000Format.getInstance();
+			}else {
+				format = SMILESFormat.getInstance();
+			}
+			reader.reset();
 		}
 		return create(reader, format);
 

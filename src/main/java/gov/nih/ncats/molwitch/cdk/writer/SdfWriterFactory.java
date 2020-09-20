@@ -24,7 +24,10 @@ package gov.nih.ncats.molwitch.cdk.writer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
+import java.util.function.Function;
 
+import gov.nih.ncats.molwitch.io.ChemFormat;
+import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.SDFWriter;
 import org.openscience.cdk.io.listener.PropertiesListener;
 
@@ -45,13 +48,12 @@ public class SdfWriterFactory implements ChemicalWriterImplFactory{
 		 if(sdfSpec.getMolSpec().getVersion() == Version.V3000) {
 			 writer.setAlwaysV3000(true);
 		 }
-		 if(sdfSpec.getMolSpec().getKekulization() == KekulizationEncoding.FORCE_AROMATIC) {
-			 Properties customSettings = new Properties();
-			 customSettings.setProperty("WriteAromaticBondTypes", Boolean.TRUE.toString());
-			 writer.addChemObjectIOListener( new PropertiesListener(customSettings));
-			 
-		 }
-		 return new CdkChemicalWriter(writer);
+        Properties customSettings = new Properties();
+        Function<IAtomContainer, IAtomContainer> adapter = CtabWriterUtil.handleMolSpec( sdfSpec.getMolSpec(), customSettings);
+
+        writer.addChemObjectIOListener( new PropertiesListener(customSettings));
+
+        return new CdkChemicalWriter(ChemObjectWriterAdapter.create(writer, adapter));
 	}
 
 	@Override

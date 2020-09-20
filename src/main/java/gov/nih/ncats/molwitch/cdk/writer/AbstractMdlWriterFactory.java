@@ -23,14 +23,22 @@ package gov.nih.ncats.molwitch.cdk.writer;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.function.Function;
 
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 
+import gov.nih.ncats.molwitch.cdk.CdkUtil;
+import org.apache.xpath.operations.Bool;
+import org.openscience.cdk.aromaticity.Aromaticity;
+import org.openscience.cdk.aromaticity.ElectronDonation;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.IChemObjectWriter;
 import org.openscience.cdk.io.listener.PropertiesListener;
 
@@ -41,6 +49,7 @@ import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification;
 import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification.Version;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImplFactory;
+import org.openscience.cdk.io.setting.IOSetting;
 
 public abstract class AbstractMdlWriterFactory implements ChemicalWriterImplFactory{
 
@@ -51,90 +60,17 @@ public abstract class AbstractMdlWriterFactory implements ChemicalWriterImplFact
 	public ChemicalWriterImpl newInstance(OutputStream out, ChemFormatWriterSpecification spec) throws IOException {
 		
 		
-		 IChemObjectWriter writer = create(out);
-		 Function<IAtomContainer, IAtomContainer> adapter = Function.identity();
-		 
-		 if(spec instanceof AromaticAwareChemFormatWriterSpecification) {
-			 Properties customSettings = new Properties();
-			 customSettings.setProperty(
-			  "WriteAromaticBondTypes", Boolean.toString(((AromaticAwareChemFormatWriterSpecification)spec).getKekulization() == KekulizationEncoding.FORCE_AROMATIC)
-			 );
-			 PropertiesListener listener =  new PropertiesListener(customSettings);
-			 //OptForceWriteAs2DCoordinates - default to false
-			 if(spec instanceof MolFormatSpecification) {
-				 MolFormatSpecification molSpec = (MolFormatSpecification) spec;
-				 
-				 switch(molSpec.getCoordinateOptions()) {
-				 case FORCE_2D:
-					 customSettings.setProperty(
-							  "OptForceWriteAs2DCoordinates", Boolean.toString(true)
-							 );
-					 adapter = c->{
-						 //force all coords as 2d
-						 boolean mustChange = false;
-						 for(IAtom a :c.atoms()) {
-							 if(a.getPoint2d() ==null && a.getPoint3d() !=null) {
-								 mustChange = true;
-							 }
-						 }
-						 if(mustChange) {
-							IAtomContainer clone;
-							try {
-								clone = c.clone();
-							} catch (CloneNotSupportedException e) {
-								return c;
-							}
-							for(IAtom a :clone.atoms()) {
-								Point3d points = a.getPoint3d();
-								if(points !=null) {
-									a.setPoint2d(new Point2d(points.x, points.y));
-								}
-							}
-							return clone;
-						 }else {
-							 return c;
-						 }
-					 };
-					 break;
-				 default:
-					 customSettings.setProperty(
-							  "OptForceWriteAs2DCoordinates", Boolean.toString(false)
-							 );
-					 adapter = c->{
-						 //force all coords as 2d
-						 boolean mustChange = false;
-						 for(IAtom a :c.atoms()) {
-							 if(a.getPoint3d() ==null && a.getPoint2d() !=null) {
-								 mustChange = true;
-							 }
-						 }
-						 if(mustChange) {
-							IAtomContainer clone;
-							try {
-								clone = c.clone();
-							} catch (CloneNotSupportedException e) {
-								return c;
-							}
-							for(IAtom a :clone.atoms()) {
-								Point2d points = a.getPoint2d();
-								if(points !=null) {
-									a.setPoint3d(new Point3d(points.x, points.y, 0));
-								}
-							}
-							return clone;
-						 }else {
-							 return c;
-						 }
-					 };
-					 
-					 break;
-				 }
-			 }
-			 writer.addChemObjectIOListener(listener);
-		 }
+		IChemObjectWriter writer = create(out);
+		Properties customSettings = new Properties();
+		Function<IAtomContainer, IAtomContainer> adapter = CtabWriterUtil.handleMolSpec( (MolFormatSpecification) spec, customSettings);
+		PropertiesListener listener = new PropertiesListener(customSettings);
+
+		writer.addChemObjectIOListener(listener);
+
 		
 		return new SingleCdkChemicalWriter(ChemObjectWriterAdapter.create(writer, adapter));
 	}
+
 
 	@Override
 	public boolean supports(ChemFormatWriterSpecification spec) {

@@ -27,6 +27,7 @@ import java.io.PrintWriter;
 import java.util.Properties;
 import java.util.function.Function;
 
+import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import org.jooq.lambda.Unchecked;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
@@ -34,9 +35,11 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.io.listener.PropertiesListener;
 import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import gov.nih.ncats.molwitch.io.ChemFormat.ChemFormatWriterSpecification;
@@ -48,6 +51,7 @@ import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImplFactory;
 
 public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
+
 
 
 	@Override
@@ -100,10 +104,9 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 						IAtomContainer copy = container.clone();
 
 						AtomContainerManipulator.convertImplicitToExplicitHydrogens(copy);
+
 						if(aromaticEncoding == KekulizationEncoding.FORCE_AROMATIC) {
-							 new Aromaticity(ElectronDonation.daylight(),
-				                     Cycles.all())
-							 .apply(copy);
+                            CdkUtil.aromatize(copy);
 						}
 						return copy;
 					}
@@ -117,16 +120,14 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 					AtomContainerManipulator.suppressHydrogens(copy);
 					if(aromaticEncoding == KekulizationEncoding.FORCE_AROMATIC) {
 						boolean alreadyMarkedAromatic=false;
-						for(IAtom a: copy.atoms()) {
-							if(a.isAromatic()) {
+						for(IBond b: copy.bonds()) {
+							if(b.isAromatic()) {
 								alreadyMarkedAromatic=true;
 								break;
 							}
 						}
 						if(!alreadyMarkedAromatic) {
-						 new Aromaticity(ElectronDonation.daylight(),
-			                     Cycles.all())
-						 .apply(copy);
+                            CdkUtil.aromatize(copy);
 						}
 					}
 					return copy;
@@ -135,7 +136,7 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 			}else if(aromaticEncoding == KekulizationEncoding.FORCE_AROMATIC) {
 				modificationFunction = Unchecked.function(container ->{
 				boolean alreadyMarkedAromatic=false;
-					for(IAtom a: container.atoms()) {
+					for(IBond a: container.bonds()) {
 						if(a.isAromatic()) {
 							alreadyMarkedAromatic=true;
 							break;
@@ -144,16 +145,25 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 					if(alreadyMarkedAromatic) {
 						return container;
 					}
+
 						IAtomContainer copy = container.clone();
-					 new Aromaticity(ElectronDonation.daylight(),
-		                     Cycles.all())
-					 .apply(copy);
+
+					 CdkUtil.aromatize(copy);
 					 return copy;
 					
 					
 				});
 			
+			}else if(aromaticEncoding == KekulizationEncoding.KEKULE){
+				modificationFunction = container ->{
+					try{
+						return  CdkUtil.setImplicitHydrogensIfNeeded(container,true);
+					}catch(Exception e){
+						return container;
+					}
+				};
 			}else {
+
 				modificationFunction = Function.identity();
 			}
 		}

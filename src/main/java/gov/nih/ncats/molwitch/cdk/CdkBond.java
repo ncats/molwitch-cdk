@@ -274,11 +274,14 @@ public class CdkBond implements Bond{
 	}
 
 
+    @Override
+    public String toString() {
+        return "CdkBond{" +
+                "bond=" + bond +
+                '}';
+    }
 
-
-
-
-	public static IBond getIBondFor(Bond b) {
+    public static IBond getIBondFor(Bond b) {
 		return ((CdkBond)b).bond;
 		
 	}

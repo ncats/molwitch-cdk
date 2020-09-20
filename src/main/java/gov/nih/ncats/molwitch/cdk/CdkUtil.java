@@ -22,18 +22,53 @@
 package gov.nih.ncats.molwitch.cdk;
 
 import gov.nih.ncats.molwitch.Chemical;
+import org.openscience.cdk.aromaticity.Aromaticity;
+import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.graph.Cycles;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smarts.Smarts;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.IOException;
 
 public class CdkUtil {
 
-	public static IAtomContainer toAtomContainer(Chemical chemical){
+    private static final Aromaticity AROMATICITY = new Aromaticity(ElectronDonation.daylight(), Cycles.or(Cycles.all(), Cycles.all(6)));
+
+    public static void aromatize(IAtomContainer container) throws CDKException {
+		setImplicitHydrogensIfNeeded(container, false);
+        AROMATICITY.apply(container);
+
+    }
+
+    public static IAtomContainer setImplicitHydrogensIfNeeded(IAtomContainer container, boolean makeCopy) throws CDKException {
+    	boolean recompute=false;
+    	for(IAtom atom : container.atoms()){
+    		if(atom.getImplicitHydrogenCount() ==null){
+    			recompute=true;
+    			break;
+			}
+		}
+    	if(!recompute){
+    		return container;
+		}
+    	IAtomContainer ret = container;
+    	if(makeCopy){
+			try {
+				ret = container.clone();
+			} catch (CloneNotSupportedException e) {
+				//shouldn't happen container support clones
+			}
+		}
+		CDKHydrogenAdder.getInstance(ret.getBuilder()).addImplicitHydrogens(ret);
+    	return ret;
+	}
+    public static IAtomContainer toAtomContainer(Chemical chemical){
 		return (IAtomContainer) chemical.getImpl().getWrappedObject();
 	}
 	public static IChemObjectBuilder getChemObjectBuilder() {

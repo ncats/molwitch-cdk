@@ -43,17 +43,8 @@ import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.GraphUtil;
 import org.openscience.cdk.graph.GraphUtil.EdgeToBondMap;
 import org.openscience.cdk.graph.invariant.Canon;
-import org.openscience.cdk.interfaces.IAtom;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomType;
-import org.openscience.cdk.interfaces.IBond;
-import org.openscience.cdk.interfaces.IStereoElement;
-import org.openscience.cdk.interfaces.ITetrahedralChirality;
+import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.interfaces.IBond.Order;
-import org.openscience.cdk.interfaces.IDoubleBondStereochemistry;
-import org.openscience.cdk.interfaces.IMolecularFormula;
-import org.openscience.cdk.interfaces.IRing;
-import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
@@ -101,12 +92,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private IAtomContainer container;
 	
 	private boolean isAromatic;
-	
+	private static IChemObjectBuilder CHEM_OBJECT_BUILDER = SilentChemObjectBuilder.getInstance();
 	private CDKHydrogenAdder hydrogenAdder;
 //	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
 
     Map<Integer, Map<Integer, CdkBond>> bondMap = new HashMap<>();
 
+    private final Aromaticity      aromaticity = new Aromaticity(ElectronDonation.daylight(), Cycles.or(Cycles.all(), Cycles.all(6)));
 
     CachedSupplier<Void> perceiveAtomTypesOfNonQueryAtoms = CachedSupplier.of(()->{
     	try {
@@ -249,7 +241,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	@Override
 	public Atom addAtom(String symbol) {
-		IAtom atom = new org.openscience.cdk.Atom(symbol);
+		IAtom atom = CHEM_OBJECT_BUILDER.newAtom();
+		atom.setSymbol(symbol);
 		   
 		return addAtom(atom);
 	}
@@ -418,8 +411,19 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	@Override
 	public double getMass() {
-		
-		return AtomContainerManipulator.getNaturalExactMass(container);
+		perceiveAtomTypesOfNonQueryAtoms.get();
+		boolean recomputeHydrogens=false;
+		for(IAtom a : container.atoms()){
+			if(a.getImplicitHydrogenCount()==null){
+				recomputeHydrogens=true;
+				break;
+			}
+//		setImplicitHydrogens()
+		};
+		if(recomputeHydrogens){
+			setImplicitHydrogens();
+		}
+		return AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
 	}
 
 	@Override
@@ -440,20 +444,25 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	@Override
 	public Atom removeAtom(int i){
 		IAtom atom = container.getAtom(i);
-		
+		for(SGroup sgroup : getSGroups()){
+			((CDKSgroupAdapter)sgroup).removeAtom(atom);
+		}
 		container.removeAtom(atom);
 		Atom retAtom = getCdkAtomFor(atom);
 		setDirty();
 		return retAtom;
 	}
-	
+
 	@Override
 	public Atom removeAtom(Atom a){
 		if(!(a instanceof CdkAtom)){
 			throw new IllegalArgumentException("wrong type");
 		}
 		IAtom iatom = ((CdkAtom)a).getAtom();
-		
+		for(SGroup sgroup : getSGroups()){
+			sgroup.removeAtom(a);
+
+		}
 		
 		container.removeAtom(iatom);
 		
@@ -502,9 +511,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		try {
 			perceiveAtomTypesOfNonQueryAtoms.get();
 //			fix();
-			 new Aromaticity(ElectronDonation.daylight(),
-                     Cycles.all())
-			 .apply(container);
+			setImplicitHydrogens();
+			aromaticity.apply(container);
 			isAromatic = true;
 			
 		} catch (Exception e) {
@@ -562,9 +570,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             if(options.aromatize){
                 aromatize();
             }
-            else{
-                kekulize();
-            }
 			if(options.computeCoords){
 				StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(container);
 				coordinateGenerator.generateCoordinates();
@@ -573,14 +578,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			}
 
 			if(options.computeStereo){
-	            boolean has2dCoords=true;
 	            boolean has3dCoords = true;
 	            for(IAtom atom : container.atoms()){
 	                if(atom.getPoint3d() ==null){
 	                    has3dCoords=false;
-	                }
-	                if(atom.getPoint2d() ==null){
-	                    has2dCoords=false;
+	                    break;
 	                }
 	            }
 	            StereoElementFactory stereoElementFactory;
@@ -629,6 +631,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	    //kekulize doesn't touch the aromatic bond flags
+        //so we want to I guess?
+        for(IBond bond : container.bonds()){
+            bond.setIsAromatic(false);
+        }
 		
 	}
 
@@ -777,9 +784,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		IBond bond = container.getBuilder().newInstance(IBond.class, 
 					container.getAtom(index1), container.getAtom(index2), order);
 		if(type == BondType.AROMATIC) {
-	        bond.getBegin().setFlag(CDKConstants.ISAROMATIC, true);
-	        bond.getEnd().setFlag(CDKConstants.ISAROMATIC, true);
-	        bond.setFlag(CDKConstants.ISAROMATIC, true);
+	        bond.getBegin().setIsAromatic(true);
+	        bond.getEnd().setIsAromatic(true);
+	        bond.setIsAromatic(true);
 		}
 		container.addBond( bond);
 		setImplicitHydrogens(((CdkAtom)atom1).getAtom());
@@ -789,14 +796,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		return getCdkBondFor(bond);
 	}
 	protected void setImplicitHydrogens(){
-		for(int i = 0; i< container.getAtomCount(); i++){
-			setImplicitHydrogens(container.getAtom(i));
+		try {
+			hydrogenAdder.addImplicitHydrogens(container);
+		} catch (CDKException e) {
+			e.printStackTrace();
 		}
 	}
 	protected int setImplicitHydrogens(IAtom atom){
 		//compute it
 		try {
-			CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
+			CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(CHEM_OBJECT_BUILDER);
 			 IAtomType type = matcher.findMatchingAtomType(container, atom);
 			
 			 AtomTypeManipulator.configure(atom, type);
@@ -805,8 +814,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			 if(neighborCount ==null){
 				 neighborCount = 0;
 			 }
-			 int implicitH = neighborCount; 
+			 int implicitH = neighborCount;
+//			 System.out.println(implicitH + "  " + atom);
 			 for(IBond bond : container.getConnectedBondsList(atom)){
+//			 	System.out.println("\t"+bond.getOrder());
 				 switch(bond.getOrder()){
 				 	case SINGLE : implicitH--; break;
 				 	case DOUBLE : implicitH-=2; break;
@@ -817,6 +828,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				 	default : // ? TODO do we subtract 1?
 				 }
 			 }
+//			 System.out.println(implicitH);
 			atom.setImplicitHydrogenCount(Math.max(0, implicitH));
 			return implicitH;
 			 
@@ -1198,6 +1210,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		public void removeAtom(Atom a) {
 			sgroup.removeAtom(CdkAtom.getIAtomFor(a));
 			
+		}
+		public void removeAtom(IAtom a) {
+			sgroup.removeAtom(a);
+
 		}
 
 		@Override

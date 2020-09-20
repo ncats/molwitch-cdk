@@ -239,6 +239,11 @@ public class CdkAtom implements Atom{
 	@Override
 	public void setRadical(int radical) {
 
+		//check old radical value don't do anything if match
+		int oldValue = getRadical();
+		if(oldValue == radical){
+			return;
+		}
 		ISingleElectron ise = new SingleElectron(atom);
 		ise.setElectronCount(radical);
 
@@ -324,7 +329,8 @@ public class CdkAtom implements Atom{
 	@Override
 	public void setCharge(int charge) {
 		atom.setFormalCharge(charge);
-		recomputeImplicitHydrogens();
+
+//		recomputeImplicitHydrogens();
 	}
 
 	private void recomputeImplicitHydrogens() {
@@ -342,7 +348,7 @@ public class CdkAtom implements Atom{
 		}else{
 			atom.setMassNumber(mass);
 		}
-		recomputeImplicitHydrogens();
+//		recomputeImplicitHydrogens();
 	}
 
 	@Override
@@ -352,6 +358,11 @@ public class CdkAtom implements Atom{
 			//bug in hydrogen count
 			if(isQueryAtom()){
 				return 0;
+			}
+			for(Bond b : getBonds()){
+				if(b.isQueryBond()){
+					return 0;
+				}
 			}
 			//compute it
 			return parent.setImplicitHydrogens(atom);
@@ -366,24 +377,7 @@ public class CdkAtom implements Atom{
 		atom.setImplicitHydrogenCount(implicitH);
 	}
 
-	@Override
-	public int getRadicalValue() {
-		return parent.getContainer().getConnectedSingleElectronsCount(atom);
-		//returns 1 for double? 2 for triplet?
-//		System.out.println("--------");
-//		for(IElectronContainer c : parent.getContainer().getConnectedElectronContainersList(atom)) {
-//			System.out.println("electron container has # electrons " + c.getElectronCount());
-//		}
-//		
-//		List<ISingleElectron> singleElectrons = parent.getContainer().getConnectedSingleElectronsList(atom);
-//		int total = 0;
-//		System.out.println("======");
-//		for(ISingleElectron se : singleElectrons) {
-//			total +=se.getElectronCount();
-//		}
-//		System.out.println(this.toString() +  " single electrong list size = " + singleElectrons.size() + "  total count = " + total);
-//		return total; 
-	}
+
 
 	@Override
 	public OptionalInt getValence() {

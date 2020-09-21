@@ -84,7 +84,7 @@ public class CdkMolSearcher implements MolSearcher {
   //Ring Match is set True
         IAtomContainer target = CdkUtil.toAtomContainer(targetChemical);
         try {
-            Substructure smsd = new Substructure(query, target, true, false, true, true);
+            Substructure smsd = new Substructure(query, target, true, false, true, false);
             if(!smsd.isSubgraph()){
                 return Optional.empty();
             }

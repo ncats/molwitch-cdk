@@ -55,12 +55,12 @@ public class CdkMolSearcher implements MolSearcher {
     }
     public CdkMolSearcher(Chemical chemical){
         IAtomContainer container= CdkUtil.toAtomContainer(chemical);
-//        if(hasQueryAtomsOrBonds(container)){
-//            query = new QueryAtomContainer(container, container.getBuilder());
-//        }else{
-//            query = container;
-//        }
-        query = new QueryAtomContainer(container, container.getBuilder());
+        if(hasQueryAtomsOrBonds(container)){
+            query = new QueryAtomContainer(container, container.getBuilder());
+        }else{
+            query = container;
+        }
+//        query = new QueryAtomContainer(container, container.getBuilder());
     }
 
     private static boolean hasQueryAtomsOrBonds(IAtomContainer container){
@@ -117,7 +117,7 @@ public class CdkMolSearcher implements MolSearcher {
                 int targetMappingNumber = atomMapping.getTargetIndex(targetAtom);
                 map[queryMappingNumber] = targetMappingNumber;
 //           System.out.println(sourceAtom.getSymbol() + " " + targetAtom.getSymbol());
-//           System.out.println(atomatomMapping.getQueryIndex(sourceAtom) + " " + atomatomMapping.getTargetIndex(targetAtom));
+//           System.out.println(queryMappingNumber + " " + targetMappingNumber);
             }
             return Optional.ofNullable(map);
         } catch (CDKException e) {

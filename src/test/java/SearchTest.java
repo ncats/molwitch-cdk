@@ -317,4 +317,43 @@ public class SearchTest {
         assertTrue("should have hit" , hit.isPresent());
         Assert.assertArrayEquals( new int[]{0}, hit.get()) ;
     }
+
+    @Test
+    public void ensureIsobutaneSSSDoesntReturnIsoPentene() throws Exception{
+
+
+        Chemical p=Chemical.parseMol("\n" +
+                "   JSDraw209182020002D\n" +
+                "\n" +
+                "  4  3  0  0  0  0              0 V2000\n" +
+                "   23.1921   -7.4013    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   23.6531   -8.8915    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   25.1741   -9.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   22.5929  -10.0359    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "  1  2  1  0  0  0  0\n" +
+                "  2  3  1  0  0  0  0\n" +
+                "  2  4  1  0  0  0  0\n" +
+                "M  END");
+
+        Chemical t=Chemical.parseMol("\n" +
+                "   JSDraw209182020002D\n" +
+                "\n" +
+                "  5  4  0  0  0  0              0 V2000\n" +
+                "   23.1921   -7.4013    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   23.6531   -8.8915    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   25.1741   -9.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   22.5929  -10.0359    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   26.2344   -8.0932    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "  1  2  2  0  0  0  0\n" +
+                "  2  3  1  0  0  0  0\n" +
+                "  2  4  1  0  0  0  0\n" +
+                "  3  5  1  0  0  0  0\n" +
+                "M  END");
+
+
+
+        Optional<int[]> hit = MolSearcherFactory.create(p).search(t);
+
+        assertEquals("false",""+hit.isPresent());
+    }
 }

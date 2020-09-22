@@ -1120,7 +1120,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	private class CDKSgroupAdapter implements SGroup{
 
-		
+
 		private Sgroup sgroup;
 		
 		public CDKSgroupAdapter( Sgroup sgroup) {
@@ -1291,12 +1291,96 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 		@Override
 		public Optional<String> getSubscript() {
-			return Optional.ofNullable(sgroup.getSubscript());
+		    /*
+		    public static final int ST_SUPERATOM = 0;
+    public static final int ST_MULTIPLE = 1;
+    public static final int ST_SRU = 2;
+    public static final int ST_MONOMER = 3;
+    public static final int ST_MER = 4;
+    public static final int ST_COPOLYMER = 5;
+    public static final int ST_CROSSLINK = 6;
+    public static final int ST_MODIFICATION = 7;
+    public static final int ST_MIXTURE = 8;
+    public static final int ST_FORMULATION = 9;
+    public static final int ST_DATA = 10;
+    public static final int ST_ANY = 11;
+    public static final int ST_GENERIC = 12;
+    public static final int ST_COMPONENT = 13;
+
+    public static final int SST_ALTERNATING = 1;
+    public static final int SST_RANDOM = 2;
+    public static final int SST_BLOCK = 3;
+		    public String getSubscript() {
+        if (this.sgroupType == ST_COMPONENT) {
+            return this.sgroupSubscript == null ? "c" : this.sgroupSubscript;
+        } else if (this.sgroupType == ST_MIXTURE) {
+            return "mix";
+        } else if (this.sgroupType == ST_FORMULATION) {
+            return "f";
+        } else if (this.sgroupSubscript != null) {
+            return this.sgroupSubscript;
+        } else if (this.sgroupType == ST_DATA) {
+            return "";
+        } else if (this.sgroupSubType == SST_RANDOM) {
+            return "ran";
+        } else {
+            return this.sgroupType == ST_SRU ? "n" : "";
+        }
+    }
+		     */
+
+		    //try to match old jchem
+            String actualSubscriptValue = sgroup.getSubscript();
+            SGroupType type = getType();
+            if(type == SGroupType.MULTIPLE){
+                //subscript is the multiplier
+                return Optional.ofNullable(actualSubscriptValue);
+            }
+            if(type==SGroupType.COMPONENT){
+                if(actualSubscriptValue==null){
+                    return Optional.of("c");
+                }
+                return Optional.of(actualSubscriptValue);
+            }
+            if(type == SGroupType.MIXTURE){
+                return Optional.of("mix");
+            }
+            if(type == SGroupType.FORMULATION){
+                return Optional.of("f");
+            }
+            if(actualSubscriptValue !=null){
+                return Optional.of(actualSubscriptValue);
+            }
+            if(type == SGroupType.DATA){
+                return Optional.empty();
+            }
+            if(getPolymerSubType() == PolymerSubType.RANDOM){
+                return Optional.of("ran");
+            }
+            if(type == SGroupType.SRU){
+                return Optional.of("n");
+            }
+			return Optional.empty();
 		}
 
 		@Override
-		public Optional<String> getSuperscript() {
-			return Optional.ofNullable(sgroup.getSubscript());
+		public Optional<String> getSuperscript(){
+            SGroupType type = getType();
+            if(type == SGroupType.SRU || type == SGroupType.MULTIPLE){
+
+                //ignore it
+                return Optional.empty();
+            }
+         SGroupConnectivity connectivity= getConnectivity();
+
+         if(connectivity==null){
+             return Optional.empty();
+         }
+         switch(connectivity){
+             case HEAD_TO_HEAD: return Optional.of("hh");
+             case HEAD_TO_TAIL: return Optional.of("ht");
+             default : return Optional.empty();
+         }
 		}
 		
 		

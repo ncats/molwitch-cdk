@@ -45,15 +45,8 @@ public class SingleCdkChemicalWriter extends CdkChemicalWriter{
 		if(writtenAlready){
 			throw new OnlyOneChemicalAllowedException("already wrote a Chemical to this writer");
 		}
-		try {
-			super.write(impl);
-		}catch(Throwable t){
-			List<Sgroup> sgroups = (List<Sgroup>)((IAtomContainer)impl.getWrappedObject()).getProperty(CDKConstants.CTAB_SGROUPS);
-			for(Sgroup sgroup: sgroups){
-				System.out.println("SGROUP SPA prop =" + sgroup.getValue(SgroupKey.CtabParentAtomList));
-			}
-			throw t;
-		}
+		super.write(impl);
+
 		writtenAlready=true;
 	}
 

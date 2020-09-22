@@ -64,7 +64,7 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 			//no query atoms do nothing
 			return m;
 		}
-		Chemical copy = Chemical.parseMol(m.toMol());
+		Chemical copy = m.copy();
 		for (Atom a : copy.getAtoms()) {
 			if (isAtomThatMessesUpInchi(a)) {
 				// this is what marvinjs specifies for atom *
@@ -102,7 +102,7 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		
 		} catch (Throwable e) {
 			e.printStackTrace();
-			throw new IOException("error computing Inchi for " + chemical.toSmiles(), e);
+			throw new IOException("error computing Inchi for " + chemical.toSmarts(), e);
 		} 
 	}
 

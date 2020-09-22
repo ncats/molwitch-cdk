@@ -31,6 +31,8 @@ import java.util.stream.Stream;
 import javax.vecmath.Tuple2d;
 
 import gov.nih.ncats.common.util.CachedSupplierGroup;
+import org.openscience.cdk.AtomRef;
+import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
@@ -47,6 +49,9 @@ import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.interfaces.IBond.Order;
 import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
+import org.openscience.cdk.isomorphism.matchers.IQueryAtomContainer;
+import org.openscience.cdk.isomorphism.matchers.IQueryBond;
+import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.ringsearch.AllRingsFinder;
 import org.openscience.cdk.sgroup.Sgroup;
@@ -146,6 +151,27 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		this(container, source.get());
 	}
 	public CdkChemicalImpl(IAtomContainer container, ChemicalSource source) {
+
+	    if(!(container instanceof IQueryAtomContainer)){
+	        boolean isQuery =false;
+	        for(IAtom a : container.atoms()){
+	            if(AtomRef.deref(a) instanceof IQueryAtom){
+	                isQuery = true;
+	                break;
+                }
+            }
+	        if(!isQuery){
+                for(IBond a : container.bonds()){
+                    if(BondRef.deref(a) instanceof IQueryBond){
+                        isQuery = true;
+                        break;
+                    }
+                }
+            }
+	        if(isQuery){
+	            container = new QueryAtomContainer(container, CHEM_OBJECT_BUILDER);
+            }
+        }
 		this.container = container;
 		this.source = source;
 		hydrogenAdder = CDKHydrogenAdder.getInstance(container.getBuilder());

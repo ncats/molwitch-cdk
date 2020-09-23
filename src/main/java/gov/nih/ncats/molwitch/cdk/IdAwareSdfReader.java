@@ -23,6 +23,7 @@ package gov.nih.ncats.molwitch.cdk;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -70,6 +71,9 @@ public class IdAwareSdfReader extends IteratingSDFReader{
 
 	@Override
 	public IAtomContainer next() {
+	    if(!hasNext()){
+	        throw new NoSuchElementException();
+        }
 		IAtomContainer ret= super.next();
 		ret.setID(nextId);
 		//some cdk objects like mol writers look for the title property

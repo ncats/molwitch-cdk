@@ -32,6 +32,7 @@ import gov.nih.ncats.molwitch.ChemicalSource;
 import gov.nih.ncats.molwitch.SmartsSource;
 import gov.nih.ncats.molwitch.ChemicalSource.CommonProperties;
 import gov.nih.ncats.molwitch.SmilesSource;
+import gov.nih.ncats.molwitch.io.ChemFormat;
 import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification;
 import gov.nih.ncats.molwitch.io.ChemFormat.SdfFormatSpecification;
 import gov.nih.ncats.molwitch.io.ChemFormat.SmilesFormatWriterSpecification;
@@ -43,6 +44,8 @@ import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomType;
+import org.openscience.cdk.io.IChemObjectReader;
+import org.openscience.cdk.io.MDLV2000Reader;
 import org.openscience.cdk.io.formats.*;
 import org.openscience.cdk.io.iterator.IIteratingChemObjectReader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
@@ -184,7 +187,31 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		}
 	}
 
-	@Override
+    @Override
+    public ChemicalImpl createFromString(String format, String input) throws IOException {
+        try {
+            if ("mol".equals(format)) {
+                IAtomContainer mol = SilentChemObjectBuilder.getInstance().newAtomContainer();
+              mol =  new MDLV2000Reader(new StringReader(input)).read(mol);
+                return new CdkChemicalImpl(mol, new MolStringSource(input, ChemicalSource.Type.MOL));
+            }else if("sdf".equals(format)){
+                try(IdAwareSdfReader reader = new IdAwareSdfReader(new BufferedReader(new StringReader(input)),SilentChemObjectBuilder.getInstance())){
+					IAtomContainer mol = reader.next();
+					return new CdkChemicalImpl(mol, new MolStringSource(input, ChemicalSource.Type.SDF));
+				}
+            }else if(SmilesFormatWriterSpecification.NAME.equals(input)){
+                return createFromSmiles(input);
+            }else if(ChemFormat.SmartsFormatSpecification.NAME.equals(input)){
+                return createFromSmarts(input);
+            }
+
+        }catch(Throwable e){
+            throw new IOException(e.getMessage(), e);
+        }
+        throw new IOException("unknown format" + format);
+    }
+
+    @Override
 	public ChemicalImpl create(String unknownFormattedInput) throws IOException {
 //    	System.out.println("trying to parse '"+unknownFormattedInput +"'");
 		if(new BufferedReader(new StringReader(unknownFormattedInput.trim())).lines().count() == 1){
@@ -231,8 +258,14 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 //    	return create(new ByteArrayInputStream(molBytes, start, length));
 	}
 
-	
-	@Override
+    @Override
+    public ChemicalImplReader create(String format, String input) throws IOException {
+		return createFrom(computeFormatFromString(format), new StringReader(input),
+				null);
+    }
+
+
+    @Override
 	public ChemicalImplReader create(String format, InputStreamSupplier in) throws IOException {
 
     	return createFrom(computeFormatFromString(format), new InputStreamReader(in.get()), null);

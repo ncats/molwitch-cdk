@@ -124,17 +124,18 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    	AllRingsFinder arf = new AllRingsFinder();
 		    	IRingSet ringSet;
 				try {
-					ringSet = arf.findAllRings(container);
+					//max#Rings must not be > atomCount
+					ringSet = arf.findAllRingsInIsolatedRingSystem(container, Math.min(container.getAtomCount(),12));
 					for (int ir = 0; ir < ringSet.getAtomContainerCount(); ir++) {
 			            IRing ring = (IRing) ringSet.getAtomContainer(ir);
 			            for (int jr = 0; jr < ring.getAtomCount(); jr++) {
 			                IAtom aring = ring.getAtom(jr);
-			                aring.setFlag(CDKConstants.ISINRING, true);
+			                aring.setIsInRing(true);
 			            }
 			            
 			            for (int jr = 0; jr < ring.getBondCount(); jr++) {
 			                IBond aring = ring.getBond(jr);
-			                aring.setFlag(CDKConstants.ISINRING, true);
+			                aring.setIsInRing(true);
 			            }
 					}
 					return null;
@@ -537,6 +538,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		try {
 			perceiveAtomTypesOfNonQueryAtoms.get();
 //			fix();
+			kekulize();
 			setImplicitHydrogens();
 			aromaticity.apply(container);
 			isAromatic = true;

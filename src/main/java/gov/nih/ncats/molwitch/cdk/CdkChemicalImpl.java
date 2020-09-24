@@ -48,10 +48,7 @@ import org.openscience.cdk.graph.invariant.Canon;
 import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.interfaces.IBond.Order;
 import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
-import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
-import org.openscience.cdk.isomorphism.matchers.IQueryAtomContainer;
-import org.openscience.cdk.isomorphism.matchers.IQueryBond;
-import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
+import org.openscience.cdk.isomorphism.matchers.*;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.ringsearch.AllRingsFinder;
 import org.openscience.cdk.sgroup.Sgroup;
@@ -553,7 +550,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private void percieveAtomTypeAndConfigureNonQueryAtoms() throws CDKException{
 		CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(container.getBuilder());
         for (IAtom atom : container.atoms()) {
-        		
+        	if(AtomRef.deref(atom) instanceof QueryAtom){
+        		continue;
+			}
             IAtomType matched = matcher.findMatchingAtomType(container, atom);
             if (matched != null) {
             		try{

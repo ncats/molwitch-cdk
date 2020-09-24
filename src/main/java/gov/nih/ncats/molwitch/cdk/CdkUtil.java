@@ -28,13 +28,21 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
+import org.openscience.cdk.isomorphism.matchers.Expr;
+import org.openscience.cdk.isomorphism.matchers.QueryAtom;
+import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
+import org.openscience.cdk.isomorphism.matchers.QueryBond;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smarts.Smarts;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class CdkUtil {
 
@@ -83,4 +91,80 @@ public class CdkUtil {
 		QueryAtomPerceptor.percieve(container);
 		return container;
 	}
+	
+
+	
+	public static String getSymbolForAtomExpression(Expr exp){
+		List<Expr> elist = new ArrayList<>();
+		getLeafNodes(exp, elist);
+		if(elist.size()>0 && elist.stream()
+			 .allMatch(ex->ex.type().equals(Expr.Type.ELEMENT))){
+			return "L";
+		}else{
+			return "A";
+		}
+	}
+	
+	public static void getLeafNodes(Expr exr, List<Expr> elist){
+		if(exr.type().equals(Expr.Type.OR) || exr.type().equals(Expr.Type.AND)){
+			getLeafNodes(exr.left(), elist);
+			getLeafNodes(exr.right(), elist);
+		}else if(exr.type().equals(Expr.Type.NOT)){
+			getLeafNodes(exr.left(), elist);
+		}else{
+			elist.add(exr);
+		}
+	}
+	
+
+    
+    public static QueryAtomContainer asQueryAtomContainer(IAtomContainer ia){
+    	QueryAtomContainer qac=QueryAtomContainer.create(ia);
+    	for(int i=0;i<qac.getBondCount();i++){
+    		QueryBond ib=(QueryBond)qac.getBond(i);
+    		
+    		IBond ibo=ia.getBond(i);
+    		if(ibo instanceof QueryBond){
+    			ib.setExpression(((QueryBond)ibo).getExpression());
+    		}else{
+    			if(!ibo.isAromatic()){
+    				ib.setExpression(new Expr(Expr.Type.ALIPHATIC_ORDER,ibo.getOrder().numeric()));
+    			}else{
+    				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
+    			}
+    		}
+    	}        	
+    	for(int i=0;i<qac.getAtomCount();i++){
+    		QueryAtom iat=(QueryAtom)qac.getAtom(i);
+    		
+    		IAtom iao=ia.getAtom(i);
+    		if(iao instanceof QueryAtom){
+    			
+    			iat.setExpression(((QueryAtom)iao).getExpression());
+    			iat.setSymbol(getSymbolForAtomExpression(iat.getExpression()));
+    		}else{
+    			iat.setExpression(new Expr(Expr.Type.ELEMENT,iao.getAtomicNumber()));
+    			iat.setSymbol(iao.getSymbol());
+    		}
+
+			iat.setPoint2d(iao.getPoint2d());
+    	}
+    	
+    	
+    	return qac;
+    }
+    
+    public static boolean canWrite(IAtomContainer mol){
+    	for(IAtom ia : mol.atoms()){
+    		if(ia.getSymbol() == null)return false;
+    	}
+    	return true;
+    }
+    
+    public static IAtomContainer getUsableFormOfAtomContainer(IAtomContainer mol){
+    	if(!canWrite(mol)){
+    		return asQueryAtomContainer(mol);
+    	}
+    	return mol;
+    }
 }

@@ -22,21 +22,17 @@
 package gov.nih.ncats.molwitch.cdk.fingerprinters;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
-import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.IFingerprinter;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
-import org.openscience.cdk.isomorphism.matchers.QueryAtom;
-import org.openscience.cdk.isomorphism.matchers.QueryBond;
 
 import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprint;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinter;
 import gov.nih.ncats.molwitch.spi.FingerprinterImpl;
@@ -57,6 +53,7 @@ class FingerprinterAdapter implements Fingerprinter {
 		this.delegate = impl;
 	}
 
+	
 
 	@Override
 	public Fingerprint computeFingerprint(Chemical chemical) {
@@ -103,8 +100,9 @@ class FingerprinterAdapter implements Fingerprinter {
 		}
 		
 		
+		
 		try {
-			return new Fingerprint(delegate.getBitFingerprint(container).asBitSet());
+			return new Fingerprint(delegate.getBitFingerprint(CdkUtil.getUsableFormOfAtomContainer(container)).asBitSet());
 		} catch (CDKException e) {
 			// TODO Auto-generated catch block
 			throw new RuntimeException(e);

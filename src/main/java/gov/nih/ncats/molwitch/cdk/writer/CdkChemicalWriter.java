@@ -26,9 +26,10 @@ import java.io.IOException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.IChemObjectWriter;
 
+import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
+import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
-import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 
 public class CdkChemicalWriter implements ChemicalWriterImpl{
 
@@ -42,15 +43,18 @@ public class CdkChemicalWriter implements ChemicalWriterImpl{
 	public void close() throws IOException {
 		writer.close();
 	}
-
+    
 	@Override
 	public void write(ChemicalImpl impl) throws IOException {
 		CdkChemicalImpl chem =(CdkChemicalImpl)impl;
-		IAtomContainer mol =chem.getContainer();
+		IAtomContainer mol =CdkUtil.getUsableFormOfAtomContainer(chem.getContainer());
+		
+		
 		try {
 			writer.write(mol);
 		}catch(Throwable e) {
 			throw new IOException("error writing container " + mol.getID(), e);
+			
 		}
 		
 	}

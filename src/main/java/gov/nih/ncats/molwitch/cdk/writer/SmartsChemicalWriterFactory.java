@@ -21,16 +21,18 @@
 
 package gov.nih.ncats.molwitch.cdk.writer;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smarts.Smarts;
+
+import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.io.ChemFormat;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImplFactory;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.smarts.Smarts;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 
 /**
  * Created by katzelda on 7/15/19.
@@ -55,10 +57,12 @@ public class SmartsChemicalWriterFactory implements ChemicalWriterImplFactory{
         public SmartsWriterImpl(OutputStream out) {
             this.out = new PrintWriter(out);
         }
-
+ 
         @Override
         public void write(ChemicalImpl chemicalImpl) throws IOException {
-            Smarts.generate((IAtomContainer) chemicalImpl.getWrappedObject());
+        	IAtomContainer ia = CdkUtil.asQueryAtomContainer((IAtomContainer) chemicalImpl.getWrappedObject());
+        	
+        	out.print(Smarts.generate(ia));
         }
 
         @Override

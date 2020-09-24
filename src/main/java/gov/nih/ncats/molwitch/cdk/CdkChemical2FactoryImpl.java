@@ -122,7 +122,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		return mol;
 	}
 	
-	private IAtomContainer tryCreate(String smiles) throws InvalidSmilesException{
+	private IAtomContainer tryCreate(String smiles) throws CDKException, IOException {
 		try {
 			return kekuleSmilesParser.parseSmiles(smiles);
 		} catch (InvalidSmilesException e) {
@@ -142,7 +142,12 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 				return kekuleSmilesParser.parseSmiles(fixed);
 			} catch (InvalidSmilesException e2) {
 				e2.printStackTrace();
-				return preserveAromaticSmilesParser.parseSmiles(smiles);
+				try {
+					return preserveAromaticSmilesParser.parseSmiles(smiles);
+				}catch(Exception e3){
+						return CdkUtil.parseSmarts(smiles);
+
+				}
 			}
 		}
 		
@@ -217,7 +222,8 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		if(new BufferedReader(new StringReader(unknownFormattedInput.trim())).lines().count() == 1){
 //			//only 1 line assume smarts or smiles query?
 //
-			if(unknownFormattedInput.indexOf('~') > -1 || unknownFormattedInput.indexOf('*') > -1){
+			if(unknownFormattedInput.indexOf('~') > -1 || unknownFormattedInput.indexOf('*') > -1
+				|| unknownFormattedInput.contains("[#") || unknownFormattedInput.indexOf('!') > -1){
 				//has wildcards
 				return createFromSmarts(unknownFormattedInput);
 			}

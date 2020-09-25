@@ -698,13 +698,17 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		isAromatic = true;
 	}
 	
 	private void percieveAtomTypeAndConfigureNonQueryAtoms() throws CDKException{
 		CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(container.getBuilder());
         for (IAtom atom : container.atoms()) {
+
         	try{
+        	if(AtomRef.deref(atom) instanceof QueryAtom){
+        		continue;
+			}
             IAtomType matched = matcher.findMatchingAtomType(container, atom);
             if (matched != null) {
             		try{
@@ -836,6 +840,21 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
 	}
 
+	private boolean shouldRunAlgorithm() {
+
+		boolean runAlgorithm=true;
+		if(container instanceof QueryAtomContainer){
+			return false;
+		}
+		if(runAlgorithm) {
+			for (IAtom a : container.atoms()) {
+				if (AtomRef.deref(a) instanceof IQueryAtom) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 
 
 	@Override

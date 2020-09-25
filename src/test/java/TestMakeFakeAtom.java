@@ -25,7 +25,7 @@ import gov.nih.ncats.molwitch.ChemicalBuilder;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-public class MakeFakeAtom {
+public class TestMakeFakeAtom {
     @Test
     public void makeAtomWithASymbol(){
         //FDA often makes their pseudo atoms called A

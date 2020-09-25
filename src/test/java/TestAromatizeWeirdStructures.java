@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 
-public class AromatizeWeirdStructures {
+public class TestAromatizeWeirdStructures {
 
     @Test
     public void doesntErrorOut() throws Exception{

@@ -94,7 +94,6 @@ public class CdkUtil {
 
 		AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
 		QueryAtomPerceptor.percieve(container);
-		
 		return container;
 	}
 	
@@ -107,7 +106,6 @@ public class CdkUtil {
 			 .allMatch(ex->ex.type().equals(Expr.Type.ELEMENT))){
 			return "L";
 		}else{
-			
 			return "A";
 		}
 	}
@@ -152,20 +150,12 @@ public class CdkUtil {
     		ibo = BondRef.deref(ibo);
     		if(ibo instanceof QueryBond){
     			ib.setExpression(((QueryBond)ibo).getExpression());
-//    			System.out.println("Aromatic?:" + ibo.isAromatic());
-//    			navNodes(((QueryBond)ibo).getExpression(), (e,l)->{
-//    				System.out.println(rep(" ",e) + l.type() + ":" + l.value());
-//    			},0);
+
     			if(ibo.isAromatic()){
     				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
-//    				ib.setIsAromatic(true);
-    			}else{
-    				if(ib.getExpression().type().equals(Expr.Type.ORDER)){
-    					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
-    				}
+    			}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
+					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
     			}
-    			
-    			
     		}else{
     			if(!ibo.isAromatic()){
     				if(ibo.getOrder()==null || ibo.getOrder().equals(Order.UNSET)){
@@ -181,8 +171,6 @@ public class CdkUtil {
     		if(ib.getExpression().type().equals(Expr.Type.STEREOCHEMISTRY)){
     			ib.setExpression(new Expr(Expr.Type.TRUE));
     		}
-    		
-    		
     	}        	
     	for(int i=0;i<qac.getAtomCount();i++){
     		QueryAtom iat=(QueryAtom)qac.getAtom(i);
@@ -229,7 +217,6 @@ public class CdkUtil {
     	for(IBond ib : mol.bonds()){
     		if(ib.getOrder() == null || ib.getOrder().equals(Order.UNSET))return false;
     	}
-//    	System.out.println("Nothing to see here");
     	return true;
     }
     

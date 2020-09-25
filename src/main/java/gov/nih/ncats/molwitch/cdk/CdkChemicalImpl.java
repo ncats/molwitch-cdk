@@ -21,15 +21,7 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -197,9 +189,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	            container = new QueryAtomContainer(container, CHEM_OBJECT_BUILDER);
             }
         }
-	   
 		this.container = container;
-		
 		this.source = source;
 		hydrogenAdder = CDKHydrogenAdder.getInstance(container.getBuilder());
 		cachedSupplierGroup.add(ringsSearcherSupplier);
@@ -733,11 +723,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		try {
 			StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(container);
 			this.doWithQueryFixes(()->{
-						try{
-							coordinateGenerator.generateCoordinates();
-						}catch(Exception e2){
-							throw new RuntimeException(e2);
-						}
+				try{
+					coordinateGenerator.generateCoordinates();
+				}catch(Exception e2){
+					throw new RuntimeException(e2);
+				}
 			});
 	
 			container = coordinateGenerator.getMolecule();
@@ -817,20 +807,18 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			doWithQueryFixes(()->{
 				
 				isAromatic=false;
-//		fix();
-				//setImplicitHydrogens();
-			
-			    try {
+
+				try {
 					Kekulization.kekulize(container);
 				} catch (CDKException e) {
 					// TODO Auto-generated catch block
 					throw new RuntimeException(e);
 				}
-			    //kekulize doesn't touch the aromatic bond flags
-			    //so we want to I guess?
-			    for(IBond bond : container.bonds()){
-			        bond.setIsAromatic(false);
-			    }
+				//kekulize doesn't touch the aromatic bond flags
+				//so we want to I guess?
+				for(IBond bond : container.bonds()){
+					bond.setIsAromatic(false);
+				}
 			    
 			});
 		} catch (Exception e) {

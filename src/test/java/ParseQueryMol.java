@@ -20,6 +20,7 @@
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.FingerprintSpecificatio
 import gov.nih.ncats.molwitch.search.MolSearcherFactory;
 
 public class ParseQueryMol {
-////
+
     @Test
     public void atomListsAndQueryBondFingerprintsWork() throws IOException {
     	  String mol= "\n" + 
@@ -425,7 +426,7 @@ public class ParseQueryMol {
         Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
 		
 
-		assertEquals("true",""+hit.isPresent());
+		assertTrue(hit.isPresent());
         
         
     }
@@ -457,16 +458,7 @@ public class ParseQueryMol {
            
            
            Chemical c = Chemical.parse(mol);
-//         IAtomContainer cont = (IAtomContainer) c.getImpl().getWrappedObject();
-//         for(IBond ib : cont.bonds()){
-////      	   QueryBond qb = ((QueryBond)BondRef.deref(ib));
-////      	   CdkUtil.navNodes(((QueryBond)qb).getExpression(), (e,l)->{
-//// 				System.out.println(CdkUtil.rep(" ",e) + l.type() + ":" + l.value());
-//// 			},0);
-//      	   System.out.println(ib.getIndex() + ":" + ib.getOrder() + ":" + ib.isAromatic() + ":" + ib.getClass());
-//      	   
-//         }
-//           c.aromatize();
+
 
            try{
         	   c.generateCoordinates();
@@ -489,7 +481,7 @@ public class ParseQueryMol {
            System.out.println(c2.toMol());
            System.out.println(c2.toSmiles());
            Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
-           assertEquals("true",""+hit.isPresent());
+           assertTrue(hit.isPresent());
        }
        
        
@@ -636,26 +628,7 @@ public class ParseQueryMol {
 	       c.aromatize();
 	       System.out.println(c.toMol());
 	       System.out.println(c.toSmarts());
-//		   IAtomContainer cont = (IAtomContainer) c.getImpl().getWrappedObject();
-//		   for(IBond ib : cont.bonds()){
-//			   QueryBond qb = ((QueryBond)BondRef.deref(ib));
-//			   CdkUtil.navNodes(((QueryBond)qb).getExpression(), (e,l)->{
-//					System.out.println(CdkUtil.rep(" ",e) + l.type() + ":" + l.value());
-//				},0);
-//			   System.out.println(ib.getIndex() + ":" + ib.getOrder() + ":" + ib.isAromatic() + ":" + ib.getClass());
-//			   
-//		   }
-//		   for(IAtom ia : cont.atoms()){
-//			   IAtom dr=AtomRef.deref(ia);
-//			   if(dr instanceof QueryAtom){
-//		    	   QueryAtom qa = (QueryAtom)dr;
-//		    	   CdkUtil.navNodes(((QueryAtom)qa).getExpression(), (e,l)->{
-//						System.out.println(CdkUtil.rep(" ",e) + l.type() + ":" + l.value());
-//					},0);
-//			   }
-//			   System.out.println(ia.getAtomicNumber() + ":" + ia.getSymbol() + ":" + ia.isAromatic() + ":" + ia.getClass());
-//			   
-//		   }
+
 	       
 	       String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
 	       Chemical c2 = Chemical.parse(mol2);
@@ -668,24 +641,23 @@ public class ParseQueryMol {
 	       System.out.println(c2.toMol());
 	       System.out.println(c2.toSmiles());
 	       Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
-	       assertEquals("true",""+hit.isPresent());
+	       assertTrue(hit.isPresent());
        }
-       
        @Test
-   	public void removeAtomThenReAdd() throws Exception{
-   		Chemical c=Chemical.createFromSmiles("CCCCC");
-   		Atom remAt=c.getAtom(3);
-   		List<Bond> removedBonds = new ArrayList<>();
-   		for(Bond b : remAt.getBonds()){
-   			removedBonds.add(c.removeBond(b));
-   		}
-   		
-   		c.removeAtom(remAt);
-   		
-   		c.addAtom(remAt);
-   		for(Bond b : removedBonds){
-   			c.addBond(b);
-   		}
-   		assertEquals("CCCCC", c.toSmiles());
-   	}
+	   public void removeAtomThenReAdd() throws Exception{
+			Chemical c=Chemical.createFromSmiles("CCCCC");
+			Atom remAt=c.getAtom(3);
+			List<Bond> removedBonds = new ArrayList<>();
+			for(Bond b : remAt.getBonds()){
+				removedBonds.add(c.removeBond(b));
+			}
+
+			c.removeAtom(remAt);
+
+			c.addAtom(remAt);
+			for(Bond b : removedBonds){
+				c.addBond(b);
+			}
+			assertEquals("CCCCC", c.toSmiles());
+		}
 }

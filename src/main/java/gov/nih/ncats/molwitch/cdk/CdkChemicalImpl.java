@@ -690,9 +690,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
         for (IAtom atom : container.atoms()) {
 
         	try{
-        	if(AtomRef.deref(atom) instanceof QueryAtom){
-        		continue;
-			}
             IAtomType matched = matcher.findMatchingAtomType(container, atom);
             if (matched != null) {
             		try{

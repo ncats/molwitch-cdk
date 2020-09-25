@@ -19,14 +19,19 @@
  *  Boston, MA 02111-1307 USA
  */
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.Test;
 
+import gov.nih.ncats.molwitch.Atom;
+import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprint;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinter;
@@ -230,6 +235,7 @@ public class ParseQueryMol {
         System.out.println(smarts);
         
         
+        
         String mm="\n" + 
         		"   JSDraw209242017082D\n" + 
         		"\n" + 
@@ -295,7 +301,7 @@ public class ParseQueryMol {
 
         
     }
-    
+   
     @Test
     public void atomListsAndQueryBondStructureSearchWork() throws IOException {
         String mol= "\n" + 
@@ -420,8 +426,238 @@ public class ParseQueryMol {
         Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
 		
 
-		assertEquals("true",""+hit.isPresent());
+		assertTrue(hit.isPresent());
         
         
     }
+    
+       @Test
+       public void ensureAnyBondAndAromatizationWorksForSubstructureSearch() throws IOException {
+           String mol= "\n" + 
+           		"   JSDraw209252000242D\n" + 
+           		"\n" + 
+           		"  8  8  0  0  0  0            999 V2000\n" + 
+           		"   28.1035   -4.9661    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   29.4545   -5.7461    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   30.8055   -4.9661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   32.1565   -5.7461    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   32.1565   -7.3060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   30.8055   -8.0860    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   29.4545   -7.3060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   33.5073   -8.0860    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"  1  2  8  0  0  0  0\n" + 
+           		"  2  3  1  0  0  0  0\n" + 
+           		"  3  4  2  0  0  0  0\n" + 
+           		"  4  5  1  0  0  0  0\n" + 
+           		"  5  6  2  0  0  0  0\n" + 
+           		"  6  7  1  0  0  0  0\n" + 
+           		"  2  7  2  0  0  0  0\n" + 
+           		"  5  8  1  0  0  0  0\n" + 
+           		"M  ALS   1  2 F N   O   \n" + 
+           		"M  END";
+           
+           
+           Chemical c = Chemical.parse(mol);
+
+
+           try{
+        	   c.generateCoordinates();
+           }catch(Exception e){
+        	   e.printStackTrace();
+           }
+           c.aromatize();
+           System.out.println(c.toMol());
+           System.out.println(c.toSmarts());
+           
+           
+           String mol2="NC1=CC(O)=C(O)C=C1";
+           Chemical c2 = Chemical.parse(mol2);
+           c2.aromatize();
+           try{
+        	   c2.generateCoordinates();
+           }catch(Exception e){
+        	   e.printStackTrace();
+           }
+           System.out.println(c2.toMol());
+           System.out.println(c2.toSmiles());
+           Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
+           assertTrue(hit.isPresent());
+       }
+       
+       
+       @Test
+       public void ensureAnyBondAndAromatizationInComplexExampleWorksForSubstructureSearch() throws IOException {
+           String mol= "\n" + 
+           		"  CDK     09252009303D\n" + 
+           		"\n" + 
+           		" 19 21  0  0  0  0  0  0  0  0999 V2000\n" + 
+           		"   -1.9500    2.4000    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   -1.9500    0.9000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   -0.6500    0.1500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    0.6500    0.9000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    1.9500    0.1500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    3.0600    1.1500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    2.4500    2.5200    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    3.8762    2.9846    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    2.1359    3.9867    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    0.9600    2.3600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   -0.0451    3.4735    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    1.9500   -1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    0.6500   -2.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"    0.6500   -3.6000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   -0.6500   -1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   -1.9500   -2.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   -1.9500   -3.6000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   -3.2500   -1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"   -3.2500    0.1500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+           		"  1  2  8  0  0  0  0\n" + 
+           		"  2 19  4  0  0  0  0\n" + 
+           		"  2  3  4  0  0  0  0\n" + 
+           		"  3 15  4  0  0  0  0\n" + 
+           		"  3  4  4  0  0  0  0\n" + 
+           		"  4 10  6  0  0  0  0\n" + 
+           		"  4  5  4  0  0  0  0\n" + 
+           		"  5  6  6  0  0  0  0\n" + 
+           		"  6  7  6  0  0  0  0\n" + 
+           		"  7  8  6  0  0  0  0\n" + 
+           		"  7  9  6  0  0  0  0\n" + 
+           		"  7 10  6  0  0  0  0\n" + 
+           		" 10 11  2  0  0  0  0\n" + 
+           		"  5 12  4  0  0  0  0\n" + 
+           		" 12 13  4  0  0  0  0\n" + 
+           		" 13 14  6  0  0  0  0\n" + 
+           		" 13 15  4  0  0  0  0\n" + 
+           		" 15 16  4  0  0  0  0\n" + 
+           		" 16 17  6  0  0  0  0\n" + 
+           		" 16 18  4  0  0  0  0\n" + 
+           		" 18 19  4  0  0  0  0\n" + 
+      		    "M  ALS   1  2 F O   N   \n" + 
+           		"M  END";
+                    
+           Chemical c = Chemical.parse(mol);
+           try{
+        	   c.generateCoordinates();
+           }catch(Exception e){
+        	   e.printStackTrace();
+           }
+           c.aromatize();
+           System.out.println(c.toMol());
+           System.out.println(c.toSmarts());
+           
+           
+           String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
+           Chemical c2 = Chemical.parse(mol2);
+           c2.aromatize();
+           try{
+        	   c2.generateCoordinates();
+           }catch(Exception e){
+        	   e.printStackTrace();
+           }
+           System.out.println(c2.toMol());
+           System.out.println(c2.toSmiles());
+           Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
+           assertEquals("true",""+hit.isPresent());
+       }
+       
+       
+       @Test
+       public void ensureAnyBondAndAromatizationInSimpleExampleFromSmartsWorksForSubstructureSearch() throws IOException {
+           String mol= "[#7,#8]~C1=CC=CC=C1";
+                    
+           
+	       Chemical c = Chemical.parse(mol);
+	       try{
+	    	   c.generateCoordinates();
+	       }catch(Exception e){
+	    	   e.printStackTrace();
+	       }
+	       c.aromatize();
+	       System.out.println(c.toMol());
+	       System.out.println(c.toSmarts());
+//		   IAtomContainer cont = (IAtomContainer) c.getImpl().getWrappedObject();
+//		   for(IBond ib : cont.bonds()){
+//			   QueryBond qb = ((QueryBond)BondRef.deref(ib));
+//			   CdkUtil.navNodes(((QueryBond)qb).getExpression(), (e,l)->{
+//					System.out.println(CdkUtil.rep(" ",e) + l.type() + ":" + l.value());
+//				},0);
+//			   System.out.println(ib.getIndex() + ":" + ib.getOrder() + ":" + ib.isAromatic() + ":" + ib.getClass());
+//			   
+//		   }
+//		   for(IAtom ia : cont.atoms()){
+//			   IAtom dr=AtomRef.deref(ia);
+//			   if(dr instanceof QueryAtom){
+//		    	   QueryAtom qa = (QueryAtom)dr;
+//		    	   CdkUtil.navNodes(((QueryAtom)qa).getExpression(), (e,l)->{
+//						System.out.println(CdkUtil.rep(" ",e) + l.type() + ":" + l.value());
+//					},0);
+//			   }
+//			   System.out.println(ia.getAtomicNumber() + ":" + ia.getSymbol() + ":" + ia.isAromatic() + ":" + ia.getClass());
+//			   
+//		   }
+	       
+	       String mol2="OC1=CC=CC=C1";
+	       Chemical c2 = Chemical.parse(mol2);
+	       c2.aromatize();
+	       try{
+	    	   c2.generateCoordinates();
+	       }catch(Exception e){
+	    	   e.printStackTrace();
+	       }
+	       System.out.println(c2.toMol());
+	       System.out.println(c2.toSmiles());
+	       Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
+	       assertEquals("true",""+hit.isPresent());
+       }
+       
+
+       //
+      	//String structure="[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
+      	//structureIndexer.add("1", "COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12");
+      	//structureIndexer.add("2", "CC1=C2OC(C)(O)C(=O)C2=C3C4=C(C=C(O)C3=C1O)N5C=CC=CC5=N4");
+       @Test
+       public void ensureAnyBondAndAromatizationInComplexExampleFromSmartsWorksForSubstructureSearch() throws IOException {
+           String mol= "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
+                    
+           
+	       Chemical c = Chemical.parse(mol);
+	       try{
+	    	   c.generateCoordinates();
+	       }catch(Exception e){
+	    	   e.printStackTrace();
+	       }
+	       c.aromatize();
+	       System.out.println(c.toMol());
+	       System.out.println(c.toSmarts());
+
+	       
+	       String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
+	       Chemical c2 = Chemical.parse(mol2);
+	       c2.aromatize();
+	       try{
+	    	   c2.generateCoordinates();
+	       }catch(Exception e){
+	    	   e.printStackTrace();
+	       }
+	       System.out.println(c2.toMol());
+	       System.out.println(c2.toSmiles());
+	       Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
+	       assertTrue(hit.isPresent());
+       }
+       @Test
+	   public void removeAtomThenReAdd() throws Exception{
+			Chemical c=Chemical.createFromSmiles("CCCCC");
+			Atom remAt=c.getAtom(3);
+			List<Bond> removedBonds = new ArrayList<>();
+			for(Bond b : remAt.getBonds()){
+				removedBonds.add(c.removeBond(b));
+			}
+
+			c.removeAtom(remAt);
+
+			c.addAtom(remAt);
+			for(Bond b : removedBonds){
+				c.addBond(b);
+			}
+			assertEquals("CCCCC", c.toSmiles());
+		}
 }

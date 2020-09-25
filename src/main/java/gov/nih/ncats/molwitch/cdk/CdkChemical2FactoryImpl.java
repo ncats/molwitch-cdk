@@ -196,8 +196,9 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
     public ChemicalImpl createFromString(String format, String input) throws IOException {
         try {
             if ("mol".equals(format)) {
-                IAtomContainer mol = SilentChemObjectBuilder.getInstance().newAtomContainer();
-              mol =  new MDLV2000Reader(new StringReader(input)).read(mol);
+                IAtomContainer mol =  CdkUtil.getChemObjectBuilder().newAtomContainer();
+                
+                mol =  new MDLV2000Reader(new StringReader(input)).read(mol);
                 return new CdkChemicalImpl(mol, new MolStringSource(input, ChemicalSource.Type.MOL));
             }else if("sdf".equals(format)){
                 try(IdAwareSdfReader reader = new IdAwareSdfReader(new BufferedReader(new StringReader(input)),SilentChemObjectBuilder.getInstance())){

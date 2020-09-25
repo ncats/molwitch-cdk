@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
+import gov.nih.ncats.common.util.Unchecked;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -542,7 +543,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		return container;
 	}
 	
-	private void doWithQueryFixes(Runnable r) throws Exception{
+	private <E extends Throwable> void doWithQueryFixes(Unchecked.ThrowingRunnable<E> r) throws E{
 		Map<IAtom, Integer> oldAI = new HashMap<>();
 		Map<IAtom, Integer> oldIH = new HashMap<>();
 		Map<IAtom, Integer> oldFC = new HashMap<>();
@@ -637,14 +638,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			kekulize();
 			
 			setImplicitHydrogens();
-			doWithQueryFixes(()->{
-				try{
-					aromaticity.apply(container);
-				}catch(Exception e){
-					throw new RuntimeException(e);
-				}
-					
-			});
+			doWithQueryFixes(()->aromaticity.apply(container));
 			
 			
 			// Due to the way queries are handled, an attempt
@@ -722,14 +716,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public void generateCoordinates() throws ChemkitException{
 		try {
 			StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(container);
-			this.doWithQueryFixes(()->{
-				try{
-					coordinateGenerator.generateCoordinates();
-				}catch(Exception e2){
-					throw new RuntimeException(e2);
-				}
-			});
-	
+			doWithQueryFixes(coordinateGenerator::generateCoordinates);
 			container = coordinateGenerator.getMolecule();
 		}catch(Exception e) {
 			throw new ChemkitException(e.getMessage(), e);
@@ -807,13 +794,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			doWithQueryFixes(()->{
 				
 				isAromatic=false;
+				Kekulization.kekulize(container);
 
-				try {
-					Kekulization.kekulize(container);
-				} catch (CDKException e) {
-					// TODO Auto-generated catch block
-					throw new RuntimeException(e);
-				}
 				//kekulize doesn't touch the aromatic bond flags
 				//so we want to I guess?
 				for(IBond bond : container.bonds()){
@@ -828,21 +810,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
 	}
 
-	private boolean shouldRunAlgorithm() {
 
-		boolean runAlgorithm=true;
-		if(container instanceof QueryAtomContainer){
-			return false;
-		}
-		if(runAlgorithm) {
-			for (IAtom a : container.atoms()) {
-				if (AtomRef.deref(a) instanceof IQueryAtom) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
 
 
 	@Override

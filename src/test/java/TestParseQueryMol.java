@@ -644,6 +644,46 @@ public class TestParseQueryMol {
 	       assertTrue(hit.isPresent());
        }
        @Test
+       public void ensureAnyBondAndAromatizationInComplexExampleFromSmartsWorksForFingerprint() throws IOException {
+           String mol= "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
+                    
+           
+	       Chemical c = Chemical.parse(mol);
+	       try{
+	    	   c.generateCoordinates();
+	       }catch(Exception e){
+	    	   e.printStackTrace();
+	       }
+	       c.aromatize();
+	       System.out.println(c.toMol());
+	       System.out.println(c.toSmarts());
+
+	       
+	       String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
+	       Chemical c2 = Chemical.parse(mol2);
+	       c2.aromatize();
+	       try{
+	    	   c2.generateCoordinates();
+	       }catch(Exception e){
+	    	   e.printStackTrace();
+	       }
+	       System.out.println(c2.toMol());
+	       System.out.println(c2.toSmiles());
+
+
+	        Fingerprinter fingerPrinterSub =  Fingerprinters.getFingerprinter(FingerprintSpecification.PATH_BASED.create().setLength(512));
+	        
+	        Fingerprint fp=fingerPrinterSub.computeFingerprint(c);
+	        
+	        Fingerprint fp2=fingerPrinterSub.computeFingerprint(c2);
+	        
+	        BitSet bsTemp = BitSet.valueOf(fp.toBitSet().toLongArray());
+	        bsTemp.and(fp2.toBitSet());
+
+	        assertEquals(fp.populationCount(), bsTemp.cardinality());
+	        
+       }
+       @Test
 	   public void removeAtomThenReAdd() throws Exception{
 			Chemical c=Chemical.createFromSmiles("CCCCC");
 			Atom remAt=c.getAtom(3);

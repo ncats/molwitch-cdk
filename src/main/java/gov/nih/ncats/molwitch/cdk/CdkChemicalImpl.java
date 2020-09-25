@@ -532,19 +532,21 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			isAromatic = true;
 			return;
 		}
-		try {
-			perceiveAtomTypesOfNonQueryAtoms.get();
+		if(shouldRunAlgorithm()) {
+			try {
+				perceiveAtomTypesOfNonQueryAtoms.get();
 //			fix();
-			kekulize();
-			setImplicitHydrogens();
-			aromaticity.apply(container);
-			isAromatic = true;
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+				kekulize();
+				setImplicitHydrogens();
+				aromaticity.apply(container);
+
+
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		
+		isAromatic = true;
 	}
 	
 	private void percieveAtomTypeAndConfigureNonQueryAtoms() throws CDKException{
@@ -648,15 +650,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	@Override
 	public void kekulize() {
-		
 		isAromatic=false;
 //		fix();
 		//setImplicitHydrogens();
-	    try {
-			Kekulization.kekulize(container);
-		} catch (CDKException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(shouldRunAlgorithm()) {
+			try {
+				Kekulization.kekulize(container);
+			} catch (CDKException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	    //kekulize doesn't touch the aromatic bond flags
         //so we want to I guess?
@@ -666,6 +669,21 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
 	}
 
+	private boolean shouldRunAlgorithm() {
+
+		boolean runAlgorithm=true;
+		if(container instanceof QueryAtomContainer){
+			return false;
+		}
+		if(runAlgorithm) {
+			for (IAtom a : container.atoms()) {
+				if (AtomRef.deref(a) instanceof IQueryAtom) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 
 
 	@Override

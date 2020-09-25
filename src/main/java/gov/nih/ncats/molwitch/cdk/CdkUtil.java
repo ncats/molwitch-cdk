@@ -21,7 +21,13 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import gov.nih.ncats.molwitch.Chemical;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
+
+import org.openscience.cdk.AtomRef;
+import org.openscience.cdk.BondRef;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
@@ -29,6 +35,7 @@ import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IBond.Order;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.isomorphism.matchers.Expr;
 import org.openscience.cdk.isomorphism.matchers.QueryAtom;
@@ -38,11 +45,9 @@ import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smarts.Smarts;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
+import org.openscience.cdk.tools.periodictable.PeriodicTable;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import gov.nih.ncats.molwitch.Chemical;
 
 public class CdkUtil {
 
@@ -84,23 +89,25 @@ public class CdkUtil {
 	}
 
 	public static IAtomContainer parseSmarts(String smarts) throws CDKException, IOException {
-		IAtomContainer container = CdkUtil.getChemObjectBuilder().newAtomContainer();
+		IAtomContainer container =CdkUtil.getChemObjectBuilder().newAtomContainer();
 		Smarts.parse(container, smarts);
 
 		AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
 		QueryAtomPerceptor.percieve(container);
+		
 		return container;
 	}
 	
 
 	
-	public static String getSymbolForAtomExpression(Expr exp){
+	private static String getSymbolForAtomExpression(Expr exp){
 		List<Expr> elist = new ArrayList<>();
 		getLeafNodes(exp, elist);
 		if(elist.size()>0 && elist.stream()
 			 .allMatch(ex->ex.type().equals(Expr.Type.ELEMENT))){
 			return "L";
 		}else{
+			
 			return "A";
 		}
 	}
@@ -115,7 +122,25 @@ public class CdkUtil {
 			elist.add(exr);
 		}
 	}
+	public static void navNodes(Expr exr, BiConsumer<Integer, Expr> elist, int l){
+		elist.accept(l, exr);
+		if(exr.type().equals(Expr.Type.OR) || exr.type().equals(Expr.Type.AND)){
+			navNodes(exr.left(), elist,l+1);
+			navNodes(exr.right(), elist,l+1);
+		}else if(exr.type().equals(Expr.Type.NOT)){
+			navNodes(exr.left(), elist,l+1);
+		}
+	}
 	
+
+
+	public static String rep(String m, int l){
+		String r="";
+		for(int i=0;i<l;i++){
+			r+=m;
+		}
+		return r;
+	}
 
     
     public static QueryAtomContainer asQueryAtomContainer(IAtomContainer ia){
@@ -124,27 +149,70 @@ public class CdkUtil {
     		QueryBond ib=(QueryBond)qac.getBond(i);
     		
     		IBond ibo=ia.getBond(i);
+    		ibo = BondRef.deref(ibo);
     		if(ibo instanceof QueryBond){
     			ib.setExpression(((QueryBond)ibo).getExpression());
+//    			System.out.println("Aromatic?:" + ibo.isAromatic());
+//    			navNodes(((QueryBond)ibo).getExpression(), (e,l)->{
+//    				System.out.println(rep(" ",e) + l.type() + ":" + l.value());
+//    			},0);
+    			if(ibo.isAromatic()){
+    				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
+//    				ib.setIsAromatic(true);
+    			}else{
+    				if(ib.getExpression().type().equals(Expr.Type.ORDER)){
+    					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
+    				}
+    			}
+    			
+    			
     		}else{
     			if(!ibo.isAromatic()){
-    				ib.setExpression(new Expr(Expr.Type.ALIPHATIC_ORDER,ibo.getOrder().numeric()));
+    				if(ibo.getOrder()==null || ibo.getOrder().equals(Order.UNSET)){
+    					ib.setExpression(new Expr(Expr.Type.TRUE));
+    				}else{
+    					ib.setExpression(new Expr(Expr.Type.ALIPHATIC_ORDER,ibo.getOrder().numeric()));
+    				}
     			}else{
     				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
     			}
+    			
     		}
+    		if(ib.getExpression().type().equals(Expr.Type.STEREOCHEMISTRY)){
+    			ib.setExpression(new Expr(Expr.Type.TRUE));
+    		}
+    		
+    		
     	}        	
     	for(int i=0;i<qac.getAtomCount();i++){
     		QueryAtom iat=(QueryAtom)qac.getAtom(i);
     		
     		IAtom iao=ia.getAtom(i);
+    		iao = AtomRef.deref(iao);
     		if(iao instanceof QueryAtom){
     			
     			iat.setExpression(((QueryAtom)iao).getExpression());
     			iat.setSymbol(getSymbolForAtomExpression(iat.getExpression()));
+    			if(iat.getExpression().type().equals(Expr.Type.ALIPHATIC_ELEMENT) ||
+    					iat.getExpression().type().equals(Expr.Type.ELEMENT)||
+    					iat.getExpression().type().equals(Expr.Type.AROMATIC_ELEMENT)){
+    				iat.setAtomicNumber(iat.getExpression().value());
+    				iat.setSymbol(PeriodicTable.getSymbol(iat.getExpression().value()));
+    			}
+    			
     		}else{
-    			iat.setExpression(new Expr(Expr.Type.ELEMENT,iao.getAtomicNumber()));
-    			iat.setSymbol(iao.getSymbol());
+    			if(iao.getAtomicNumber()==null){
+    				iat.setSymbol("A");
+    			}else{
+    				iat.setExpression(new Expr(Expr.Type.ELEMENT,iao.getAtomicNumber()));
+    				iat.setSymbol(iao.getSymbol());
+    			}
+    		}
+    		if(iao.getCharge()!=null){
+    			iat.setCharge(iao.getCharge());
+    		}
+    		if(iao.getMassNumber()!=null){
+    			iat.setMassNumber(iat.getMassNumber());
     		}
 
 			iat.setPoint2d(iao.getPoint2d());
@@ -158,6 +226,10 @@ public class CdkUtil {
     	for(IAtom ia : mol.atoms()){
     		if(ia.getSymbol() == null)return false;
     	}
+    	for(IBond ib : mol.bonds()){
+    		if(ib.getOrder() == null || ib.getOrder().equals(Order.UNSET))return false;
+    	}
+//    	System.out.println("Nothing to see here");
     	return true;
     }
     

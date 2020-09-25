@@ -21,8 +21,19 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -30,7 +41,6 @@ import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
-import gov.nih.ncats.common.util.CachedSupplierGroup;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -45,13 +55,26 @@ import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.GraphUtil;
 import org.openscience.cdk.graph.GraphUtil.EdgeToBondMap;
 import org.openscience.cdk.graph.invariant.Canon;
-import org.openscience.cdk.interfaces.*;
+import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomType;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IBond.Order;
+import org.openscience.cdk.interfaces.IChemObjectBuilder;
+import org.openscience.cdk.interfaces.IDoubleBondStereochemistry;
+import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.interfaces.IRing;
+import org.openscience.cdk.interfaces.IRingSet;
+import org.openscience.cdk.interfaces.IStereoElement;
+import org.openscience.cdk.interfaces.ITetrahedralChirality;
 import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
+import org.openscience.cdk.isomorphism.matchers.Expr;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtomContainer;
 import org.openscience.cdk.isomorphism.matchers.IQueryBond;
+import org.openscience.cdk.isomorphism.matchers.QueryAtom;
 import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
+import org.openscience.cdk.isomorphism.matchers.QueryBond;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.ringsearch.AllRingsFinder;
 import org.openscience.cdk.sgroup.Sgroup;
@@ -68,13 +91,12 @@ import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.openscience.cdk.tools.periodictable.PeriodicTable;
 
+import gov.nih.ncats.common.util.CachedSupplier;
+import gov.nih.ncats.common.util.CachedSupplierGroup;
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.AtomCoordinates;
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Bond.BondType;
-import gov.nih.ncats.molwitch.SGroup.SGroupBracket;
-import gov.nih.ncats.molwitch.SGroup.SGroupType;
-import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.BondTable;
 import gov.nih.ncats.molwitch.ChemicalSource;
 import gov.nih.ncats.molwitch.ChemkitException;
@@ -83,10 +105,12 @@ import gov.nih.ncats.molwitch.DoubleBondStereochemistry;
 import gov.nih.ncats.molwitch.ExtendedTetrahedralChirality;
 import gov.nih.ncats.molwitch.GraphInvariant;
 import gov.nih.ncats.molwitch.SGroup;
+import gov.nih.ncats.molwitch.SGroup.SGroupBracket;
+import gov.nih.ncats.molwitch.SGroup.SGroupType;
+import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.isotopes.Isotope;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
-import gov.nih.ncats.common.util.CachedSupplier;
 
 public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
@@ -173,7 +197,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	            container = new QueryAtomContainer(container, CHEM_OBJECT_BUILDER);
             }
         }
+	   
 		this.container = container;
+		
 		this.source = source;
 		hydrogenAdder = CDKHydrogenAdder.getInstance(container.getBuilder());
 		cachedSupplierGroup.add(ringsSearcherSupplier);
@@ -525,6 +551,63 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public IAtomContainer getContainer() {
 		return container;
 	}
+	
+	private void doWithQueryFixes(Runnable r) throws Exception{
+		Map<IAtom, Integer> oldAI = new HashMap<>();
+		Map<IAtom, Integer> oldIH = new HashMap<>();
+		Map<IAtom, Integer> oldFC = new HashMap<>();
+		Map<IBond, Integer> oldOrder = new HashMap<>();
+		
+		for(IAtom atom : container.atoms()){
+	         if(atom.getAtomicNumber()==null){
+	        	 oldAI.put(atom, null);
+	        	 atom.setAtomicNumber(2);
+	         }
+	         if(atom.getFormalCharge()==null){
+	        	 oldFC.put(atom, null);
+	        	 atom.setFormalCharge(0);
+	         }
+	         if(atom.getImplicitHydrogenCount()==null){
+	        	 oldIH.put(atom, null);
+	        	 atom.setImplicitHydrogenCount(0);
+	         }
+	         
+	    } 
+		for(IBond bond : container.bonds()){
+			if(bond.getOrder()==null || bond.getOrder().equals(Order.UNSET)){
+				if(bond instanceof QueryBond){
+					QueryBond qb = (QueryBond)bond;
+					if(qb.getExpression().type().equals(Expr.Type.ALIPHATIC_ORDER)||qb.getExpression().type().equals(Expr.Type.ORDER)){
+						bond.setOrder(Order.values()[qb.getExpression().value()-1]);
+						oldOrder.put(bond, null);
+					}else{
+						bond.setOrder(Order.SINGLE);
+						oldOrder.put(bond, null);
+					}
+				}else{
+					bond.setOrder(Order.SINGLE);
+					oldOrder.put(bond, null);
+				}
+			}
+		}
+		
+		try{
+			r.run();
+		}finally{
+	        for(IAtom at: oldAI.keySet()){
+	        	at.setAtomicNumber(null);
+	        }
+	        for(IAtom at: oldIH.keySet()){
+	        	at.setImplicitHydrogenCount(null);
+	        }
+	        for(IAtom at: oldFC.keySet()){
+	        	at.setFormalCharge(null);
+	        }
+	        for(IBond ib: oldOrder.keySet()){
+	        	ib.setOrder(Order.UNSET);
+	        }
+		}
+	}
 
 	
 	@Override
@@ -536,11 +619,79 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			return;
 		}
 		try {
+			// This isn't pretty, but stereochemistry query bonds
+			// end up messing up the aromaticity model
+			// so they are explicitly set to be single or aromatic bonds
+			// with implied order of 1. In practice, this may end up
+			// causing problems, but really only when the bond
+			// turns out not to be aromatic by the model ...
+			// this will need to be evaluated.
+			
+			for(IBond bond : container.bonds()){
+	            if(bond instanceof IQueryBond){
+	            	IQueryBond iq = (IQueryBond)bond;
+					QueryBond qb= (QueryBond)BondRef.deref(iq);
+					Expr exp=qb.getExpression();
+					CdkUtil.navNodes(exp, (e,l)->{
+						if(l.type().equals(Expr.Type.STEREOCHEMISTRY)){
+							l.setPrimitive(Expr.Type.SINGLE_OR_AROMATIC);
+							iq.setOrder(Order.SINGLE);
+						}
+					},0);
+	            }
+	        }
+			
 			perceiveAtomTypesOfNonQueryAtoms.get();
 //			fix();
+			
 			kekulize();
+			
 			setImplicitHydrogens();
-			aromaticity.apply(container);
+			doWithQueryFixes(()->{
+				try{
+					aromaticity.apply(container);
+				}catch(Exception e){
+					throw new RuntimeException(e);
+				}
+					
+			});
+			
+			
+			// Due to the way queries are handled, an attempt
+			// to aromatize atoms/bonds DOES mark them as aromatic,
+			// but it doesn't update any underlying expression used
+			// for matching. We need to look for cases where
+			// a query expression explicitly asks for aliphatic 
+			// bonds and elements and change them to be asking for
+			// just the element and just the bond
+			
+			for(IAtom atom: container.atoms()){
+				if(atom.isAromatic() && atom instanceof IQueryAtom){
+					IQueryAtom iq = (IQueryAtom)atom;
+					QueryAtom qa= (QueryAtom)AtomRef.deref(iq);
+					Expr exp=qa.getExpression();
+					CdkUtil.navNodes(exp, (e,l)->{
+						if(l.type().equals(Expr.Type.ALIPHATIC_ELEMENT)){
+							l.setPrimitive(Expr.Type.ELEMENT, l.value());
+						}
+					},0);	
+				}	
+			}
+			for(IBond bond : container.bonds()){
+	            if(bond instanceof IQueryBond){
+	            	IQueryBond iq = (IQueryBond)bond;
+					QueryBond qb= (QueryBond)BondRef.deref(iq);
+					Expr exp=qb.getExpression();
+					if(bond.isAromatic()){
+						CdkUtil.navNodes(exp, (e,l)->{
+							if(l.type().equals(Expr.Type.ALIPHATIC_ORDER)){
+								l.setPrimitive(Expr.Type.IS_AROMATIC);
+							}
+						},0);
+					}
+	            }
+	        }
+			
 			isAromatic = true;
 			
 		} catch (Exception e) {
@@ -553,7 +704,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private void percieveAtomTypeAndConfigureNonQueryAtoms() throws CDKException{
 		CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(container.getBuilder());
         for (IAtom atom : container.atoms()) {
-        		
+        	try{
             IAtomType matched = matcher.findMatchingAtomType(container, atom);
             if (matched != null) {
             		try{
@@ -562,6 +713,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             			//ignore
             		}
             }
+        	}catch(NullPointerException e) {
+        		//ignore
+        	}
         }
 	}
 	
@@ -574,10 +728,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public void generateCoordinates() throws ChemkitException{
 		try {
 			StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(container);
-			coordinateGenerator.generateCoordinates();
+			this.doWithQueryFixes(()->{
+						try{
+							coordinateGenerator.generateCoordinates();
+						}catch(Exception e2){
+							throw new RuntimeException(e2);
+						}
+			});
 	
 			container = coordinateGenerator.getMolecule();
-		}catch(CDKException e) {
+		}catch(Exception e) {
 			throw new ChemkitException(e.getMessage(), e);
 		}
 		
@@ -649,21 +809,30 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	@Override
 	public void kekulize() {
-		
-		isAromatic=false;
+		try {
+			doWithQueryFixes(()->{
+				
+				isAromatic=false;
 //		fix();
-		//setImplicitHydrogens();
-	    try {
-			Kekulization.kekulize(container);
-		} catch (CDKException e) {
-			// TODO Auto-generated catch block
+				//setImplicitHydrogens();
+			
+			    try {
+					Kekulization.kekulize(container);
+				} catch (CDKException e) {
+					// TODO Auto-generated catch block
+					throw new RuntimeException(e);
+				}
+			    //kekulize doesn't touch the aromatic bond flags
+			    //so we want to I guess?
+			    for(IBond bond : container.bonds()){
+			        bond.setIsAromatic(false);
+			    }
+			    
+			});
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	    //kekulize doesn't touch the aromatic bond flags
-        //so we want to I guess?
-        for(IBond bond : container.bonds()){
-            bond.setIsAromatic(false);
-        }
+       
 		
 	}
 

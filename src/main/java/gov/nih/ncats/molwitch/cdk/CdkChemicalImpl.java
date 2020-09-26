@@ -21,7 +21,15 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -33,7 +41,6 @@ import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
-import gov.nih.ncats.common.util.Unchecked;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -86,6 +93,7 @@ import org.openscience.cdk.tools.periodictable.PeriodicTable;
 
 import gov.nih.ncats.common.util.CachedSupplier;
 import gov.nih.ncats.common.util.CachedSupplierGroup;
+import gov.nih.ncats.common.util.Unchecked;
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.AtomCoordinates;
 import gov.nih.ncats.molwitch.Bond;
@@ -243,6 +251,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	
 	@Override
+	//TODO: This is a weird thing to ask for ...
+	// someone might want SSSR, but not typically the
+	// smallest absolute ring.
+	//
+	// They may, however, want the smallest ring for
+	// a particular bond/atom. Perhaps that's where
+	// this came from?
 	public int getSmallestRingSize() {
 		IRingSet ringSet = Cycles.sssr(container).toRingSet();
 		int numRings = ringSet.getAtomContainerCount();
@@ -565,25 +580,25 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	         }
 	         
 	    } 
-//		for(IBond bond : container.bonds()){
-//			if(bond.getOrder()==null || bond.getOrder().equals(Order.UNSET)){
-//				Order oorder=bond.getOrder();
-//				if(bond instanceof QueryBond){
-//					QueryBond qb = (QueryBond)bond;
-//					if(qb.getExpression().type().equals(Expr.Type.ALIPHATIC_ORDER)||qb.getExpression().type().equals(Expr.Type.ORDER)){
-//						
-//						bond.setOrder(Order.values()[qb.getExpression().value()-1]);
-//						oldOrder.put(bond, oorder);
-//					}else{
-//						bond.setOrder(Order.SINGLE);
-//						oldOrder.put(bond, oorder);
-//					}
-//				}else{
-//					bond.setOrder(Order.SINGLE);
-//					oldOrder.put(bond, oorder);
-//				}
-//			}
-//		}
+		for(IBond bond : container.bonds()){
+			if(bond.getOrder()==null || bond.getOrder().equals(Order.UNSET)){
+				Order oorder=bond.getOrder();
+				if(bond instanceof QueryBond){
+					QueryBond qb = (QueryBond)bond;
+					if(qb.getExpression().type().equals(Expr.Type.ALIPHATIC_ORDER)||qb.getExpression().type().equals(Expr.Type.ORDER)){
+						
+						bond.setOrder(Order.values()[qb.getExpression().value()-1]);
+						oldOrder.put(bond, oorder);
+					}else{
+						bond.setOrder(Order.SINGLE);
+						oldOrder.put(bond, oorder);
+					}
+				}else{
+					bond.setOrder(Order.SINGLE);
+					oldOrder.put(bond, oorder);
+				}
+			}
+		}
 		
 		try{
 			r.run();
@@ -597,9 +612,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	        for(IAtom at: oldFC.keySet()){
 	        	at.setFormalCharge(null);
 	        }
-//	        for(IBond ib: oldOrder.keySet()){
-//	        	ib.setOrder(oldOrder.get(ib));
-//	        }
+	        for(IBond ib: oldOrder.keySet()){
+	        	ib.setOrder(oldOrder.get(ib));
+	        }
 		}
 	}
 
@@ -1193,7 +1208,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
 		
 	}
-	private static Chirality convetCIPValueToChirality(IAtom center) {
+	private static Chirality convertCIPValueToChirality(IAtom center) {
 		String value =center.getProperty(CDKConstants.CIP_DESCRIPTOR);
 		if("S".equals(value)) {
 			return Chirality.S;
@@ -1204,10 +1219,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if("NONE".equals(value)) {
 			return Chirality.Non_Chiral;
 		}
-		System.out.println("stereo is not S or R but it's '" + value +"'");
+//		System.out.println("stereo is not S or R but it's '" + value +"'");
 		return Chirality.Unknown;
 	}
 	private static Chirality convertCdkStereoToChirality(Stereo stereoType) {
+		//I don't think this is right
 		switch(stereoType){
 			 case ANTI_CLOCKWISE : return Chirality.S;
 			 case CLOCKWISE : return Chirality.R;
@@ -1243,7 +1259,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 		@Override
 		public Chirality getChirality() {
-			 return convetCIPValueToChirality(chirality.getChiralAtom());
+			 return convertCIPValueToChirality(chirality.getChiralAtom());
 		}
 
 		

@@ -23,7 +23,7 @@ import gov.nih.ncats.molwitch.Chemical;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class ParseMolWithAtomLists {
+public class TestParseMolWithAtomLists {
 
     @Test
     public void withAtomList() throws Exception {

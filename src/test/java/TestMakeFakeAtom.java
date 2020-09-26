@@ -22,10 +22,12 @@
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.ChemicalBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-public class MakeFakeAtom {
+@Ignore
+public class TestMakeFakeAtom {
     @Test
     public void makeAtomWithASymbol(){
         //FDA often makes their pseudo atoms called A

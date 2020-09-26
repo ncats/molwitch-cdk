@@ -28,7 +28,7 @@ import org.openscience.cdk.sgroup.SgroupKey;
 
 import java.util.Collection;
 import static org.junit.Assert.*;
-public class ParseMolWithSgroupsAndClone {
+public class TestParseMolWithSgroupsAndClone {
 
     @Test
     public void doesntThrowCastException() throws Exception{

@@ -25,7 +25,7 @@ import org.junit.Test;
 import java.io.IOException;
 import static org.junit.Assert.*;
 
-public class ParseBrackettedMol {
+public class TestParseBrackettedMol {
 
     @Test
     public void parse() throws IOException {

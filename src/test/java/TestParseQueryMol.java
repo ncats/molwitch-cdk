@@ -39,7 +39,7 @@ import gov.nih.ncats.molwitch.fingerprint.Fingerprinters;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.FingerprintSpecification;
 import gov.nih.ncats.molwitch.search.MolSearcherFactory;
 
-public class ParseQueryMol {
+public class TestParseQueryMol {
 
     @Test
     public void atomListsAndQueryBondFingerprintsWork() throws IOException {

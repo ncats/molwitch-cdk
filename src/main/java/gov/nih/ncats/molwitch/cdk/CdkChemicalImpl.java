@@ -547,7 +547,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		Map<IAtom, Integer> oldAI = new HashMap<>();
 		Map<IAtom, Integer> oldIH = new HashMap<>();
 		Map<IAtom, Integer> oldFC = new HashMap<>();
-		Map<IBond, Integer> oldOrder = new HashMap<>();
+		Map<IBond, Order> oldOrder = new HashMap<>();
 		
 		for(IAtom atom : container.atoms()){
 	         if(atom.getAtomicNumber()==null){
@@ -560,27 +560,30 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	         }
 	         if(atom.getImplicitHydrogenCount()==null){
 	        	 oldIH.put(atom, null);
-	        	 atom.setImplicitHydrogenCount(0);
+	        	 //this is really unfortunate, because it 
+	        	 atom.setImplicitHydrogenCount(0);	        	 
 	         }
 	         
 	    } 
-		for(IBond bond : container.bonds()){
-			if(bond.getOrder()==null || bond.getOrder().equals(Order.UNSET)){
-				if(bond instanceof QueryBond){
-					QueryBond qb = (QueryBond)bond;
-					if(qb.getExpression().type().equals(Expr.Type.ALIPHATIC_ORDER)||qb.getExpression().type().equals(Expr.Type.ORDER)){
-						bond.setOrder(Order.values()[qb.getExpression().value()-1]);
-						oldOrder.put(bond, null);
-					}else{
-						bond.setOrder(Order.SINGLE);
-						oldOrder.put(bond, null);
-					}
-				}else{
-					bond.setOrder(Order.SINGLE);
-					oldOrder.put(bond, null);
-				}
-			}
-		}
+//		for(IBond bond : container.bonds()){
+//			if(bond.getOrder()==null || bond.getOrder().equals(Order.UNSET)){
+//				Order oorder=bond.getOrder();
+//				if(bond instanceof QueryBond){
+//					QueryBond qb = (QueryBond)bond;
+//					if(qb.getExpression().type().equals(Expr.Type.ALIPHATIC_ORDER)||qb.getExpression().type().equals(Expr.Type.ORDER)){
+//						
+//						bond.setOrder(Order.values()[qb.getExpression().value()-1]);
+//						oldOrder.put(bond, oorder);
+//					}else{
+//						bond.setOrder(Order.SINGLE);
+//						oldOrder.put(bond, oorder);
+//					}
+//				}else{
+//					bond.setOrder(Order.SINGLE);
+//					oldOrder.put(bond, oorder);
+//				}
+//			}
+//		}
 		
 		try{
 			r.run();
@@ -594,9 +597,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	        for(IAtom at: oldFC.keySet()){
 	        	at.setFormalCharge(null);
 	        }
-	        for(IBond ib: oldOrder.keySet()){
-	        	ib.setOrder(Order.UNSET);
-	        }
+//	        for(IBond ib: oldOrder.keySet()){
+//	        	ib.setOrder(oldOrder.get(ib));
+//	        }
 		}
 	}
 
@@ -634,9 +637,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			
 			perceiveAtomTypesOfNonQueryAtoms.get();
 //			fix();
-			
+
 			kekulize();
-			
+
 			setImplicitHydrogens();
 			doWithQueryFixes(()->aromaticity.apply(container));
 			
@@ -682,7 +685,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		isAromatic = true;
+//		isAromatic = true;
 	}
 	
 	private void percieveAtomTypeAndConfigureNonQueryAtoms() throws CDKException{
@@ -690,6 +693,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
         for (IAtom atom : container.atoms()) {
 
         	try{
+//        	if(AtomRef.deref(atom) instanceof QueryAtom){
+//        		continue;
+//			}
             IAtomType matched = matcher.findMatchingAtomType(container, atom);
             if (matched != null) {
             		try{

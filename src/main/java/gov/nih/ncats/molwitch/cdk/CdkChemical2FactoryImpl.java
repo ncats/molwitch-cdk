@@ -192,14 +192,26 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		}
 	}
 
-    @Override
+	@Override
     public ChemicalImpl createFromString(String format, String input) throws IOException {
         try {
             if ("mol".equals(format)) {
-                IAtomContainer mol =  CdkUtil.getChemObjectBuilder().newAtomContainer();
-                
-                mol =  new MDLV2000Reader(new StringReader(input)).read(mol);
-                return new CdkChemicalImpl(mol, new MolStringSource(input, ChemicalSource.Type.MOL));
+            	try(ChemicalImplReader reader = createFrom(new BufferedReader(new StringReader(input)), null)){
+        			return reader.read();
+        		}
+            	//TODO: Obviously the real way to parse a mol is below, but sometimes this gives different
+            	//stereo results than above. It's unclear why. For now, it uses the above because it's
+            	//more often correct with stereo.
+            	
+            	
+//                IAtomContainer mol =  CdkUtil.getChemObjectBuilder().newAtomContainer();
+//                
+//                try(MDLV2000Reader reader = new MDLV2000Reader(new StringReader(input))){
+//                	mol =  reader.read(mol);
+//                }
+//                return new CdkChemicalImpl(mol, new MolStringSource(input, ChemicalSource.Type.MOL));
+            	
+            	
             }else if("sdf".equals(format)){
                 try(IdAwareSdfReader reader = new IdAwareSdfReader(new BufferedReader(new StringReader(input)),SilentChemObjectBuilder.getInstance())){
 					IAtomContainer mol = reader.next();

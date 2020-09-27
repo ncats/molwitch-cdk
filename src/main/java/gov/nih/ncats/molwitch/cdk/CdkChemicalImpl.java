@@ -558,12 +558,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		return container;
 	}
 	
-	private <E extends Throwable> void doWithQueryFixes(Unchecked.ThrowingRunnable<E> r) throws E{
+	private <E extends Throwable> void doWithQueryFixes(Unchecked.ThrowingRunnable<E> r, boolean mustSet) throws E{
 		Map<IAtom, Integer> oldAI = new HashMap<>();
 		Map<IAtom, Integer> oldIH = new HashMap<>();
 		Map<IAtom, Integer> oldFC = new HashMap<>();
 		Map<IBond, Order> oldOrder = new HashMap<>();
-		
+//		
 		for(IAtom atom : container.atoms()){
 	         if(atom.getAtomicNumber()==null){
 	        	 oldAI.put(atom, null);
@@ -594,8 +594,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 						oldOrder.put(bond, oorder);
 					}
 				}else{
-					bond.setOrder(Order.SINGLE);
-					oldOrder.put(bond, oorder);
+					if(mustSet){
+						bond.setOrder(Order.SINGLE);
+						oldOrder.put(bond, oorder);
+					}
 				}
 			}
 		}
@@ -656,7 +658,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			kekulize();
 
 			setImplicitHydrogens();
-			doWithQueryFixes(()->aromaticity.apply(container));
+			doWithQueryFixes(()->aromaticity.apply(container),true);
 			
 			
 			// Due to the way queries are handled, an attempt
@@ -734,7 +736,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public void generateCoordinates() throws ChemkitException{
 		try {
 			StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(container);
-			doWithQueryFixes(coordinateGenerator::generateCoordinates);
+			doWithQueryFixes(coordinateGenerator::generateCoordinates,false);
 			container = coordinateGenerator.getMolecule();
 		}catch(Exception e) {
 			throw new ChemkitException(e.getMessage(), e);
@@ -811,7 +813,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		try {
 			doWithQueryFixes(()->{
 				
-				isAromatic=false;
 				Kekulization.kekulize(container);
 
 				//kekulize doesn't touch the aromatic bond flags
@@ -819,8 +820,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				for(IBond bond : container.bonds()){
 					bond.setIsAromatic(false);
 				}
-			    
-			});
+				isAromatic=false;
+			},false);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

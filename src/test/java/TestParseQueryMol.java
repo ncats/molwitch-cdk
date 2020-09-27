@@ -32,11 +32,13 @@ import org.junit.Test;
 
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.Bond;
+import gov.nih.ncats.molwitch.Bond.BondType;
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprint;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinter;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinters;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.FingerprintSpecification;
+import gov.nih.ncats.molwitch.inchi.InChiResult;
 import gov.nih.ncats.molwitch.search.MolSearcherFactory;
 
 public class TestParseQueryMol {
@@ -709,7 +711,9 @@ public class TestParseQueryMol {
 	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
 	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);
 	   		
+
 	
 	   	}
+	  
 	   	
 }

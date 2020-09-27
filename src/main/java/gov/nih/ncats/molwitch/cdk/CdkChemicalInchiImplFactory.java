@@ -88,8 +88,11 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		try {
 			//need to pass list options (even empty) to get AuxInfo...
 //			System.out.println("computing inchi for " + (chemical.getSource().isPresent()? chemical.getSource().get().getData() : "NO SOURCE"));
+//			chemical.aromatize();
+			
 			Chemical ichem=handleQueryAtoms(chemical);
-			ichem.kekulize();
+			chemical.kekulize();
+			
 			InChIGenerator gen = factory.getInChIGenerator(CdkUtil.toAtomContainer(ichem), Collections.emptyList());
 		
 			InChiResult.Status status = toChemkitStatus(gen.getReturnStatus());

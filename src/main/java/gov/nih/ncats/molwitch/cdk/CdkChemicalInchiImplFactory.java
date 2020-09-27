@@ -91,7 +91,7 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 //			chemical.aromatize();
 			
 			Chemical ichem=handleQueryAtoms(chemical);
-			chemical.kekulize();
+			ichem.kekulize();
 			
 			InChIGenerator gen = factory.getInChIGenerator(CdkUtil.toAtomContainer(ichem), Collections.emptyList());
 		

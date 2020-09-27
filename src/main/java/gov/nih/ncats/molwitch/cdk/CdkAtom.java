@@ -382,8 +382,8 @@ public class CdkAtom implements Atom{
 	@Override
 	public OptionalInt getValence() {
 		parent.perceiveAtomTypesOfNonQueryAtoms.get();
-		Integer valence= atom.getValency();
 		
+		Integer valence= atom.getValency();
 		if(valence ==null) {
 			return OptionalInt.empty();
 		}
@@ -395,7 +395,34 @@ public class CdkAtom implements Atom{
 	public boolean hasValenceError() {
 		//after perceiving atom types valence should not be null unless there's an error?
 		//TODO maybe not set on query atoms?
-		return !getValence().isPresent();
+		OptionalInt opin=getValence();
+		if(!opin.isPresent())return true;
+		
+		int v = opin.getAsInt();
+		
+		// TODO: Need a real valence model check here ...
+		// CDK probably has one. Generally specific elements
+		// are only allowed to have certain valences. That is,
+		// there are only certain bond count/charge/radical
+		// configurations that are allowed. The most common
+		// case we're worried about though is pentavalent
+		// carbon. So we'll currently just throw an error
+		// on that one case.
+		
+		if("C".equals(this.getSymbol()) && v>4){
+			return true;
+		}
+		if("N".equals(this.getSymbol())){
+			if(v==4){
+				if(this.getCharge()==1){
+					return false;
+				}else{
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 
 	@Override

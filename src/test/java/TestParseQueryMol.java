@@ -714,6 +714,19 @@ public class TestParseQueryMol {
 
 	
 	   	}
+	   	
+	  	@Test
+	   	public void testQueryAtomMolfileHasWriteAtoms2() throws Exception {
+	   		Chemical c=Chemical.parse("S(=O)(=O)(O)OC[#6,#7]");
+	   		System.out.println(c.toMol());
+	   		Chemical c2= Chemical.parse(c.toMol());
+	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
+	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);
+	       	assertTrue("Simple SMARTS keeps atom list", c.toMol().contains("0.0000 L   0"));
+	   		
+
+	
+	   	}
 	  
 	   	
 }

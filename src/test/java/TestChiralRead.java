@@ -365,4 +365,62 @@ public class TestChiralRead {
 			
 			assertEquals("Parity_Either", sdfChiral);
 	   	}
+		@Test
+	   	public void testRemoveNonDescriptHydrogensDoesntRemoveStereoInformationOnMol() throws Exception {
+
+	   		Chemical mol=Chemical.parse("\n" + 
+	   				"   JSDraw209282016242D\n" + 
+	   				"\n" + 
+	   				"  8  7  0  0  1  0            999 V2000\n" + 
+	   				"   28.5600   -9.6110    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   28.0990   -8.1210    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   27.6380   -9.6110    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   29.4510   -7.3410    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   30.9720   -7.6870    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   30.5110   -8.4850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   29.4510   -5.7810    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   26.7480   -7.3410    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"  1  2  1  0  0  0  0\n" + 
+	   				"  2  3  1  1  0  0  0\n" + 
+	   				"  2  4  1  0  0  0  0\n" + 
+	   				"  4  5  1  6  0  0  0\n" + 
+	   				"  4  6  1  0  0  0  0\n" + 
+	   				"  4  7  1  0  0  0  0\n" + 
+	   				"  2  8  1  0  0  0  0\n" + 
+	   				"M  END");
+	   		mol= Chemical.parse(mol.toMol());
+	   		Chemical mol2= Chemical.parse(mol.toSmiles());
+	   		mol2.removeNonDescriptHydrogens();
+	   		mol2.generateCoordinates();
+	   		mol2=Chemical.parse(mol2.toMol());
+	   		
+	   		String sdfChiral = mol2.atoms()
+					 .map(ca->ca.getChirality())
+					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
+					 .map(ch->ch.toString())
+					 .collect(Collectors.joining());
+			
+			assertEquals("SS", sdfChiral);
+	   		
+	   	}
+	  	
+	  	@Test
+	   	public void testMethaneRemoveNonDescriptHydrogensMakesRightSmiles() throws Exception {
+	   		Chemical mol=Chemical.parse("\n" + 
+	   				"   JSDraw209282013552D\n" + 
+	   				"\n" + 
+	   				"  4  3  0  0  0  0            999 V2000\n" + 
+	   				"   18.7200  -10.7328    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   20.0710   -9.9528    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   18.7200  -12.2928    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   17.3690   -9.9528    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"  1  2  1  0  0  0  0\n" + 
+	   				"  1  3  1  0  0  0  0\n" + 
+	   				"  1  4  1  0  0  0  0\n" + 
+	   				"M  END");
+	   		mol=Chemical.parse(mol.toSmiles());
+	   		mol.removeNonDescriptHydrogens();
+	   		assertEquals("C", mol.toSmiles());
+	   	}
+	  	
 }

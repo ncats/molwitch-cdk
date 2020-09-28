@@ -20,7 +20,9 @@
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -180,6 +182,8 @@ public class TestChiralRead {
 					"M  END";
 			Chemical c=Chemical.parse(mm);
 			
+			System.out.println(mm);
+			
 			String genChiral = c.atoms()
 			 .map(ca->ca.getChirality())
 			 .filter(ch->!ch.equals(Chirality.Non_Chiral))
@@ -211,4 +215,154 @@ public class TestChiralRead {
 			assertEquals(genChiral,sdfChiral);
 			
 		}
+		
+		@Test
+	   	public void testSimpleTetrahedralStereoMarked() throws Exception {
+			Chemical c1=Chemical.parse("\n" + 
+					"   JSDraw209282010112D\n" + 
+					"\n" + 
+					"  5  4  0  0  0  0              0 V2000\n" + 
+					"   23.6688   -9.1798    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   25.1766   -9.2022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   26.5285   -9.1725    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   25.1766   -7.6422    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   25.1766  -10.7622    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"  1  2  1  0  0  0  0\n" + 
+					"  2  3  1  0  0  0  0\n" + 
+					"  2  4  1  0  0  0  0\n" + 
+					"  2  5  1  0  0  0  0\n" + 
+					"M  END\n" + 
+					"");
+			
+//			System.out.println(c1.toMol());
+			
+			Optional<Chirality> opChi=c1.atoms()
+			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+			  .map(ca->ca.getChirality())
+			  .findFirst();
+			assertTrue(opChi.isPresent());
+			assertEquals(Chirality.Parity_Either, opChi.get());
+	   	}
+		/*
+
+		 */
+		
+		@Test
+	   	public void testSimpleTetrahedralStereoMarked2() throws Exception {
+			Chemical c1=Chemical.parse("\n" + 
+					"   JSDraw209282010292D\n" + 
+					"\n" + 
+					" 26 26  0  0  1  0            999 V2000\n" + 
+					"   41.5969   -8.3170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   40.0369   -8.3170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   39.2569   -9.6679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   40.0369  -11.0188    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   37.6969   -9.6679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   36.9169  -11.0199    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   37.6969  -12.3614    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   39.2569  -12.3588    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   36.9169  -13.7134    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   37.6971  -15.0642    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   39.2571  -15.0640    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   40.0302  -13.7090    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   41.5640  -13.6862    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   42.3968  -15.0595    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   43.9567  -15.0387    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   41.6237  -16.4143    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   40.0177  -16.3960    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   35.3570  -13.7134    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   34.5770  -15.0654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   35.3572  -16.4162    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   33.0170  -15.0654    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   32.2368  -16.4162    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   32.2370  -13.7134    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   30.6771  -13.7134    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   36.9169   -8.3159    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   37.6971   -6.9651    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"  1  2  1  0  0  0  0\n" + 
+					"  2  3  1  0  0  0  0\n" + 
+					"  3  4  1  6  0  0  0\n" + 
+					"  3  5  1  0  0  0  0\n" + 
+					"  5  6  1  6  0  0  0\n" + 
+					"  6  7  1  0  0  0  0\n" + 
+					"  7  8  2  0  0  0  0\n" + 
+					"  7  9  1  0  0  0  0\n" + 
+					"  9 10  1  6  0  0  0\n" + 
+					" 10 11  1  0  0  0  0\n" + 
+					" 11 12  2  0  0  0  0\n" + 
+					" 12 13  1  0  0  0  0\n" + 
+					" 13 14  2  0  0  0  0\n" + 
+					" 14 15  1  0  0  0  0\n" + 
+					" 14 16  1  0  0  0  0\n" + 
+					" 16 17  2  0  0  0  0\n" + 
+					" 11 17  1  0  0  0  0\n" + 
+					"  9 18  1  0  0  0  0\n" + 
+					" 18 19  1  0  0  0  0\n" + 
+					" 19 20  2  0  0  0  0\n" + 
+					" 19 21  1  0  0  0  0\n" + 
+					" 21 22  1  1  0  0  0\n" + 
+					" 21 23  1  0  0  0  0\n" + 
+					" 23 24  1  0  0  0  0\n" + 
+					"  5 25  1  0  0  0  0\n" + 
+					" 25 26  2  0  0  0  0\n" + 
+					"M  END");
+			String sdfChiral = c1.atoms()
+					 .map(ca->ca.getChirality())
+					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
+					 .map(ch->ch.toString())
+					 .collect(Collectors.joining());
+			
+			assertEquals("SSSR", sdfChiral);
+	   	}
+
+		@Test
+	   	public void testSulfoxideStereo() throws Exception {
+			Chemical c1=Chemical.parse("\n" + 
+					"   JSDraw209282010442D\n" + 
+					"\n" + 
+					"  5  4  0  0  1  0            999 V2000\n" + 
+					"   16.7440   -8.8731    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   18.0950   -8.0931    0.0000 S   0  3  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   19.4460   -8.8731    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   20.7970   -8.0931    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   18.0950   -6.5331    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" + 
+					"  1  2  1  0  0  0  0\n" + 
+					"  2  3  1  0  0  0  0\n" + 
+					"  3  4  1  0  0  0  0\n" + 
+					"  2  5  1  1  0  0  0\n" + 
+					"M  CHG  2   2   1   5  -1\n" + 
+					"M  END");
+			String sdfChiral = c1.atoms()
+					 .map(ca->ca.getChirality())
+					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
+					 .map(ch->ch.toString())
+					 .collect(Collectors.joining());
+			
+			assertEquals("R", sdfChiral);
+	   	}
+		@Test
+	   	public void testSulfoxideStereoPossible() throws Exception {
+			Chemical c1=Chemical.parse("\n" + 
+					"   JSDraw209282010462D\n" + 
+					"\n" + 
+					"  5  4  0  0  0  0            999 V2000\n" + 
+					"   16.7440   -8.8731    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   18.0950   -8.0931    0.0000 S   0  3  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   19.4460   -8.8731    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   20.7970   -8.0931    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   18.0950   -6.5331    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" + 
+					"  1  2  1  0  0  0  0\n" + 
+					"  2  3  1  0  0  0  0\n" + 
+					"  3  4  1  0  0  0  0\n" + 
+					"  2  5  1  0  0  0  0\n" + 
+					"M  CHG  2   2   1   5  -1\n" + 
+					"M  END");
+			String sdfChiral = c1.atoms()
+					 .map(ca->ca.getChirality())
+					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
+					 .map(ch->ch.toString())
+					 .collect(Collectors.joining());
+			
+			assertEquals("Parity_Either", sdfChiral);
+	   	}
 }

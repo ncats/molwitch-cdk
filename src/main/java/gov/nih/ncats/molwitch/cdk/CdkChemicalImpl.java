@@ -90,6 +90,7 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.openscience.cdk.tools.periodictable.PeriodicTable;
+import org.xmlcml.cml.base.CMLElement.Hybridization;
 
 import gov.nih.ncats.common.util.CachedSupplier;
 import gov.nih.ncats.common.util.CachedSupplierGroup;
@@ -142,6 +143,36 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     
     CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
 	    	CIPTool.label(container);
+	    	Stereocenters  centers   = Stereocenters.of(container);
+	    	for (int i = 0; i < container.getAtomCount(); i++) {
+	    		switch(centers.stereocenterType(i)){
+					case Non:
+						break;
+					case Para:
+					case Potential:
+						break;
+					case True:
+						IAtom ai=container.getAtom(i);
+						if(ai.getProperty(CDKConstants.CIP_DESCRIPTOR) == null){
+							// we only really set it if it's tetrahedral CARBON
+							// right now,
+							boolean bailout=false;
+							for(IBond ib:ai.bonds()){
+								if(!Order.SINGLE.equals(ib.getOrder())){
+									bailout=true;
+									break;
+								}								
+							}
+							if(bailout)continue;
+							
+							container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+							
+						}
+						break;
+					default:
+						break;
+	    		}
+	    	}
 	    	return null;
     }
     	);

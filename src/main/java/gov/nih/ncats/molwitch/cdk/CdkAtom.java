@@ -298,6 +298,10 @@ public class CdkAtom implements Atom{
 		if("S".equals(value)) {
 			return Chirality.S;
 		}
+		if("EITHER".equals(value)) {
+			return Chirality.Parity_Either;
+		}
+		
 		return Chirality.Non_Chiral;
 	}
 

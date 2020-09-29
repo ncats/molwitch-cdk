@@ -21,22 +21,16 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-
-import gov.nih.ncats.common.functions.ThrowableFunction;
-import gov.nih.ncats.molwitch.ChemicalSource;
-import gov.nih.ncats.molwitch.SmartsSource;
-import gov.nih.ncats.molwitch.ChemicalSource.CommonProperties;
-import gov.nih.ncats.molwitch.SmilesSource;
-import gov.nih.ncats.molwitch.io.ChemFormat;
-import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification;
-import gov.nih.ncats.molwitch.io.ChemFormat.SdfFormatSpecification;
-import gov.nih.ncats.molwitch.io.ChemFormat.SmilesFormatWriterSpecification;
-import gov.nih.ncats.molwitch.internal.source.MolStringSource;
 
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
 import org.openscience.cdk.exception.CDKException;
@@ -44,22 +38,31 @@ import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomType;
-import org.openscience.cdk.io.IChemObjectReader;
-import org.openscience.cdk.io.MDLV2000Reader;
-import org.openscience.cdk.io.formats.*;
+import org.openscience.cdk.io.formats.IChemFormat;
+import org.openscience.cdk.io.formats.MDLV2000Format;
+import org.openscience.cdk.io.formats.SDFFormat;
+import org.openscience.cdk.io.formats.SMILESFormat;
 import org.openscience.cdk.io.iterator.IIteratingChemObjectReader;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
-import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smarts.Smarts;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
+import gov.nih.ncats.common.io.InputStreamSupplier;
+import gov.nih.ncats.molwitch.ChemicalSource;
+import gov.nih.ncats.molwitch.ChemicalSource.CommonProperties;
+import gov.nih.ncats.molwitch.SmartsSource;
+import gov.nih.ncats.molwitch.SmilesSource;
+import gov.nih.ncats.molwitch.internal.source.MolStringSource;
+import gov.nih.ncats.molwitch.io.ChemFormat;
+import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification;
+import gov.nih.ncats.molwitch.io.ChemFormat.SdfFormatSpecification;
+import gov.nih.ncats.molwitch.io.ChemFormat.SmilesFormatWriterSpecification;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalImplFactory;
 import gov.nih.ncats.molwitch.spi.ChemicalImplReader;
-import gov.nih.ncats.common.io.InputStreamSupplier;
 
 public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 

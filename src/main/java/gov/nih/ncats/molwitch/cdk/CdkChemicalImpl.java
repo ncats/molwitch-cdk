@@ -164,12 +164,21 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 									break;
 								}								
 							}
+							
 							if(bailout){
 //								System.out.println("It's real but ...");
 //								System.out.println(centers.elementType(i));
 								
 								continue;
 							}
+							if("N".equals(ai.getSymbol())){
+								if(ai.getFormalCharge()==0){
+									//only charged nitrogens allowed
+									continue;
+								}
+							}
+							
+							
 							
 							container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
 							

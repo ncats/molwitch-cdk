@@ -41,7 +41,7 @@ public class TestChiralRead {
 	   public void ensureChiralityIsTheSameRegardlessOfSDFOrMolOrAgnosticRead() throws Exception{
  	   
  	   String mm="\n" + 
-					"  CDK     09262014553D\n" + 
+					"  CDK     09262014552D\n" +
 					"\n" + 
 					" 69 71  0  0  1  0  0  0  0  0999 V2000\n" + 
 					"    7.4100    3.6690    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 

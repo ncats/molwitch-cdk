@@ -81,8 +81,9 @@ public class CtabWriterUtil {
         };
 
 
-        Function<IAtomContainer, IAtomContainer> coordinateAdapter;
+        Function<IAtomContainer, IAtomContainer> coordinateAdapter = Function.identity();
         switch (spec.getCoordinateOptions()) {
+            case AS_IS: break;
             case FORCE_2D:
                 customSettings.setProperty(
                         "OptForceWriteAs2DCoordinates", Boolean.toString(true)
@@ -115,7 +116,8 @@ public class CtabWriterUtil {
                     }
                 };
                 break;
-            default:
+
+            case FORCE_3D:
                 customSettings.setProperty(
                         "OptForceWriteAs2DCoordinates", Boolean.toString(false)
                 );
@@ -136,7 +138,9 @@ public class CtabWriterUtil {
                         }
                         for (IAtom a : clone.atoms()) {
                             Point2d points = a.getPoint2d();
-                            if (points != null) {
+
+                            if(points !=null){
+
                                 a.setPoint3d(new Point3d(points.x, points.y, 0));
                             }
                         }

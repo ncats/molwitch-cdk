@@ -234,8 +234,6 @@ public class TestChiralRead {
 					"M  END\n" + 
 					"");
 			
-//			System.out.println(c1.toMol());
-			
 			Optional<Chirality> opChi=c1.atoms()
 			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 			  .map(ca->ca.getChirality())
@@ -243,6 +241,37 @@ public class TestChiralRead {
 			assertTrue(opChi.isPresent());
 			assertEquals(Chirality.Parity_Either, opChi.get());
 	   	}
+		@Test
+	   	public void testSimpleTetrahedralStereoMarkedAsCenter() throws Exception {
+			Chemical c1=Chemical.parse("\n" + 
+					"   JSDraw209282010112D\n" + 
+					"\n" + 
+					"  5  4  0  0  0  0              0 V2000\n" + 
+					"   23.6688   -9.1798    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   25.1766   -9.2022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   26.5285   -9.1725    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   25.1766   -7.6422    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   25.1766  -10.7622    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"  1  2  1  0  0  0  0\n" + 
+					"  2  3  1  0  0  0  0\n" + 
+					"  2  4  1  0  0  0  0\n" + 
+					"  2  5  1  0  0  0  0\n" + 
+					"M  END\n" + 
+					"");
+//			c1.getAllStereocenters()
+//				.forEach(s->{
+//					System.out.println(s.getChirality());
+//				});
+			
+			Optional<Chirality> opChi=c1.getAllStereocenters().stream()
+			  .map(ca->ca.getChirality())
+			  .findFirst();
+			assertTrue(opChi.isPresent());
+			assertEquals(Chirality.Parity_Either, opChi.get());
+	   	}
+		
+		
+		
 		/*
 
 		 */
@@ -389,7 +418,12 @@ public class TestChiralRead {
 	   				"  2  8  1  0  0  0  0\n" + 
 	   				"M  END");
 	   		mol= Chemical.parse(mol.toMol());
-	   		Chemical mol2= Chemical.parse(mol.toSmiles());
+	   		Chemical mol2= Chemical.createFromSmiles(mol.toSmiles());
+	   		if(!mol2.hasCoordinates()){
+	   			mol2.generateCoordinates();
+	   		}
+	   		System.out.println(mol2.hasCoordinates());
+	   		System.out.println(mol2.toMol());
 	   		mol2.removeNonDescriptHydrogens();
 	   		mol2.generateCoordinates();
 	   		mol2=Chemical.parse(mol2.toMol());
@@ -401,8 +435,36 @@ public class TestChiralRead {
 					 .collect(Collectors.joining());
 			
 			assertEquals("SS", sdfChiral);
-	   		
 	   	}
+		@Test
+	   	public void testReadingSmilesShouldNotGenerateCoordinates() throws Exception {
+
+	   		Chemical mol=Chemical.parse("\n" + 
+	   				"   JSDraw209282016242D\n" + 
+	   				"\n" + 
+	   				"  8  7  0  0  1  0            999 V2000\n" + 
+	   				"   28.5600   -9.6110    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   28.0990   -8.1210    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   27.6380   -9.6110    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   29.4510   -7.3410    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   30.9720   -7.6870    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   30.5110   -8.4850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   29.4510   -5.7810    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"   26.7480   -7.3410    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+	   				"  1  2  1  0  0  0  0\n" + 
+	   				"  2  3  1  1  0  0  0\n" + 
+	   				"  2  4  1  0  0  0  0\n" + 
+	   				"  4  5  1  6  0  0  0\n" + 
+	   				"  4  6  1  0  0  0  0\n" + 
+	   				"  4  7  1  0  0  0  0\n" + 
+	   				"  2  8  1  0  0  0  0\n" + 
+	   				"M  END");
+	   		Chemical mol2= Chemical.createFromSmiles(mol.toSmiles());
+	   		
+			
+			assertEquals("false", mol2.hasCoordinates()+"");
+	   	}
+		
 	  	
 	  	@Test
 	   	public void testMethaneRemoveNonDescriptHydrogensMakesRightSmiles() throws Exception {
@@ -421,6 +483,39 @@ public class TestChiralRead {
 	   		mol=Chemical.parse(mol.toSmiles());
 	   		mol.removeNonDescriptHydrogens();
 	   		assertEquals("C", mol.toSmiles());
+	   	}
+	  	
+	  	@Test
+	   	public void testSimpleExtendedTetrahedralStereoMarkedAsCenter() throws Exception {
+			Chemical c1=Chemical.parse("\n" + 
+					"   JSDraw209282018142D\n" + 
+					"\n" + 
+					"  7  6  0  0  1  0            999 V2000\n" + 
+					"   10.0360   -7.4984    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   11.3870   -6.7184    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   13.0510   -5.7824    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   10.0360   -9.0584    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"    8.6850   -6.7184    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   13.0510   -4.2224    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   14.4540   -6.5624    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"  1  2  2  0  0  0  0\n" + 
+					"  2  3  2  0  0  0  0\n" + 
+					"  1  4  1  0  0  0  0\n" + 
+					"  1  5  1  0  0  0  0\n" + 
+					"  3  6  1  6  0  0  0\n" + 
+					"  3  7  1  1  0  0  0\n" + 
+					"M  END");
+//			c1.getAllStereocenters()
+//				.forEach(s->{
+//					System.out.println(s);
+//					System.out.println(s.getChirality());
+//				});
+//			
+			Optional<Chirality> opChi=c1.getAllStereocenters().stream()
+			  .map(ca->ca.getChirality())
+			  .findFirst();
+			assertTrue(opChi.isPresent());
+			assertEquals(Chirality.S, opChi.get());
 	   	}
 	  	
 }

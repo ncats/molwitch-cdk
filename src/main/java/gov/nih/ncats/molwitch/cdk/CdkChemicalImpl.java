@@ -100,6 +100,7 @@ import gov.nih.ncats.molwitch.AtomCoordinates;
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Bond.BondType;
 import gov.nih.ncats.molwitch.BondTable;
+import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.ChemicalSource;
 import gov.nih.ncats.molwitch.ChemkitException;
 import gov.nih.ncats.molwitch.Chirality;
@@ -163,7 +164,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 									break;
 								}								
 							}
-							if(bailout)continue;
+							if(bailout){
+//								System.out.println("It's real but ...");
+//								System.out.println(centers.elementType(i));
+								
+								continue;
+							}
 							
 							container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
 							
@@ -904,6 +910,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public List<ExtendedTetrahedralChirality> getExtendedTetrahedrals() {
 		List<ExtendedTetrahedralChirality> list = new ArrayList<>();
 		cahnIngoldPrelogSupplier.get();
+		//TODO: this only finds defined stereocenters, it doesn't
+		//find stereo centers that could be defined later
 		for(IStereoElement se : container.stereoElements()){
 			if(se instanceof ExtendedTetrahedral){
 				
@@ -915,19 +923,30 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	@Override
 	public List<TetrahedralChirality> getTetrahedrals() {
-		List<TetrahedralChirality> list = new ArrayList<>();
 
 		cahnIngoldPrelogSupplier.get();
 		
-		for(IStereoElement se : container.stereoElements()){
-			if(se instanceof ITetrahedralChirality){
-				 ITetrahedralChirality chirality = (ITetrahedralChirality) se;
-				 list.add(new CdkTetrahedralChirality(chirality));
-
-			}
-		}
-		return list;
 		
+		Chemical c= new Chemical(this);
+		return c.atoms()
+		 .filter(ca->{
+			 switch(ca.getChirality()){
+			case Non_Chiral:
+				break;
+			case Parity_Either:
+			case R:
+			case S:
+				return true;
+			case Unknown:
+				break;
+			default:
+				break;
+			 
+			 }
+			 return false;
+		 })
+		 .map(ca->new CdkTetrahedralChirality2(ca))
+		 .collect(Collectors.toList());		
 	}
 
 	@Override
@@ -1246,6 +1265,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if("R".equals(value)) {
 			return Chirality.R;
 		}
+		if("EITHER".equals(value)) {
+			return Chirality.Parity_Either;
+		}
 		if("NONE".equals(value)) {
 			return Chirality.Non_Chiral;
 		}
@@ -1308,9 +1330,57 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			atoms.add(getLigand(3));
 			return atoms;
 		}
+	}
+	
+	private class CdkTetrahedralChirality2 implements TetrahedralChirality{
+		private final Atom ia;
+		private final Atom[] ligands;
 		
-		
-		
+		public CdkTetrahedralChirality2(Atom ai) {
+			this.ia = ai;
+			ligands = new Atom[4];
+			List<Atom> nats= getCenterAtom().getNeighbors();
+			
+			for(int i=0;i<nats.size();i++){
+				ligands[i] = nats.get(i);
+			}
+		}
+
+		@Override
+		public boolean isDefined() {
+			Atom ca= getCenterAtom();
+			Chirality c=ca.getChirality();
+			// Chirality.R.equals(c) || Chirality.S.equals(c)
+			// TODO: really, it can be defined and not be R/S,
+			// as in some rings. Should fix.
+			
+			return Chirality.R.equals(c) || Chirality.S.equals(c);
+		}
+
+		@Override
+		public Atom getCenterAtom() {
+			return ia;
+		}
+
+		@Override
+		public Chirality getChirality() {
+			 return getCenterAtom().getChirality();
+		}		
+
+		@Override
+		public Atom getLigand(int i) {
+			return ligands[i];
+		}
+
+		@Override
+		public List<Atom> getPeripheralAtoms() {
+			List<Atom> atoms = new ArrayList<Atom>(4);
+			atoms.add(getLigand(0));
+			atoms.add(getLigand(1));
+			atoms.add(getLigand(2));
+			atoms.add(getLigand(3));
+			return atoms;
+		}
 	}
 	
 	private class CDKSgroupAdapter implements SGroup{

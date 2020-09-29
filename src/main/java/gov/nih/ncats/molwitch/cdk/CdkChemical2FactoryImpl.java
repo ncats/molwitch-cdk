@@ -113,10 +113,10 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
 
 
-		StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(mol);
-		coordinateGenerator.generateExperimentalCoordinates();
+		//StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(mol);
+		//coordinateGenerator.generateExperimentalCoordinates();
 		//coordinateGenerator.generateCoordinates(coordinateGenerator.DEFAULT_BOND_VECTOR, true, true);
-		mol = coordinateGenerator.getMolecule();
+		//mol = coordinateGenerator.getMolecule();
 
 
 		return mol;

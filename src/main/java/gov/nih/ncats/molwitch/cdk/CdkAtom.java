@@ -417,7 +417,7 @@ public class CdkAtom implements Atom{
 			return true;
 		}
 		if("N".equals(this.getSymbol())){
-			if(v==4){
+			if(v==5){
 				if(this.getCharge()==1){
 					return false;
 				}else{

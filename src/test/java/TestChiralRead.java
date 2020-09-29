@@ -559,6 +559,20 @@ public class TestChiralRead {
 			assertTrue(opChi.isPresent());
 			assertEquals(Chirality.Parity_Either, opChi.get());
 	   	}
-	  	
+		@Test
+	   	public void testQueryStructureSimpleTetrahedralStereoDoesntError() throws Exception {
+			Chemical c1=Chemical.parse("S(=O)(=O)(O)O-C-[#6]");
+//			c1.getAllStereocenters()
+//				.forEach(s->{
+//					System.out.println(s);
+//					System.out.println(s.getChirality());
+//				});
+//			
+			Optional<Chirality> opChi=c1.getAllStereocenters().stream()
+			  .map(ca->ca.getChirality())
+			  .findFirst();
+			assertTrue(!opChi.isPresent());
+//			assertEquals(Chirality.Parity_Either, opChi.get());
+	   	}
 	  	
 }

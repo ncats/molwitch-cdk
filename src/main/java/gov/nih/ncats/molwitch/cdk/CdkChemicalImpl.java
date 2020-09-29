@@ -144,6 +144,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     
     CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
 	    	CIPTool.label(container);
+	    	this.doWithQueryFixes(()->{
 	    	Stereocenters  centers   = Stereocenters.of(container);
 	    	for (int i = 0; i < container.getAtomCount(); i++) {
 	    		switch(centers.stereocenterType(i)){
@@ -188,6 +189,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 						break;
 	    		}
 	    	}
+	    	},false);
+	    	
 	    	return null;
     }
     	);

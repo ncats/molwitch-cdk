@@ -153,6 +153,7 @@ public class CdkUtil {
 
     			if(ibo.isAromatic()){
     				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
+    				
     			}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
 					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
     			}

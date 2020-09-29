@@ -21,7 +21,15 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -33,7 +41,6 @@ import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
-import gov.nih.ncats.common.util.Unchecked;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -83,14 +90,17 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.openscience.cdk.tools.periodictable.PeriodicTable;
+import org.xmlcml.cml.base.CMLElement.Hybridization;
 
 import gov.nih.ncats.common.util.CachedSupplier;
 import gov.nih.ncats.common.util.CachedSupplierGroup;
+import gov.nih.ncats.common.util.Unchecked;
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.AtomCoordinates;
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Bond.BondType;
 import gov.nih.ncats.molwitch.BondTable;
+import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.ChemicalSource;
 import gov.nih.ncats.molwitch.ChemkitException;
 import gov.nih.ncats.molwitch.Chirality;
@@ -134,6 +144,41 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     
     CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
 	    	CIPTool.label(container);
+	    	Stereocenters  centers   = Stereocenters.of(container);
+	    	for (int i = 0; i < container.getAtomCount(); i++) {
+	    		switch(centers.stereocenterType(i)){
+					case Non:
+						break;
+					case Para:
+					case Potential:
+						break;
+					case True:
+						IAtom ai=container.getAtom(i);
+						if(ai.getProperty(CDKConstants.CIP_DESCRIPTOR) == null){
+							// we only really set it if it's tetrahedral CARBON
+							// right now,
+							boolean bailout=false;
+							for(IBond ib:ai.bonds()){
+								if(!Order.SINGLE.equals(ib.getOrder())){
+									bailout=true;
+									break;
+								}								
+							}
+							if(bailout){
+//								System.out.println("It's real but ...");
+//								System.out.println(centers.elementType(i));
+								
+								continue;
+							}
+							
+							container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+							
+						}
+						break;
+					default:
+						break;
+	    		}
+	    	}
 	    	return null;
     }
     	);
@@ -243,6 +288,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	
 	@Override
+	//TODO: This is a weird thing to ask for ...
+	// someone might want SSSR, but not typically the
+	// smallest absolute ring.
+	//
+	// They may, however, want the smallest ring for
+	// a particular bond/atom. Perhaps that's where
+	// this came from?
 	public int getSmallestRingSize() {
 		IRingSet ringSet = Cycles.sssr(container).toRingSet();
 		int numRings = ringSet.getAtomContainerCount();
@@ -543,12 +595,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		return container;
 	}
 	
-	private <E extends Throwable> void doWithQueryFixes(Unchecked.ThrowingRunnable<E> r) throws E{
+	private <E extends Throwable> void doWithQueryFixes(Unchecked.ThrowingRunnable<E> r, boolean mustSet) throws E{
 		Map<IAtom, Integer> oldAI = new HashMap<>();
 		Map<IAtom, Integer> oldIH = new HashMap<>();
 		Map<IAtom, Integer> oldFC = new HashMap<>();
-		Map<IBond, Integer> oldOrder = new HashMap<>();
-		
+		Map<IBond, Order> oldOrder = new HashMap<>();
+//		
 		for(IAtom atom : container.atoms()){
 	         if(atom.getAtomicNumber()==null){
 	        	 oldAI.put(atom, null);
@@ -560,24 +612,29 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	         }
 	         if(atom.getImplicitHydrogenCount()==null){
 	        	 oldIH.put(atom, null);
-	        	 atom.setImplicitHydrogenCount(0);
+	        	 //this is really unfortunate, because it 
+	        	 atom.setImplicitHydrogenCount(0);	        	 
 	         }
 	         
 	    } 
 		for(IBond bond : container.bonds()){
 			if(bond.getOrder()==null || bond.getOrder().equals(Order.UNSET)){
+				Order oorder=bond.getOrder();
 				if(bond instanceof QueryBond){
 					QueryBond qb = (QueryBond)bond;
 					if(qb.getExpression().type().equals(Expr.Type.ALIPHATIC_ORDER)||qb.getExpression().type().equals(Expr.Type.ORDER)){
+						
 						bond.setOrder(Order.values()[qb.getExpression().value()-1]);
-						oldOrder.put(bond, null);
+						oldOrder.put(bond, oorder);
 					}else{
 						bond.setOrder(Order.SINGLE);
-						oldOrder.put(bond, null);
+						oldOrder.put(bond, oorder);
 					}
 				}else{
-					bond.setOrder(Order.SINGLE);
-					oldOrder.put(bond, null);
+					if(mustSet){
+						bond.setOrder(Order.SINGLE);
+						oldOrder.put(bond, oorder);
+					}
 				}
 			}
 		}
@@ -595,7 +652,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	        	at.setFormalCharge(null);
 	        }
 	        for(IBond ib: oldOrder.keySet()){
-	        	ib.setOrder(Order.UNSET);
+	        	ib.setOrder(oldOrder.get(ib));
 	        }
 		}
 	}
@@ -634,11 +691,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			
 			perceiveAtomTypesOfNonQueryAtoms.get();
 //			fix();
-			
+
 			kekulize();
-			
+
 			setImplicitHydrogens();
-			doWithQueryFixes(()->aromaticity.apply(container));
+			doWithQueryFixes(()->aromaticity.apply(container),true);
 			
 			
 			// Due to the way queries are handled, an attempt
@@ -682,7 +739,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		isAromatic = true;
+//		isAromatic = true;
 	}
 	
 	private void percieveAtomTypeAndConfigureNonQueryAtoms() throws CDKException{
@@ -713,7 +770,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public void generateCoordinates() throws ChemkitException{
 		try {
 			StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(container);
-			doWithQueryFixes(coordinateGenerator::generateCoordinates);
+			doWithQueryFixes(coordinateGenerator::generateCoordinates,false);
 			container = coordinateGenerator.getMolecule();
 		}catch(Exception e) {
 			throw new ChemkitException(e.getMessage(), e);
@@ -790,7 +847,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		try {
 			doWithQueryFixes(()->{
 				
-				isAromatic=false;
 				Kekulization.kekulize(container);
 
 				//kekulize doesn't touch the aromatic bond flags
@@ -798,8 +854,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				for(IBond bond : container.bonds()){
 					bond.setIsAromatic(false);
 				}
-			    
-			});
+				isAromatic=false;
+			},false);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -853,6 +910,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public List<ExtendedTetrahedralChirality> getExtendedTetrahedrals() {
 		List<ExtendedTetrahedralChirality> list = new ArrayList<>();
 		cahnIngoldPrelogSupplier.get();
+		//TODO: this only finds defined stereocenters, it doesn't
+		//find stereo centers that could be defined later
 		for(IStereoElement se : container.stereoElements()){
 			if(se instanceof ExtendedTetrahedral){
 				
@@ -864,19 +923,30 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	@Override
 	public List<TetrahedralChirality> getTetrahedrals() {
-		List<TetrahedralChirality> list = new ArrayList<>();
 
 		cahnIngoldPrelogSupplier.get();
 		
-		for(IStereoElement se : container.stereoElements()){
-			if(se instanceof ITetrahedralChirality){
-				 ITetrahedralChirality chirality = (ITetrahedralChirality) se;
-				 list.add(new CdkTetrahedralChirality(chirality));
-
-			}
-		}
-		return list;
 		
+		Chemical c= new Chemical(this);
+		return c.atoms()
+		 .filter(ca->{
+			 switch(ca.getChirality()){
+			case Non_Chiral:
+				break;
+			case Parity_Either:
+			case R:
+			case S:
+				return true;
+			case Unknown:
+				break;
+			default:
+				break;
+			 
+			 }
+			 return false;
+		 })
+		 .map(ca->new CdkTetrahedralChirality2(ca))
+		 .collect(Collectors.toList());		
 	}
 
 	@Override
@@ -1187,7 +1257,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
 		
 	}
-	private static Chirality convetCIPValueToChirality(IAtom center) {
+	private static Chirality convertCIPValueToChirality(IAtom center) {
 		String value =center.getProperty(CDKConstants.CIP_DESCRIPTOR);
 		if("S".equals(value)) {
 			return Chirality.S;
@@ -1195,13 +1265,17 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if("R".equals(value)) {
 			return Chirality.R;
 		}
+		if("EITHER".equals(value)) {
+			return Chirality.Parity_Either;
+		}
 		if("NONE".equals(value)) {
 			return Chirality.Non_Chiral;
 		}
-		System.out.println("stereo is not S or R but it's '" + value +"'");
+//		System.out.println("stereo is not S or R but it's '" + value +"'");
 		return Chirality.Unknown;
 	}
 	private static Chirality convertCdkStereoToChirality(Stereo stereoType) {
+		//I don't think this is right
 		switch(stereoType){
 			 case ANTI_CLOCKWISE : return Chirality.S;
 			 case CLOCKWISE : return Chirality.R;
@@ -1237,7 +1311,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 		@Override
 		public Chirality getChirality() {
-			 return convetCIPValueToChirality(chirality.getChiralAtom());
+			 return convertCIPValueToChirality(chirality.getChiralAtom());
 		}
 
 		
@@ -1256,9 +1330,57 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			atoms.add(getLigand(3));
 			return atoms;
 		}
+	}
+	
+	private class CdkTetrahedralChirality2 implements TetrahedralChirality{
+		private final Atom ia;
+		private final Atom[] ligands;
 		
-		
-		
+		public CdkTetrahedralChirality2(Atom ai) {
+			this.ia = ai;
+			ligands = new Atom[4];
+			List<Atom> nats= getCenterAtom().getNeighbors();
+			
+			for(int i=0;i<nats.size();i++){
+				ligands[i] = nats.get(i);
+			}
+		}
+
+		@Override
+		public boolean isDefined() {
+			Atom ca= getCenterAtom();
+			Chirality c=ca.getChirality();
+			// Chirality.R.equals(c) || Chirality.S.equals(c)
+			// TODO: really, it can be defined and not be R/S,
+			// as in some rings. Should fix.
+			
+			return Chirality.R.equals(c) || Chirality.S.equals(c);
+		}
+
+		@Override
+		public Atom getCenterAtom() {
+			return ia;
+		}
+
+		@Override
+		public Chirality getChirality() {
+			 return getCenterAtom().getChirality();
+		}		
+
+		@Override
+		public Atom getLigand(int i) {
+			return ligands[i];
+		}
+
+		@Override
+		public List<Atom> getPeripheralAtoms() {
+			List<Atom> atoms = new ArrayList<Atom>(4);
+			atoms.add(getLigand(0));
+			atoms.add(getLigand(1));
+			atoms.add(getLigand(2));
+			atoms.add(getLigand(3));
+			return atoms;
+		}
 	}
 	
 	private class CDKSgroupAdapter implements SGroup{

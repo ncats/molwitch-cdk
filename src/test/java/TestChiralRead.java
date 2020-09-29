@@ -20,15 +20,20 @@
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
 
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.Chirality;
+import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
 
 public class TestChiralRead {
@@ -517,5 +522,43 @@ public class TestChiralRead {
 			assertTrue(opChi.isPresent());
 			assertEquals(Chirality.S, opChi.get());
 	   	}
+	  	
+		@Test
+	   	public void testSimpleTetrahedralStereoOnQuatAmineMarkedAsCenter() throws Exception {
+			Chemical c1=Chemical.parse("\n" + 
+					"   JSDraw209282021202D\n" + 
+					"\n" + 
+					"  8  7  0  0  0  0              0 V2000\n" + 
+					"   14.8200  -10.2960    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   16.1710   -9.5160    0.0000 N   0  3  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   16.1710   -7.9560    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   17.5220  -10.2960    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   14.8200   -7.1760    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   18.8730   -9.5160    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   18.8730   -7.9560    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"   16.1710  -11.0760    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
+					"  1  2  1  0  0  0  0\n" + 
+					"  2  3  1  0  0  0  0\n" + 
+					"  2  4  1  0  0  0  0\n" + 
+					"  3  5  1  0  0  0  0\n" + 
+					"  4  6  1  0  0  0  0\n" + 
+					"  6  7  1  0  0  0  0\n" + 
+					"  2  8  1  0  0  0  0\n" + 
+					"M  CHG  1   2   1\n" + 
+					"M  END\n" + 
+					"");
+//			c1.getAllStereocenters()
+//				.forEach(s->{
+//					System.out.println(s);
+//					System.out.println(s.getChirality());
+//				});
+//			
+			Optional<Chirality> opChi=c1.getAllStereocenters().stream()
+			  .map(ca->ca.getChirality())
+			  .findFirst();
+			assertTrue(opChi.isPresent());
+			assertEquals(Chirality.Parity_Either, opChi.get());
+	   	}
+	  	
 	  	
 }

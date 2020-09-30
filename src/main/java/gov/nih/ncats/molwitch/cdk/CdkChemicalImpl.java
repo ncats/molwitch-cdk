@@ -584,7 +584,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 		double d=AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
 		
-		if(Double.isNaN(d)){
+		if(Double.isNaN(d) || (d<0.01 && this.getAtomCount()>0)){
 		
 			double off=0;
 			
@@ -598,6 +598,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 							.filter(mm->mm.getIsotopicComposition()!=null)
 							.map(aa->aa.getRelativeAtomicMass().getValue().doubleValue())
 							.orElseGet(()->{
+								
 								if(mostStable[an]!=0)return (double)mostStable[an]; 
 								List<Isotope> ilist= NISTIsotopeFactory.INSTANCE.getIsotopesFor(an).stream()
 										    .sorted(Comparator.comparing(an1->an1.getRelativeAtomicMass().getValue().doubleValue()))

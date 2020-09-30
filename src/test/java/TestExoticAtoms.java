@@ -18,7 +18,7 @@ public class TestExoticAtoms {
                     
            
            Chemical c = Chemical.parse(mol);
-           for(int i=1;i<119;i++){
+           for(int i=1;i<=118;i++){
         	   c.getAtom(0).setAtomicNumber(i);
         	   double  mass = c.getMass();
         	   assertTrue(mass>0.01);

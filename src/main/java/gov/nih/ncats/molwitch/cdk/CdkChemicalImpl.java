@@ -23,8 +23,10 @@ package gov.nih.ncats.molwitch.cdk;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -90,7 +92,6 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.openscience.cdk.tools.periodictable.PeriodicTable;
-import org.xmlcml.cml.base.CMLElement.Hybridization;
 
 import gov.nih.ncats.common.util.CachedSupplier;
 import gov.nih.ncats.common.util.CachedSupplierGroup;
@@ -113,6 +114,7 @@ import gov.nih.ncats.molwitch.SGroup.SGroupType;
 import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.isotopes.Isotope;
+import gov.nih.ncats.molwitch.isotopes.NISTIsotopeFactory;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 
 public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
@@ -131,6 +133,55 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     Map<Integer, Map<Integer, CdkBond>> bondMap = new HashMap<>();
 
     private final Aromaticity      aromaticity = new Aromaticity(ElectronDonation.daylight(), Cycles.or(Cycles.all(), Cycles.all(6)));
+    
+    private final static int[] mostStable = new int[119];
+    private final static BitSet cdkMissing = new BitSet();
+	
+
+    static{
+		
+		mostStable[94]=244;
+		mostStable[96]=247;
+		mostStable[43]=97; 
+		mostStable[93]=237;
+		mostStable[91]=231;
+		mostStable[95]=243;
+		mostStable[88]=226;
+		mostStable[97]=247;
+		mostStable[98]=251;
+		mostStable[84]=209;
+		mostStable[89]=227;
+		mostStable[61]=145;
+		mostStable[99]=252;
+		mostStable[100]=257;
+		mostStable[101]=258;
+		mostStable[86]=222;
+		mostStable[105]=268;
+		mostStable[103]=266;
+		mostStable[85]=210;
+		mostStable[104]=267;
+		mostStable[102]=259;
+		mostStable[87]=223;
+		mostStable[106]=269;
+		mostStable[111]=282;
+		mostStable[107]=270;
+		mostStable[112]=285;
+		mostStable[108]=269;
+		mostStable[110]=281;
+		mostStable[113]=286;
+		mostStable[109]=278;
+		mostStable[114]=289;
+		mostStable[115]=290;
+		mostStable[116]=293;
+		mostStable[117]=294;
+		mostStable[118]=294;
+		
+		cdkMissing.set(43);
+		cdkMissing.set(61);
+		for(int i=84;i<=89;i++)cdkMissing.set(i);
+		for(int i=93;i<=118;i++)cdkMissing.set(i);
+		
+    }
 
     CachedSupplier<Void> perceiveAtomTypesOfNonQueryAtoms = CachedSupplier.of(()->{
     	try {
@@ -531,7 +582,49 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if(recomputeHydrogens){
 			setImplicitHydrogens();
 		}
-		return AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
+		double d=AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
+		
+		if(Double.isNaN(d)){
+		
+			double off=0;
+			
+			Map<IAtom, Integer> realAtomicNums = new HashMap<IAtom,Integer>();
+			
+			
+			for(IAtom a : container.atoms()){
+				int an= a.getAtomicNumber();
+				if(cdkMissing.get(an)){
+					double m = NISTIsotopeFactory.INSTANCE.getMostAbundant(an)
+							.filter(mm->mm.getIsotopicComposition()!=null)
+							.map(aa->aa.getRelativeAtomicMass().getValue().doubleValue())
+							.orElseGet(()->{
+								if(mostStable[an]!=0)return (double)mostStable[an]; 
+								List<Isotope> ilist= NISTIsotopeFactory.INSTANCE.getIsotopesFor(an).stream()
+										    .sorted(Comparator.comparing(an1->an1.getRelativeAtomicMass().getValue().doubleValue()))
+										    .collect(Collectors.toList());;
+								if(ilist.isEmpty())return 0.0;
+								Isotope iso = ilist.get(ilist.size()/2);
+								
+								return (double)Math.round(iso.getRelativeAtomicMass().getValue().doubleValue());
+							});
+					
+					off+=m;
+					a.setSymbol("R");
+					realAtomicNums.put(a, an);
+				}
+			}
+			double base=AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
+			realAtomicNums.forEach((a,i)->{
+				a.setAtomicNumber(i);
+			});
+			
+			d=base+off;
+		
+			//this means there's an isotope issue
+			//the fix, for now, is this ugly one
+			
+		}
+		return d;
 	}
 
 	@Override

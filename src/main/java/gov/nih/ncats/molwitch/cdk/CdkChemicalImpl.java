@@ -103,7 +103,7 @@ import gov.nih.ncats.molwitch.Bond.BondType;
 import gov.nih.ncats.molwitch.BondTable;
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.ChemicalSource;
-import gov.nih.ncats.molwitch.ChemkitException;
+import gov.nih.ncats.molwitch.MolwitchException;
 import gov.nih.ncats.molwitch.Chirality;
 import gov.nih.ncats.molwitch.DoubleBondStereochemistry;
 import gov.nih.ncats.molwitch.ExtendedTetrahedralChirality;
@@ -873,13 +873,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
 	}
 	@Override
-	public void generateCoordinates() throws ChemkitException{
+	public void generateCoordinates() throws MolwitchException{
 		try {
 			StructureDiagramGenerator coordinateGenerator = new StructureDiagramGenerator(container);
 			doWithQueryFixes(coordinateGenerator::generateCoordinates,false);
 			container = coordinateGenerator.getMolecule();
 		}catch(Exception e) {
-			throw new ChemkitException(e.getMessage(), e);
+			throw new MolwitchException(e.getMessage(), e);
 		}
 		
 	}

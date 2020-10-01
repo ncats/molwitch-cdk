@@ -21,12 +21,8 @@
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import static org.junit.Assert.assertFalse;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -186,16 +182,14 @@ public class TestChiralRead {
 					" 67 69  2  0  0  0  0\n" + 
 					"M  END";
 			Chemical c=Chemical.parse(mm);
-			
-			System.out.println(mm);
+
 			
 			String genChiral = c.atoms()
 			 .map(ca->ca.getChirality())
 			 .filter(ch->!ch.equals(Chirality.Non_Chiral))
 			 .map(ch->ch.toString())
 			 .collect(Collectors.joining());
-			
-			System.out.println("CHIRALITY FROM GENERIC PARSE:" + genChiral);
+
 			
 			c=Chemical.parseMol(mm);
 			String molChiral = c.atoms()
@@ -204,7 +198,6 @@ public class TestChiralRead {
 					 .map(ch->ch.toString())
 					 .collect(Collectors.joining());
 
-			System.out.println("CHIRALITY FROM MOL PARSE:" + molChiral);
 			
 			c=new Chemical(ChemicalReaderFactory.read("sdf", mm + "\n$$$$"));
 			
@@ -213,8 +206,7 @@ public class TestChiralRead {
 					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
 					 .map(ch->ch.toString())
 					 .collect(Collectors.joining());
-			
-			System.out.println("CHIRALITY FROM SDF PARSE:" + sdfChiral);
+
 			
 			assertEquals(genChiral,molChiral);
 			assertEquals(genChiral,sdfChiral);
@@ -263,10 +255,6 @@ public class TestChiralRead {
 					"  2  5  1  0  0  0  0\n" + 
 					"M  END\n" + 
 					"");
-//			c1.getAllStereocenters()
-//				.forEach(s->{
-//					System.out.println(s.getChirality());
-//				});
 			
 			Optional<Chirality> opChi=c1.getAllStereocenters().stream()
 			  .map(ca->ca.getChirality())
@@ -274,12 +262,6 @@ public class TestChiralRead {
 			assertTrue(opChi.isPresent());
 			assertEquals(Chirality.Parity_Either, opChi.get());
 	   	}
-		
-		
-		
-		/*
-
-		 */
 		
 		@Test
 	   	public void testSimpleTetrahedralStereoMarked2() throws Exception {
@@ -427,8 +409,7 @@ public class TestChiralRead {
 	   		if(!mol2.hasCoordinates()){
 	   			mol2.generateCoordinates();
 	   		}
-	   		System.out.println(mol2.hasCoordinates());
-	   		System.out.println(mol2.toMol());
+
 	   		mol2.removeNonDescriptHydrogens();
 	   		mol2.generateCoordinates();
 	   		mol2=Chemical.parse(mol2.toMol());
@@ -467,7 +448,7 @@ public class TestChiralRead {
 	   		Chemical mol2= Chemical.createFromSmiles(mol.toSmiles());
 	   		
 			
-			assertEquals("false", mol2.hasCoordinates()+"");
+			assertFalse(mol2.hasCoordinates());
 	   	}
 		
 	  	
@@ -510,12 +491,8 @@ public class TestChiralRead {
 					"  3  6  1  6  0  0  0\n" + 
 					"  3  7  1  1  0  0  0\n" + 
 					"M  END");
-//			c1.getAllStereocenters()
-//				.forEach(s->{
-//					System.out.println(s);
-//					System.out.println(s.getChirality());
-//				});
-//			
+
+
 			Optional<Chirality> opChi=c1.getAllStereocenters().stream()
 			  .map(ca->ca.getChirality())
 			  .findFirst();
@@ -547,12 +524,7 @@ public class TestChiralRead {
 					"M  CHG  1   2   1\n" + 
 					"M  END\n" + 
 					"");
-//			c1.getAllStereocenters()
-//				.forEach(s->{
-//					System.out.println(s);
-//					System.out.println(s.getChirality());
-//				});
-//			
+
 			Optional<Chirality> opChi=c1.getAllStereocenters().stream()
 			  .map(ca->ca.getChirality())
 			  .findFirst();
@@ -562,17 +534,11 @@ public class TestChiralRead {
 		@Test
 	   	public void testQueryStructureSimpleTetrahedralStereoDoesntError() throws Exception {
 			Chemical c1=Chemical.parse("S(=O)(=O)(O)O-C-[#6]");
-//			c1.getAllStereocenters()
-//				.forEach(s->{
-//					System.out.println(s);
-//					System.out.println(s.getChirality());
-//				});
-//			
+
 			Optional<Chirality> opChi=c1.getAllStereocenters().stream()
 			  .map(ca->ca.getChirality())
 			  .findFirst();
-			assertTrue(!opChi.isPresent());
-//			assertEquals(Chirality.Parity_Either, opChi.get());
+			assertFalse(opChi.isPresent());
 	   	}
 	  	
 }

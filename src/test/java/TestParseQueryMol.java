@@ -21,7 +21,7 @@
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
+import static org.junit.Assert.assertFalse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -234,7 +234,7 @@ public class TestParseQueryMol {
         Chemical c = Chemical.parseMol(mol);
         String smarts=c.toSmarts();
         
-        System.out.println(smarts);
+        assertFalse(smarts.isEmpty());
         
         
         
@@ -299,7 +299,7 @@ public class TestParseQueryMol {
         		" 27 24  4  0  0  0  0\n" + 
         		"M  END";
         Chemical c2 = Chemical.parseMol(mm);
-        System.out.println(c2.toSmarts());
+        assertFalse(c2.toSmarts().isEmpty());
 
         
     }
@@ -420,8 +420,7 @@ public class TestParseQueryMol {
         		" 26 27  4  0  0  0  0\n" + 
         		" 27 24  4  0  0  0  0\n" + 
         		"M  END";
-        
-        System.out.println(mm);
+
         
         Chemical c2 = Chemical.parseMol(mm);
         
@@ -468,8 +467,9 @@ public class TestParseQueryMol {
         	   e.printStackTrace();
            }
            c.aromatize();
-           System.out.println(c.toMol());
-           System.out.println(c.toSmarts());
+
+           assertFalse(c.toMol().isEmpty());
+           assertFalse(c.toSmarts().isEmpty());
            
            
            String mol2="NC1=CC(O)=C(O)C=C1";
@@ -480,8 +480,8 @@ public class TestParseQueryMol {
            }catch(Exception e){
         	   e.printStackTrace();
            }
-           System.out.println(c2.toMol());
-           System.out.println(c2.toSmiles());
+		   assertFalse(c2.toMol().isEmpty());
+		   assertFalse(c2.toSmiles().isEmpty());
            Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
            assertTrue(hit.isPresent());
        }
@@ -543,8 +543,8 @@ public class TestParseQueryMol {
         	   e.printStackTrace();
            }
            c.aromatize();
-           System.out.println(c.toMol());
-           System.out.println(c.toSmarts());
+		   assertFalse(c.toMol().isEmpty());
+		   assertFalse(c.toSmarts().isEmpty());
            
            
            String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
@@ -555,10 +555,10 @@ public class TestParseQueryMol {
            }catch(Exception e){
         	   e.printStackTrace();
            }
-           System.out.println(c2.toMol());
-           System.out.println(c2.toSmiles());
+		   assertFalse(c2.toMol().isEmpty());
+		   assertFalse(c2.toSmiles().isEmpty());
            Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
-           assertEquals("true",""+hit.isPresent());
+           assertTrue(hit.isPresent());
        }
        
        
@@ -574,28 +574,9 @@ public class TestParseQueryMol {
 	    	   e.printStackTrace();
 	       }
 	       c.aromatize();
-	       System.out.println(c.toMol());
-	       System.out.println(c.toSmarts());
-//		   IAtomContainer cont = (IAtomContainer) c.getImpl().getWrappedObject();
-//		   for(IBond ib : cont.bonds()){
-//			   QueryBond qb = ((QueryBond)BondRef.deref(ib));
-//			   CdkUtil.navNodes(((QueryBond)qb).getExpression(), (e,l)->{
-//					System.out.println(CdkUtil.rep(" ",e) + l.type() + ":" + l.value());
-//				},0);
-//			   System.out.println(ib.getIndex() + ":" + ib.getOrder() + ":" + ib.isAromatic() + ":" + ib.getClass());
-//			   
-//		   }
-//		   for(IAtom ia : cont.atoms()){
-//			   IAtom dr=AtomRef.deref(ia);
-//			   if(dr instanceof QueryAtom){
-//		    	   QueryAtom qa = (QueryAtom)dr;
-//		    	   CdkUtil.navNodes(((QueryAtom)qa).getExpression(), (e,l)->{
-//						System.out.println(CdkUtil.rep(" ",e) + l.type() + ":" + l.value());
-//					},0);
-//			   }
-//			   System.out.println(ia.getAtomicNumber() + ":" + ia.getSymbol() + ":" + ia.isAromatic() + ":" + ia.getClass());
-//			   
-//		   }
+		   assertFalse(c.toMol().isEmpty());
+		   assertFalse(c.toSmarts().isEmpty());
+
 	       
 	       String mol2="OC1=CC=CC=C1";
 	       Chemical c2 = Chemical.parse(mol2);
@@ -605,17 +586,12 @@ public class TestParseQueryMol {
 	       }catch(Exception e){
 	    	   e.printStackTrace();
 	       }
-	       System.out.println(c2.toMol());
-	       System.out.println(c2.toSmiles());
+		   assertFalse(c2.toMol().isEmpty());
+		   assertFalse(c2.toSmiles().isEmpty());
 	       Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
-	       assertEquals("true",""+hit.isPresent());
+	       assertTrue(hit.isPresent());
        }
-       
 
-       //
-      	//String structure="[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
-      	//structureIndexer.add("1", "COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12");
-      	//structureIndexer.add("2", "CC1=C2OC(C)(O)C(=O)C2=C3C4=C(C=C(O)C3=C1O)N5C=CC=CC5=N4");
        @Test
        public void ensureAnyBondAndAromatizationInComplexExampleFromSmartsWorksForSubstructureSearch() throws IOException {
            String mol= "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
@@ -628,8 +604,8 @@ public class TestParseQueryMol {
 	    	   e.printStackTrace();
 	       }
 	       c.aromatize();
-	       System.out.println(c.toMol());
-	       System.out.println(c.toSmarts());
+		   assertFalse(c.toMol().isEmpty());
+		   assertFalse(c.toSmarts().isEmpty());
 
 	       
 	       String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
@@ -640,8 +616,8 @@ public class TestParseQueryMol {
 	       }catch(Exception e){
 	    	   e.printStackTrace();
 	       }
-	       System.out.println(c2.toMol());
-	       System.out.println(c2.toSmiles());
+		   assertFalse(c2.toMol().isEmpty());
+		   assertFalse(c2.toSmiles().isEmpty());
 	       Optional<int[]> hit = MolSearcherFactory.create(c).search(c2);
 	       assertTrue(hit.isPresent());
        }
@@ -657,8 +633,8 @@ public class TestParseQueryMol {
 	    	   e.printStackTrace();
 	       }
 	       c.aromatize();
-	       System.out.println(c.toMol());
-	       System.out.println(c.toSmarts());
+		   assertFalse(c.toMol().isEmpty());
+		   assertFalse(c.toSmarts().isEmpty());
 
 	       
 	       String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
@@ -669,8 +645,8 @@ public class TestParseQueryMol {
 	       }catch(Exception e){
 	    	   e.printStackTrace();
 	       }
-	       System.out.println(c2.toMol());
-	       System.out.println(c2.toSmiles());
+		   assertFalse(c2.toMol().isEmpty());
+		   assertFalse(c2.toSmiles().isEmpty());
 
 
 	        Fingerprinter fingerPrinterSub =  Fingerprinters.getFingerprinter(FingerprintSpecification.PATH_BASED.create().setLength(512));
@@ -706,7 +682,7 @@ public class TestParseQueryMol {
 	   	@Test
 	   	public void testQueryAtomMolfileHasWriteAtoms() throws Exception {
 	   		Chemical c=Chemical.parse("S(=O)(=O)(O)OC[#6]");
-	   		System.out.println(c.toMol());
+
 	   		Chemical c2= Chemical.parse(c.toMol());
 	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
 	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);
@@ -718,7 +694,7 @@ public class TestParseQueryMol {
 	  	@Test
 	   	public void testQueryAtomMolfileHasWriteAtoms2() throws Exception {
 	   		Chemical c=Chemical.parse("S(=O)(=O)(O)OC[#6,#7]");
-	   		System.out.println(c.toMol());
+
 	   		Chemical c2= Chemical.parse(c.toMol());
 	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
 	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);

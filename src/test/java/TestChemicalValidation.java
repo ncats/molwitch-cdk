@@ -53,7 +53,6 @@ public class TestChemicalValidation {
    				"M  END");
    		
    		long terror=c.atoms()
-   				.peek(ca->System.out.println(ca.getValence().getAsInt()))
    				.filter(ca->ca.hasValenceError()).count();
    		
    		assertEquals(1,terror);
@@ -80,11 +79,9 @@ public class TestChemicalValidation {
    				"  5  6  4  0  0  0  0\n" + 
    				"  4  6  4  0  0  0  0\n" + 
    				"M  END");
-   		
-   		System.out.println(c.toMol());
+
         InChiResult result = c.toInchi();
         String key = result.getKey();
-        System.out.println(key);
         assertEquals("UHOVQNZJYSORNB-UHFFFAOYSA-N", key);
 
 
@@ -113,8 +110,7 @@ public class TestChemicalValidation {
    		
    		long l=c.bonds().filter(b->b.getBondType().equals(BondType.SINGLE) || b.getBondType().equals(BondType.DOUBLE))
    		         .count();
-   		
-   		System.out.println(c.toMol());
+
    		assertEquals(6,l);
 
 

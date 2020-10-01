@@ -9,7 +9,7 @@
     <version>1.0.4-SNAPSHOT</version>
     <name>molwitch-cdk</name>
 
-    <url>https://spotlite.nih.gov/ncats/molwitch-cdk/</url>
+    <url>https://github.com/ncats/molwitch-cdk/</url>
     <description>MolWitch implementation that uses CDK as the underlying cheminformatics framework.</description>
     <organization>
         <name>NIH/NCATS</name>
@@ -43,7 +43,7 @@
     </developers>
 
     <scm>
-        <url>https://spotlite.nih.gov/ncats/ncats-common</url>
+        <url>https://github.com/ncats/molwitch-cdk.git</url>
     </scm>
 
     <distributionManagement>
@@ -70,12 +70,12 @@
         <dependency>
             <groupId>gov.nih.ncats</groupId>
             <artifactId>molwitch</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.6.0</version>
         </dependency>
         <dependency>
             <groupId>gov.nih.ncats</groupId>
             <artifactId>ncats-common</artifactId>
-            <version>0.3.4-SNAPSHOT</version>
+            <version>0.3.4</version>
         </dependency>
         <dependency>
             <artifactId>cdk-bundle</artifactId>
@@ -85,7 +85,7 @@
         <dependency>
             <groupId>gov.nih.ncats</groupId>
             <artifactId>molwitch-apitests</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.6.0</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

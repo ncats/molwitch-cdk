@@ -210,7 +210,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 							// we only really set it if it's tetrahedral CARBON
 							// right now,
 							boolean bailout=false;
-							for(IBond ib:ai.bonds()){
+							//we have to go through the container because some atom implementations
+                            //throw unsupport operation exceptions if we ask them for their bonds
+							for(IBond ib:container.getConnectedBondsList(ai)){
 								if(!Order.SINGLE.equals(ib.getOrder())){
 									bailout=true;
 									break;
@@ -560,7 +562,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	List<CdkBond> getBondsFor(IAtom atom){
 		List<CdkBond> bonds = new ArrayList<>();
-		for(IBond bond : container.bonds()){
+		for(IBond bond : container.getConnectedBondsList(atom)){
 			if(bond.contains(atom)){
 				bonds.add(getCdkBondFor(bond));
 			}
@@ -582,48 +584,62 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if(recomputeHydrogens){
 			setImplicitHydrogens();
 		}
-		double d=AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
-		
-		if(Double.isNaN(d) || (d<0.01 && this.getAtomCount()>0)){
-		
-			double off=0;
-			
-			Map<IAtom, Integer> realAtomicNums = new HashMap<IAtom,Integer>();
-			
-			
-			for(IAtom a : container.atoms()){
-				int an= a.getAtomicNumber();
-				if(cdkMissing.get(an)){
+		double d=Double.NaN;
+		try {
+			d = AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
+		}catch(Exception e){
+
+		}
+		if(Double.isNaN(d) || (d<0.01 && this.getAtomCount()>0)) {
+
+			double off = 0;
+
+			Map<IAtom, Integer> realAtomicNums = new HashMap<IAtom, Integer>();
+
+
+			for (IAtom a : container.atoms()) {
+				Integer an = a.getAtomicNumber();
+				if (an == null) {
+					a.setAtomicNumber(2);
+					realAtomicNums.put(a, an);
+					continue;
+				}
+				if (cdkMissing.get(an)) {
 					double m = NISTIsotopeFactory.INSTANCE.getMostAbundant(an)
-							.filter(mm->mm.getIsotopicComposition()!=null)
-							.map(aa->aa.getRelativeAtomicMass().getValue().doubleValue())
-							.orElseGet(()->{
-								
-								if(mostStable[an]!=0)return (double)mostStable[an]; 
-								List<Isotope> ilist= NISTIsotopeFactory.INSTANCE.getIsotopesFor(an).stream()
-										    .sorted(Comparator.comparing(an1->an1.getRelativeAtomicMass().getValue().doubleValue()))
-										    .collect(Collectors.toList());;
-								if(ilist.isEmpty())return 0.0;
-								Isotope iso = ilist.get(ilist.size()/2);
-								
-								return (double)Math.round(iso.getRelativeAtomicMass().getValue().doubleValue());
+							.filter(mm -> mm.getIsotopicComposition() != null)
+							.map(aa -> aa.getRelativeAtomicMass().getValue().doubleValue())
+							.orElseGet(() -> {
+
+								if (mostStable[an] != 0) return (double) mostStable[an];
+								List<Isotope> ilist = NISTIsotopeFactory.INSTANCE.getIsotopesFor(an).stream()
+										.sorted(Comparator.comparing(an1 -> an1.getRelativeAtomicMass().getValue().doubleValue()))
+										.collect(Collectors.toList());
+								;
+								if (ilist.isEmpty()) return 0.0;
+								Isotope iso = ilist.get(ilist.size() / 2);
+
+								return (double) Math.round(iso.getRelativeAtomicMass().getValue().doubleValue());
 							});
-					
-					off+=m;
+
+					off += m;
 					a.setSymbol("R");
 					realAtomicNums.put(a, an);
 				}
 			}
-			double base=AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
-			realAtomicNums.forEach((a,i)->{
-				a.setAtomicNumber(i);
-			});
-			
-			d=base+off;
-		
-			//this means there's an isotope issue
-			//the fix, for now, is this ugly one
-			
+			try {
+				double base = AtomContainerManipulator.getMass(container, AtomContainerManipulator.MolWeight);
+
+
+				d = base + off;
+
+				//this means there's an isotope issue
+				//the fix, for now, is this ugly one
+
+			} finally {
+				realAtomicNums.forEach((a, i) -> {
+					a.setAtomicNumber(i);
+				});
+			}
 		}
 		return d;
 	}

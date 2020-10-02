@@ -19,9 +19,6 @@
  *  Boston, MA 02111-1307 USA
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -40,6 +37,8 @@ import gov.nih.ncats.molwitch.fingerprint.Fingerprinters;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.FingerprintSpecification;
 import gov.nih.ncats.molwitch.inchi.InChiResult;
 import gov.nih.ncats.molwitch.search.MolSearcherFactory;
+
+import static org.junit.Assert.*;
 
 public class TestParseQueryMol {
 
@@ -703,6 +702,187 @@ public class TestParseQueryMol {
 
 	
 	   	}
-	  
+
+	   	@Test
+		public void legacyAtomList() throws Exception{
+    	String mol = "\n" +
+				"  ACCLDraw10012012192D\n" +
+				"\n" +
+				" 10 10  3  0  0  0  0  0  0  0999 V2000\n" +
+				"   12.8286   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.0309   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5986   -6.6106    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5909   -8.0335    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.8363   -8.7514    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0379   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0714   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.4779   -7.3439    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"  2  1  1  0  0  0  0\n" +
+				"  3  1  2  0  0  0  0\n" +
+				"  4  2  2  0  0  0  0\n" +
+				"  5  2  1  0  0  0  0\n" +
+				"  6  3  1  0  0  0  0\n" +
+				"  7  1  1  0  0  0  0\n" +
+				"  8  3  1  0  0  0  0\n" +
+				"  9  7  2  0  0  0  0\n" +
+				" 10  9  1  0  0  0  0\n" +
+				" 10  8  2  0  0  0  0\n" +
+				"  4 F    2   8   7\n" +
+				"  5 F    2   7   8\n" +
+				"  6 F    2   7   8\n" +
+				"M  END\n";
+
+    	Chemical c = Chemical.parse(mol);
+    	assertTrue(c.getAtom(5).isQueryAtom());
+		}
+
+	@Test
+	public void legacyAtomListGetStereoCentersDoentErrorOut() throws Exception{
+		String mol = "\n" +
+				"  ACCLDraw10012012192D\n" +
+				"\n" +
+				" 10 10  3  0  0  0  0  0  0  0999 V2000\n" +
+				"   12.8286   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.0309   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5986   -6.6106    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5909   -8.0335    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.8363   -8.7514    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0379   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0714   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.4779   -7.3439    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"  2  1  1  0  0  0  0\n" +
+				"  3  1  2  0  0  0  0\n" +
+				"  4  2  2  0  0  0  0\n" +
+				"  5  2  1  0  0  0  0\n" +
+				"  6  3  1  0  0  0  0\n" +
+				"  7  1  1  0  0  0  0\n" +
+				"  8  3  1  0  0  0  0\n" +
+				"  9  7  2  0  0  0  0\n" +
+				" 10  9  1  0  0  0  0\n" +
+				" 10  8  2  0  0  0  0\n" +
+				"  4 F    2   8   7\n" +
+				"  5 F    2   7   8\n" +
+				"  6 F    2   7   8\n" +
+				"M  END\n";
+
+		Chemical c = Chemical.parse(mol);
+		assertEquals(0, c.getAllStereocenters().size());
+	}
+
+	@Test
+	public void modernAtomListGetStereoCentersDoentErrorOut() throws Exception{
+		String mol = "\n" +
+				"  ACCLDraw10012012192D\n" +
+				"\n" +
+				" 10 10  3  0  0  0  0  0  0  0999 V2000\n" +
+				"   12.8286   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.0309   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5986   -6.6106    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5909   -8.0335    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.8363   -8.7514    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0379   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0714   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.4779   -7.3439    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"  2  1  1  0  0  0  0\n" +
+				"  3  1  2  0  0  0  0\n" +
+				"  4  2  2  0  0  0  0\n" +
+				"  5  2  1  0  0  0  0\n" +
+				"  6  3  1  0  0  0  0\n" +
+				"  7  1  1  0  0  0  0\n" +
+				"  8  3  1  0  0  0  0\n" +
+				"  9  7  2  0  0  0  0\n" +
+				" 10  9  1  0  0  0  0\n" +
+				" 10  8  2  0  0  0  0\n" +
+				"M  ALS   4  2 F O   N   \n" +
+				"M  ALS   5  2 F N   O   \n" +
+				"M  ALS   6  2 F N   O   \n" +
+				"M  END\n";
+
+		Chemical c = Chemical.parse(mol);
+		assertEquals(0, c.getAllStereocenters().size());
+	}
+
+	@Test
+	public void mixOfModernAtomListGetStereoCentersDoentErrorOut() throws Exception{
+		String mol = "\n" +
+				"  ACCLDraw10012012192D\n" +
+				"\n" +
+				" 10 10  3  0  0  0  0  0  0  0999 V2000\n" +
+				"   12.8286   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.0309   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5986   -6.6106    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5909   -8.0335    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.8363   -8.7514    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0379   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0714   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.4779   -7.3439    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"  2  1  1  0  0  0  0\n" +
+				"  3  1  2  0  0  0  0\n" +
+				"  4  2  2  0  0  0  0\n" +
+				"  5  2  1  0  0  0  0\n" +
+				"  6  3  1  0  0  0  0\n" +
+				"  7  1  1  0  0  0  0\n" +
+				"  8  3  1  0  0  0  0\n" +
+				"  9  7  2  0  0  0  0\n" +
+				" 10  9  1  0  0  0  0\n" +
+				" 10  8  2  0  0  0  0\n" +
+				"  4 F    2   8   7\n" +
+				"  5 F    2   7   8\n" +
+				"  6 F    2   7   8\n" +
+				"M  ALS   4  2 F O   N   \n" +
+				"M  ALS   5  2 F N   O   \n" +
+				"M  ALS   6  2 F N   O   \n" +
+				"M  END\n";
+
+		Chemical c = Chemical.parse(mol);
+		assertEquals(0, c.getAllStereocenters().size());
+	}
+
+	@Test
+	public void clonedMixOfModernAtomListGetStereoCentersDoentErrorOut() throws Exception{
+		String mol = "\n" +
+				"  ACCLDraw10012012192D\n" +
+				"\n" +
+				" 10 10  3  0  0  0  0  0  0  0999 V2000\n" +
+				"   12.8286   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.0309   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5986   -6.6106    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.5909   -8.0335    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.8363   -8.7514    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.2300   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0379   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.0714   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.4779   -7.3439    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"  2  1  1  0  0  0  0\n" +
+				"  3  1  2  0  0  0  0\n" +
+				"  4  2  2  0  0  0  0\n" +
+				"  5  2  1  0  0  0  0\n" +
+				"  6  3  1  0  0  0  0\n" +
+				"  7  1  1  0  0  0  0\n" +
+				"  8  3  1  0  0  0  0\n" +
+				"  9  7  2  0  0  0  0\n" +
+				" 10  9  1  0  0  0  0\n" +
+				" 10  8  2  0  0  0  0\n" +
+				"  4 F    2   8   7\n" +
+				"  5 F    2   7   8\n" +
+				"  6 F    2   7   8\n" +
+				"M  ALS   4  2 F O   N   \n" +
+				"M  ALS   5  2 F N   O   \n" +
+				"M  ALS   6  2 F N   O   \n" +
+				"M  END\n";
+
+		Chemical c = Chemical.parse(mol).copy();
+		assertEquals(0, c.getAllStereocenters().size());
+		assertNotNull(c.getMass());
+	}
 	   	
 }

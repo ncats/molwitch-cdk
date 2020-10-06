@@ -3,7 +3,7 @@
 MolWitch implementation using [CDK](https://cdk.github.io/)
 
 
-#Available on Maven Central
+# Available on Maven Central
 Usually, one needs to add 2 dependencies:
 This adds the API.
 ```
@@ -16,12 +16,12 @@ This adds the API.
 
 There also needs to be a molwitch implementation
 
-To add CDK:
+To add CDK molwitch implementation (NOTE: currently a snapshot until CDK 2.4 is released) :
 ```
 <dependency>
         <groupId>gov.nih.ncats</groupId>
         <artifactId>molwitch-cdk</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.4-SNAPSHOT</version>
 </dependency>
 ```
 

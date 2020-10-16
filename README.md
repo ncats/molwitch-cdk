@@ -26,7 +26,7 @@ To add CDK molwitch implementation (NOTE: currently a snapshot until CDK 2.4 is 
 ```
 
 ## Current API Contract Compliance
-Results from running the latest code on Molwitch-jchem using the [API Contract](https://github.com/ncats/molwitch-apitests)
+Results from running the latest code on Molwitch-cdk using the [API Contract](https://github.com/ncats/molwitch-apitests)
 
 | Feature | Compliance Level | Comments|
  | ------ | ---------- | ---------- |

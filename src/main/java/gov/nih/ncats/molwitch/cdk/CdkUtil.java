@@ -30,6 +30,7 @@ import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
+import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
@@ -58,8 +59,39 @@ public class CdkUtil {
         AROMATICITY.apply(container);
 
     }
+	public static IAtomContainer kekulizeIfNeeded(IAtomContainer container, boolean makeCopy) throws CDKException {
+		IAtomContainer possibleCopy = setImplicitHydrogensIfNeeded(container, makeCopy);
+		boolean setBonds=false;
+		for(IBond bond : possibleCopy.bonds()){
+			if(bond.getOrder() ==null || bond.getOrder()==Order.UNSET){
+				setBonds=true;
+				break;
+			}
+		}
+		if(setBonds){
+			IAtomContainer ret = possibleCopy;
+			if(possibleCopy ==container && makeCopy){
+				try {
+					ret = container.clone();
+				} catch (CloneNotSupportedException e) {
+					//shouldn't happen container support clones
+				}
 
-    public static IAtomContainer setImplicitHydrogensIfNeeded(IAtomContainer container, boolean makeCopy) throws CDKException {
+			}
+			Kekulization.kekulize(ret);
+			for(IBond bond : ret.bonds()){
+				bond.setIsAromatic(false);
+			}
+			return ret;
+		}
+		for(IBond bond : possibleCopy.bonds()){
+			bond.setIsAromatic(false);
+		}
+		return possibleCopy;
+
+	}
+
+		public static IAtomContainer setImplicitHydrogensIfNeeded(IAtomContainer container, boolean makeCopy) throws CDKException {
     	boolean recompute=false;
     	for(IAtom atom : container.atoms()){
     		if(atom.getImplicitHydrogenCount() ==null){

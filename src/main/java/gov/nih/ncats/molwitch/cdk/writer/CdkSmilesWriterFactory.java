@@ -157,7 +157,7 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 			}else if(aromaticEncoding == KekulizationEncoding.KEKULE){
 				modificationFunction = container ->{
 					try{
-						return  CdkUtil.setImplicitHydrogensIfNeeded(container,true);
+						return  CdkUtil.kekulizeIfNeeded(container,true);
 					}catch(Exception e){
 						return container;
 					}

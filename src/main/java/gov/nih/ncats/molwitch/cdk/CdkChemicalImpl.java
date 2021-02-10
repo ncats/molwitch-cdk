@@ -46,6 +46,7 @@ import javax.vecmath.Tuple2d;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
+import org.openscience.cdk.PseudoAtom;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.aromaticity.Kekulization;
@@ -280,6 +281,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	public CdkChemicalImpl(IAtomContainer container, ChemicalSource source) {
 
+		for(int i=0; i< container.getAtomCount(); i++){
+			IAtom a = container.getAtom(i);
+			if(a.getSymbol().startsWith("_R")){
+				container.setAtom(i, new PseudoAtom(a));
+			}
+		}
 	    if(!(container instanceof IQueryAtomContainer)){
 	        boolean isQuery =false;
 	        for(IAtom a : container.atoms()){

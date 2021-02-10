@@ -436,8 +436,7 @@ public class CdkAtom implements Atom{
 
 	@Override
 	public boolean isPseudoAtom() {
-		IAtom deref = AtomRef.deref(atom);
-		return deref instanceof IPseudoAtom;
+		return CdkUtil.isPseudoAtom(atom);
 	}
 
 	@Override

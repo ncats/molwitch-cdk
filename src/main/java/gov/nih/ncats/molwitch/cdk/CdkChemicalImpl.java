@@ -1006,6 +1006,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		int charge = 0;
 		IAtom hAtom = null;
 		for (IAtom iAtom : container.atoms()) {
+			if(CdkUtil.isPseudoAtom(iAtom)){
+				continue;
+			}
 			formula.addIsotope(iAtom);
 			if (iAtom.getFormalCharge() != null){
 				charge += iAtom.getFormalCharge();

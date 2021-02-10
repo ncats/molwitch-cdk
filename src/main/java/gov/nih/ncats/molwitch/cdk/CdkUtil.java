@@ -33,11 +33,8 @@ import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.Cycles;
-import org.openscience.cdk.interfaces.IAtom;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.interfaces.IBond.Order;
-import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.isomorphism.matchers.Expr;
 import org.openscience.cdk.isomorphism.matchers.QueryAtom;
 import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
@@ -172,7 +169,10 @@ public class CdkUtil {
 		return r;
 	}
 
-    
+	public static boolean isPseudoAtom(IAtom atom) {
+		IAtom deref = AtomRef.deref(atom);
+		return deref instanceof IPseudoAtom;
+	}
     public static QueryAtomContainer asQueryAtomContainer(IAtomContainer ia){
     	QueryAtomContainer qac=QueryAtomContainer.create(ia);
     	for(int i=0;i<qac.getBondCount();i++){

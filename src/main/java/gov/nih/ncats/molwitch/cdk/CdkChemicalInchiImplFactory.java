@@ -97,11 +97,20 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		
 			InChiResult.Status status = toChemkitStatus(gen.getReturnStatus());
 //			System.out.println("INCHI STATUS =  " + status);
+			String inchi = gen.getInchi();
+			if(inchi ==null){
+				return new InChiResult.Builder(status)
+						.setAuxInfo(gen.getAuxInfo()==null?"":gen.getAuxInfo())
+						.setInchi("")
+						.setKey("")
+						.setMessage(gen.getLog()==null? "":gen.getLog())
+						.build();
+			}
 			return new InChiResult.Builder(status)
 						.setAuxInfo(gen.getAuxInfo()==null?"":gen.getAuxInfo())
-						.setInchi(gen.getInchi())
-						.setKey(gen.getInchiKey())
-						.setMessage(gen.getLog())
+						.setInchi(gen.getInchi()==null?"":gen.getInchi())
+						.setKey(gen.getInchiKey()==null?"" :gen.getInchiKey())
+						.setMessage(gen.getLog()==null? "":gen.getLog())
 						.build();
 			
 		

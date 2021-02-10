@@ -85,7 +85,8 @@ public class CdkMolSearcher implements MolSearcher {
         IAtomContainer target = CdkUtil.toAtomContainer(targetChemical);
         try {
             //set matchBonds to false if set to true a substructure with extra bonds fails test ?
-            Substructure smsd = new Substructure(query, target, false, false, true, false, false);
+//            Substructure smsd = new Substructure(query, target, false, false, true, false, false);
+            Substructure smsd = new Substructure(query, target, true, false, true, false, false);
 
             if(!smsd.isSubgraph()){
                 return Optional.empty();

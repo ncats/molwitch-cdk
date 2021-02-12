@@ -175,7 +175,7 @@ public class CdkBond implements Bond{
 			case UP_OR_DOWN_INVERTED : return Stereo.UP_OR_DOWN_INVERTED;
 
 			default :
-				return null;
+				return Stereo.NONE;
 		}
 	}
 

@@ -535,7 +535,7 @@ public class CdkAtom implements Atom{
 
 	@Override
 	public int getAtomIndexInParent() {
-		return atom.getIndex();
+		return parent.getContainer().indexOf(atom);
 	}
 
 	

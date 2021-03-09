@@ -72,6 +72,8 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 		if(smilesSpec.getKekulization() == KekulizationEncoding.FORCE_AROMATIC) {
 			options |= SmiFlavor.UseAromaticSymbols;
 		}
+		//include isotope information
+		options |= SmiFlavor.AtomicMass;
 		return new CdkSmilesWriter(out, options, smilesSpec.getHydrogenEncoding(), smilesSpec.getKekulization());
 	}
 

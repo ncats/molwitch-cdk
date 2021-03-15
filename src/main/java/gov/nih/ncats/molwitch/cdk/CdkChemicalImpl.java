@@ -1929,10 +1929,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if(ret==null){
 			return null;
 		}
-		if(key.equals(CDKConstants.CTAB_SGROUPS)){
-			System.out.println("here!!!!!!");
-			new Exception("getting sgroup as string").printStackTrace();
-		}
 		return ret.toString();
 	}
 

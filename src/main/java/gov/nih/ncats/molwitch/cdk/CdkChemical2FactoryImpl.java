@@ -427,7 +427,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 				return impl;
 				}catch(Throwable e) {
 					e.printStackTrace();
-					System.out.println("problem record\n=======\n" + savedReader.getBufferedLines() +"\n=======");
+					System.err.println("problem record\n=======\n" + savedReader.getBufferedLines() +"\n=======");
 					throw e;
 				}
 			}

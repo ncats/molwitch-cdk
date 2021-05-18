@@ -168,7 +168,13 @@ public class CdkAtom implements Atom{
 		if(mass ==null) {
 			return false;
 		}
-		return !(mass.equals(isotopeFactory.getMajorIsotope(atom.getSymbol()).getMassNumber()));
+
+		double majorMass = isotopeFactory.getMajorIsotopeMass(atom.getAtomicNumber());
+		if(majorMass == 2D* getAtomicNumber()){
+			//no major mass
+			return true;
+		}
+		return !(Double.valueOf(mass).equals(majorMass));
 	}
 
 	@Override

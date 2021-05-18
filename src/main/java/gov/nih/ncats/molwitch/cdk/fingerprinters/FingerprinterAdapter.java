@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.fingerprint.IBitFingerprint;
 import org.openscience.cdk.fingerprint.IFingerprinter;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -102,7 +103,8 @@ class FingerprinterAdapter implements Fingerprinter {
 		
 		
 		try {
-			return new Fingerprint(delegate.getBitFingerprint(CdkUtil.getUsableFormOfAtomContainer(container)).asBitSet());
+			IBitFingerprint bitFingerprint = delegate.getBitFingerprint(CdkUtil.getUsableFormOfAtomContainer(container));
+			return new Fingerprint(bitFingerprint.asBitSet(), (int) bitFingerprint.size());
 		} catch (CDKException e) {
 			// TODO Auto-generated catch block
 			throw new RuntimeException(e);

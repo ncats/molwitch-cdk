@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import gov.nih.ncats.common.sneak.Sneak;
+import gov.nih.ncats.common.util.CachedSupplier;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.IBitFingerprint;
 import org.openscience.cdk.fingerprint.IFingerprinter;
@@ -37,6 +39,8 @@ import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprint;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinter;
 import gov.nih.ncats.molwitch.spi.FingerprinterImpl;
+import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 /**
  * Adapter to wrap a {@link FingerprinterImpl} from the SPI
@@ -48,13 +52,28 @@ import gov.nih.ncats.molwitch.spi.FingerprinterImpl;
  */
 class FingerprinterAdapter implements Fingerprinter {
 	private final IFingerprinter delegate;
-	
-	
+	private boolean removeQueryAtomsAndBonds=false;
+	private boolean forceExplicitH =false;
+
 	public FingerprinterAdapter(IFingerprinter impl) {
 		this.delegate = impl;
 	}
 
-	
+	public boolean isRemoveQueryAtomsAndBonds() {
+		return removeQueryAtomsAndBonds;
+	}
+
+	public void setRemoveQueryAtomsAndBonds(boolean removeQueryAtomsAndBonds) {
+		this.removeQueryAtomsAndBonds = removeQueryAtomsAndBonds;
+	}
+
+	public boolean isForceExplicitH() {
+		return forceExplicitH;
+	}
+
+	public void setForceExplicitH(boolean forceExplicitH) {
+		this.forceExplicitH = forceExplicitH;
+	}
 
 	@Override
 	public Fingerprint computeFingerprint(Chemical chemical) {
@@ -62,17 +81,23 @@ class FingerprinterAdapter implements Fingerprinter {
 		//so lets remove them
 		IAtomContainer orig = (IAtomContainer)chemical.getImpl().getWrappedObject();
 //		System.out.println("=====  " + orig.getAtomCount());
-		
-		
-		IAtomContainer container=orig;
-		
-		try {
-			IAtomContainer clone = orig.clone();
+
+		CachedSupplier<IAtomContainer> cloneCache = CachedSupplier.of(()->{
+			try {
+				return orig.clone();
+			}catch(CloneNotSupportedException t){
+				return Sneak.sneakyThrow(t);
+			}
+		});
+		IAtomContainer containerToFingerprint = orig;
+
+		if(removeQueryAtomsAndBonds){
+			containerToFingerprint = cloneCache.get();
 			//iterator.remove() doesn't seem to work
 			List<Integer> indexesToRemove = new ArrayList<>();
 			int i=0;
-			for(IAtom next : clone.atoms()){
-				
+			for(IAtom next : containerToFingerprint.atoms()){
+
 //				System.out.println("atom  = " + next + " sym = " + next.getSymbol());
 				if(next.getSymbol() ==null){
 					indexesToRemove.add(Integer.valueOf(i));
@@ -82,28 +107,26 @@ class FingerprinterAdapter implements Fingerprinter {
 //			System.out.println(indexesToRemove);
 			//iterate in reverse to not mess up atom order of deletions
 			for(int k= indexesToRemove.size() -1; k >=0; k-- ){
-				clone.removeAtom(k);
+				containerToFingerprint.removeAtom(k);
 			}
-			Iterator<IBond> bondIter = clone.bonds().iterator();
+			Iterator<IBond> bondIter = containerToFingerprint.bonds().iterator();
 			while(bondIter.hasNext()){
-				
+
 				IBond next = bondIter.next();
 				if(next.getOrder() ==null){
 //					System.out.println("removing bond " + next);
 					bondIter.remove();
 				}
 			}
-//			System.out.println("# atoms left =" + clone.getAtomCount());
-			container = clone;
-		} catch (CloneNotSupportedException e1) {
-			//shouldn't happen
-			throw new IllegalStateException(e1);
+		}
+		if(forceExplicitH){
+			containerToFingerprint = cloneCache.get();
+			AtomContainerManipulator.convertImplicitToExplicitHydrogens(containerToFingerprint);
 		}
 		
 		
-		
 		try {
-			IBitFingerprint bitFingerprint = delegate.getBitFingerprint(CdkUtil.getUsableFormOfAtomContainer(container));
+			IBitFingerprint bitFingerprint = delegate.getBitFingerprint(CdkUtil.getUsableFormOfAtomContainer(containerToFingerprint));
 			return new Fingerprint(bitFingerprint.asBitSet(), (int) bitFingerprint.size());
 		} catch (CDKException e) {
 			// TODO Auto-generated catch block

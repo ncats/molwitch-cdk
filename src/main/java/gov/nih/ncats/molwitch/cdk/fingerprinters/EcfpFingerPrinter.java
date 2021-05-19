@@ -84,6 +84,8 @@ public class EcfpFingerPrinter implements FingerprinterImpl{
 			default: classType= CircularFingerprinter.CLASS_FCFP6;
 		}
 		}
-		return new FingerprinterAdapter(new CircularFingerprinter(classType, ecfpOptions.getBitLength()));
+		FingerprinterAdapter adapter =  new FingerprinterAdapter(new CircularFingerprinter(classType, ecfpOptions.getBitLength()));
+		adapter.setRemoveQueryAtomsAndBonds(true); // do we need this?
+		return adapter;
 	}
 }

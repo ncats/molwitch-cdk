@@ -32,7 +32,7 @@ import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.FingerprintSpecificatio
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.PathBasedSpecification;
 import gov.nih.ncats.molwitch.spi.FingerprinterImpl;
 
-public class ExtendedFingerPrinter implements FingerprinterImpl{
+public class DefaultFingerPrinter implements FingerprinterImpl{
 
 	@Override
 	public boolean supports(FingerprintSpecification options) {
@@ -56,12 +56,17 @@ public class ExtendedFingerPrinter implements FingerprinterImpl{
 
 	@Override
 	public Fingerprinter createFingerPrinterFor(FingerprintSpecification fingerPrinterOptions) {
+		FingerprinterAdapter adapter;
 		if(fingerPrinterOptions instanceof PathBasedSpecification) {
 		PathBasedSpecification options = (PathBasedSpecification)fingerPrinterOptions;
 
-		return new FingerprinterAdapter( new ExtendedFingerprinter(options.getLength(), options.getDepth()));
+			adapter = new FingerprinterAdapter( new org.openscience.cdk.fingerprint.Fingerprinter(options.getLength(), options.getDepth()));
+		}else{
+			adapter = new FingerprinterAdapter( new org.openscience.cdk.fingerprint.Fingerprinter());
 		}
-		return new FingerprinterAdapter( new ExtendedFingerprinter());
+		adapter.setRemoveQueryAtomsAndBonds(true);
+		adapter.setForceExplicitH(true);
+		return adapter;
 	}
 
 }

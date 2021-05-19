@@ -19,5 +19,5 @@
 #  Boston, MA 02111-1307 USA
 #
 
-gov.nih.ncats.molwitch.cdk.fingerprinters.ExtendedFingerPrinter
+gov.nih.ncats.molwitch.cdk.fingerprinters.DefaultFingerPrinter
 gov.nih.ncats.molwitch.cdk.fingerprinters.EcfpFingerPrinter

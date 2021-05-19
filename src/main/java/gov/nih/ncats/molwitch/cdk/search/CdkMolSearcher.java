@@ -84,23 +84,42 @@ public class CdkMolSearcher implements MolSearcher {
   //Ring Match is set True
         IAtomContainer target = CdkUtil.toAtomContainer(targetChemical);
         try {
-            //set matchBonds to false if set to true a substructure with extra bonds fails test ?
-//            Substructure smsd = new Substructure(query, target, false, false, true, false, false);
-            Substructure smsd = new Substructure(query, target, true, false, true, false, false);
+            Substructure smsd;
 
+            if(target.getAtomCount() >= query.getAtomCount()){
+                smsd = new Substructure(query, target, false, false, false, false, false);
+//
+            }else{
+                smsd = new Substructure(target, query, false, false, false, false, false);
+//
+            }
             if(!smsd.isSubgraph()){
                 return Optional.empty();
             }
+            /*
+            //set matchBonds to false if set to true a substructure with extra bonds fails test ?
+            Substructure smsd = new Substructure(query, target, false, false, false, false, false);
+//            Substructure smsd = new Substructure(query, target, true, false, true, false, false);
+//            Isomorphism smsd = new Isomorphism(query, target,Algorithm.CDKMCS, true, true, false);
+            if(!smsd.isSubgraph()){
+                smsd= new Substructure(target, query, false, false, false, false, false);
+              if(!smsd.isSubgraph()) {
+
+                  return Optional.empty();
+              }
+            }
+
+             */
             AtomAtomMapping atomMapping;
-            if(query.getAtomCount() ==1 || target.getAtomCount()==1){
+            if(smsd.getQuery().getAtomCount() ==1 || smsd.getTarget().getAtomCount()==1){
                 //for some reason SDSM doesn't report mapping
                 //of single atom but it does set isSubgraph if they match
 
                 SingleMappingHandler mcs;
                 if (!(query instanceof IQueryAtomContainer) && !(target instanceof IQueryAtomContainer)) {
-                    mcs = new SingleMappingHandler(query, target, false);
+                    mcs = new SingleMappingHandler(smsd.getQuery(), smsd.getTarget(), false);
                 } else {
-                    mcs = new SingleMappingHandler((IQueryAtomContainer) query,target);
+                    mcs = new SingleMappingHandler((IQueryAtomContainer) smsd.getQuery(), smsd.getTarget());
                 }
                 atomMapping = mcs.getFirstAtomMapping();
 //                    return mcs.getAllAtomMapping() != null && !mcs.getAllAtomMapping().isEmpty();
@@ -111,19 +130,25 @@ public class CdkMolSearcher implements MolSearcher {
             if(atomMapping.isEmpty()){
                 return Optional.empty();
             }
+            boolean flipped = query==smsd.getTarget();
             int[] map = new int[query.getAtomCount()];
+
             for (Map.Entry<IAtom, IAtom> mapping : atomMapping.getMappingsByAtoms().entrySet()) {
                 IAtom sourceAtom = mapping.getKey();
                 IAtom targetAtom = mapping.getValue();
                 int queryMappingNumber = atomMapping.getQueryIndex(sourceAtom);
                 //Get the mapped atom number in Target AtomContainer
                 int targetMappingNumber = atomMapping.getTargetIndex(targetAtom);
-                map[queryMappingNumber] = targetMappingNumber;
+                if(flipped){
+                    map[targetMappingNumber]= queryMappingNumber;
+                }else {
+                    map[queryMappingNumber] = targetMappingNumber;
+                }
 //           System.out.println(sourceAtom.getSymbol() + " " + targetAtom.getSymbol());
 //           System.out.println(queryMappingNumber + " " + targetMappingNumber);
             }
             return Optional.ofNullable(map);
-        } catch (CDKException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return Optional.empty();
         }

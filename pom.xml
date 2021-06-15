@@ -81,6 +81,7 @@
             <artifactId>cdk-bundle</artifactId>
             <groupId>org.openscience.cdk</groupId>
             <version>2.6-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>gov.nih.ncats</groupId>

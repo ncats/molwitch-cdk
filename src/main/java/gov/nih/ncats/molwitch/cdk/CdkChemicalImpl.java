@@ -397,14 +397,40 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	@Override
 	public CdkChemicalImpl deepCopy() {
-		
+	    // A note here: this method used to rely on a deep "clone" of
+	    // CDK's AtomContainer. However it turns out that clone isn't
+	    // as deep as CDK suggests it is, and mutations done to the cloned
+	    // container are often also done to the original container
+	    //
+	    // Instead, this makes a deep clone by copying to molfile and importing
+	    // again. This is not ideal, obviously. Furthermore, we can't just
+	    // export to SD format since information regarding aromaticity is lost
+	    // on toSD sometimes (it's not lost on toMol).
+	    //
+	    // TODO: debug CDK directly to fix
+	    //
+	    
 		try {
-			return new CdkChemicalImpl(container.clone(), source);
-		} catch (CloneNotSupportedException e) {
-			throw new IllegalStateException();
+		    Chemical wc = (new Chemical(this));
+		    String b = wc.toMol();
+		    Chemical p =Chemical.parse(b);
+		    wc.getPropertyIterator().forEachRemaining(ew->{
+		        if(ew.getValue()!=null) {
+		            p.setProperty(ew.getKey(), ew.getValue());
+		        }
+		    });
+		    CdkChemicalImpl imp=(CdkChemicalImpl) p.getImpl();
+			return new CdkChemicalImpl(imp.container,source);
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
 		}
-		
+//        try {
+//            return new CdkChemicalImpl(container.clone(), source);
+//        } catch (CloneNotSupportedException e) {
+//            throw new IllegalStateException(e);
+//        }
 	}
+	
 
 
 	@Override
@@ -466,9 +492,22 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	@Override
 	public void makeHydrogensExplicit() {
-		
-		AtomContainerManipulator.convertImplicitToExplicitHydrogens(container);
-		setDirty();
+
+	    // This is a little slap-dash. Forcing hydrogens to be explicit
+	    // requires that they had previously been set to be implicit somehow.
+	    // MolWitch CDK has a complex and inconsistent relationship with 
+	    // implicit hydrogen counts. This case below forces some preliminary
+	    // detection flags, then some forced implicit H count settings,
+	    // and THEN attempts to turn them into explicit H.
+	    //
+	    // TODO: It is likely that not all these steps are necessary every
+	    // time, and more research is needed to be consistent.
+
+        setImplicitHydrogens();
+
+	    AtomContainerManipulator.convertImplicitToExplicitHydrogens(container);
+	    
+	    setDirty();
 	}
 
 	@Override
@@ -488,7 +527,15 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	@Override
 	public void makeHydrogensImplicit() {
-		AtomContainerManipulator.suppressHydrogens(container);
+	    // As with the code that makes H's EXPLICIT, this code
+        // also starts by calculating implicit counts. When this is necessary
+	    // isn't clear.
+		try {
+		    setImplicitHydrogens();
+		    AtomContainerManipulator.suppressHydrogens(container);
+		}catch(Exception e) {
+		    throw new RuntimeException(e);
+		}
 		setDirty();
 	}
 	public boolean isAromatic() {
@@ -987,7 +1034,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			},false);
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			// TODO: probably need a DEBUG flag to suppress this / decide to throw
+			// It gets thrown/printed a lot.
+			
+//			e.printStackTrace();
 		}
        
 		
@@ -1168,44 +1218,67 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	protected void setImplicitHydrogens(){
 		try {
+            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
 			hydrogenAdder.addImplicitHydrogens(container);
 		} catch (CDKException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+		    throw new RuntimeException(e);
 		}
 	}
 	protected int setImplicitHydrogens(IAtom atom){
-		//compute it
-		try {
-			CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(CHEM_OBJECT_BUILDER);
-			 IAtomType type = matcher.findMatchingAtomType(container, atom);
-			
-			 AtomTypeManipulator.configure(atom, type);
-			//includes explicit and implicit Hs
-			 Integer neighborCount = atom.getFormalNeighbourCount();
-			 if(neighborCount ==null){
-				 neighborCount = 0;
-			 }
-			 int implicitH = neighborCount;
-//			 System.out.println(implicitH + "  " + atom);
-			 for(IBond bond : container.getConnectedBondsList(atom)){
-//			 	System.out.println("\t"+bond.getOrder());
-				 switch(bond.getOrder()){
-				 	case SINGLE : implicitH--; break;
-				 	case DOUBLE : implicitH-=2; break;
-				 	case TRIPLE : implicitH-=3; break;
-				 	case QUADRUPLE :implicitH-=4; break;
-				 	case QUINTUPLE :implicitH-=5; break;
-				 	case SEXTUPLE :implicitH-=6; break;
-				 	default : // ? TODO do we subtract 1?
-				 }
-			 }
-//			 System.out.println(implicitH);
-			atom.setImplicitHydrogenCount(Math.max(0, implicitH));
-			return implicitH;
-			 
-		}catch(CDKException e){
-			throw new RuntimeException("error computing implicit H count for atom " +atom, e);
-		}
+	    
+	    try {
+            hydrogenAdder.addImplicitHydrogens(container, atom);
+            return atom.getImplicitHydrogenCount();
+        } catch (CDKException e) {
+            throw new RuntimeException("error computing implicit H count for atom " +atom, e);
+        }
+	    
+	    //compute it
+	    
+	    
+//		try {
+//		    
+//		    //TODO: This pipeline needs to be rewritten. It doesn't make sense.
+//		    // ...? This logic doesn't make sense.
+//		    
+//			CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(CHEM_OBJECT_BUILDER);
+//			 IAtomType type = matcher.findMatchingAtomType(container, atom);
+//			
+//			 AtomTypeManipulator.configure(atom, type);
+//			//includes explicit and implicit Hs
+//			 Integer neighborCount = atom.getFormalNeighbourCount();
+//			 if(neighborCount ==null){
+//				 neighborCount = 0;
+//			 }
+//			 double implicitH = neighborCount;
+////			 System.out.println(implicitH + "  " + atom);
+//			 for(IBond bond : container.getConnectedBondsList(atom)){
+////			 	System.out.println("\t"+bond.getOrder());
+//			     if(bond.isAromatic()) {
+//			         implicitH-=1.5;
+//			     }else {
+//    				 switch(bond.getOrder()){
+//    				 	case SINGLE : implicitH--; break;
+//    				 	case DOUBLE : implicitH-=2; break;
+//    				 	case TRIPLE : implicitH-=3; break;
+//    				 	
+//    				 	//???
+//    				 	//WHY?
+//    				 	case QUADRUPLE :implicitH-=4; break;  
+//    				 	case QUINTUPLE :implicitH-=5; break;
+//    				 	case SEXTUPLE :implicitH-=6; break;
+//    				 	default : // ? TODO do we subtract 1?
+//    				 }
+//			     }
+//			 }
+////			 System.out.println(implicitH);
+//			atom.setImplicitHydrogenCount(Math.max(0, (int)implicitH));
+//			return Math.max(0, (int)implicitH);
+//			 
+//		}catch(CDKException e){
+//			throw new RuntimeException("error computing implicit H count for atom " +atom, e);
+//		}
 	}
 	
 	@Override

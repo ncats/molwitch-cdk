@@ -86,30 +86,11 @@ public class CdkMolSearcher implements MolSearcher {
         try {
             Substructure smsd;
 
-            if(target.getAtomCount() >= query.getAtomCount()){
-                smsd = new Substructure(query, target, false, false, false, false, false);
-//
-            }else{
-                smsd = new Substructure(target, query, false, false, false, false, false);
-//
-            }
+            smsd = new Substructure(query, target, true, false, true, false, false);
+
             if(!smsd.isSubgraph()){
                 return Optional.empty();
             }
-            /*
-            //set matchBonds to false if set to true a substructure with extra bonds fails test ?
-            Substructure smsd = new Substructure(query, target, false, false, false, false, false);
-//            Substructure smsd = new Substructure(query, target, true, false, true, false, false);
-//            Isomorphism smsd = new Isomorphism(query, target,Algorithm.CDKMCS, true, true, false);
-            if(!smsd.isSubgraph()){
-                smsd= new Substructure(target, query, false, false, false, false, false);
-              if(!smsd.isSubgraph()) {
-
-                  return Optional.empty();
-              }
-            }
-
-             */
             AtomAtomMapping atomMapping;
             if(smsd.getQuery().getAtomCount() ==1 || smsd.getTarget().getAtomCount()==1){
                 //for some reason SDSM doesn't report mapping
@@ -144,8 +125,6 @@ public class CdkMolSearcher implements MolSearcher {
                 }else {
                     map[queryMappingNumber] = targetMappingNumber;
                 }
-//           System.out.println(sourceAtom.getSymbol() + " " + targetAtom.getSymbol());
-//           System.out.println(queryMappingNumber + " " + targetMappingNumber);
             }
             return Optional.ofNullable(map);
         } catch (Throwable e) {

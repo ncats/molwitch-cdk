@@ -57,9 +57,11 @@ public class IsotopeWriterTests {
         System.out.println(cc.toMol());
         InChiResult inChiResult = cc.toInchi();
         String inchi = inChiResult.getInchi();
-        System.out.println(inchi);
-        Chemical icopy= Inchi.toChemical(inchi+"\n"+ inChiResult.getAuxInfo());
+//        System.out.println(inchi);
+        Chemical icopy= Inchi.toChemical(inchi);
+        //+"\n"+ inChiResult.getAuxInfo()
         //does not have 121 ISO, has 0 ISO
-        System.out.println(icopy.toMol());
+        assertTrue("Molfile should have 121 ISO after inchi roundtrip", icopy.toMol().contains("ISO  1   1 121"));
+//        System.out.println(icopy.toMol());
     }
 }

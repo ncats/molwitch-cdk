@@ -53,7 +53,8 @@ public class CdkUtil {
 
     public static void aromatize(IAtomContainer container) throws CDKException {
 		setImplicitHydrogensIfNeeded(container, false);
-        AROMATICITY.apply(container);
+		 Aromaticity.cdkLegacy().apply(container);
+//        AROMATICITY.apply(container);
 
     }
 	public static IAtomContainer kekulizeIfNeeded(IAtomContainer container, boolean makeCopy) throws CDKException {
@@ -88,27 +89,28 @@ public class CdkUtil {
 
 	}
 
-		public static IAtomContainer setImplicitHydrogensIfNeeded(IAtomContainer container, boolean makeCopy) throws CDKException {
-    	boolean recompute=false;
-    	for(IAtom atom : container.atoms()){
-    		if(atom.getImplicitHydrogenCount() ==null){
-    			recompute=true;
-    			break;
-			}
-		}
-    	if(!recompute){
-    		return container;
-		}
-    	IAtomContainer ret = container;
-    	if(makeCopy){
-			try {
-				ret = container.clone();
-			} catch (CloneNotSupportedException e) {
-				//shouldn't happen container support clones
-			}
-		}
-		CDKHydrogenAdder.getInstance(ret.getBuilder()).addImplicitHydrogens(ret);
-    	return ret;
+	public static IAtomContainer setImplicitHydrogensIfNeeded(IAtomContainer container, boolean makeCopy) throws CDKException {
+	    boolean recompute=false;
+	    for(IAtom atom : container.atoms()){
+	        if(atom.getImplicitHydrogenCount() ==null){
+	            recompute=true;
+	            break;
+	        }
+	    }
+	    if(!recompute){
+	        return container;
+	    }
+	    IAtomContainer ret = container;
+	    if(makeCopy){
+	        try {
+	            ret = container.clone();
+	        } catch (CloneNotSupportedException e) {
+	            //shouldn't happen container support clones
+	        }
+	    }
+	    AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(ret);
+	    CDKHydrogenAdder.getInstance(ret.getBuilder()).addImplicitHydrogens(ret);
+	    return ret;
 	}
     public static IAtomContainer toAtomContainer(Chemical chemical){
 		return (IAtomContainer) chemical.getImpl().getWrappedObject();
@@ -248,7 +250,11 @@ public class CdkUtil {
     		if(ia.getSymbol() == null)return false;
     	}
     	for(IBond ib : mol.bonds()){
-    		if(ib.getOrder() == null || ib.getOrder().equals(Order.UNSET))return false;
+    		if(ib.getOrder() == null || ib.getOrder().equals(Order.UNSET)) {
+    		    if(!ib.isAromatic()) {
+    		        return false;
+    		    }
+    		}
     	}
     	return true;
     }

@@ -21,8 +21,10 @@
 
 package gov.nih.ncats.molwitch.cdk.fingerprinters;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -36,11 +38,13 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IBond.Order;
+import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import gov.nih.ncats.common.sneak.Sneak;
 import gov.nih.ncats.common.util.CachedSupplier;
 import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.ChemicalSource;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprint;
@@ -79,6 +83,18 @@ class FingerprinterAdapter implements Fingerprinter {
 	public void setForceExplicitH(boolean forceExplicitH) {
 		this.forceExplicitH = forceExplicitH;
 	}
+	
+	private void printContainer(IAtomContainer cln) {
+	    
+        CdkChemicalImpl cci = new CdkChemicalImpl(cln, (ChemicalSource)null);
+        Chemical cq = new Chemical(cci);
+        Chemical qq=cq.copy();
+        try {
+            System.out.println(qq.toMol());
+        }catch(Exception e) {
+            
+        }
+	}
 
 	@Override
 	public Fingerprint computeFingerprint(Chemical chemical) {
@@ -93,6 +109,11 @@ class FingerprinterAdapter implements Fingerprinter {
 			    Chemical cc=chemical.copy();
 			    IAtomContainer cln = (IAtomContainer)cc.getImpl().getWrappedObject();
 			    try {
+			        printContainer(cln);
+		            CdkUtil.removeQueryAtoms(cln);
+		            CdkUtil.removeQueryBonds(cln);
+		            cln=CdkUtil.getSimplifiedContainer(cln);
+		            printContainer(cln);
 			        // The logic here is a little suspect, and may not be necessary,
 			        // but the basic idea is to flag all bonds that will
 			        // be modified by the aromatic detection and mark them for removal
@@ -103,8 +124,13 @@ class FingerprinterAdapter implements Fingerprinter {
                         IBond next = bondIter2.next();
                         oldOrder.put(next, next.getOrder() + "" + next.isAromatic());
                     }
-		            AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(cln);
+                    AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(cln);
 		            Aromaticity.cdkLegacy().apply(cln);
+//		            System.out.println("===");
+//		            System.out.println(cln);
+		            CdkUtil.removeQueryBonds(cln);
+		            printContainer(cln);
+		           
 		            Iterator<IBond> bondIter = cln.bonds().iterator();
 		            while(bondIter.hasNext()){
 		                IBond next = bondIter.next();
@@ -125,30 +151,9 @@ class FingerprinterAdapter implements Fingerprinter {
 
 		if(removeQueryAtomsAndBonds){
 			containerToFingerprint = cloneCache.get();
-			//iterator.remove() doesn't seem to work
-			List<Integer> indexesToRemove = new ArrayList<>();
-			int i=0;
-			for(IAtom next : containerToFingerprint.atoms()){
+			CdkUtil.removeQueryAtoms(containerToFingerprint);
+			CdkUtil.removeQueryBonds(containerToFingerprint);
 
-//				System.out.println("atom  = " + next + " sym = " + next.getSymbol());
-				if(next.getSymbol() ==null){
-					indexesToRemove.add(Integer.valueOf(i));
-				}
-				i++;
-			}
-			//iterate in reverse to not mess up atom order of deletions
-			for(int k= indexesToRemove.size() -1; k >=0; k-- ){
-				containerToFingerprint.removeAtom(k);
-			}
-			Iterator<IBond> bondIter = containerToFingerprint.bonds().iterator();
-			while(bondIter.hasNext()){
-				IBond next = bondIter.next();
-				if(next.getOrder() ==null || next.getOrder() == Order.UNSET){
-				    if(!next.isAromatic()) {
-				        bondIter.remove();
-				    }
-				}
-			}
 		}
 		//This whole idea here is a bit suspicious
 		if(forceExplicitH){
@@ -156,12 +161,18 @@ class FingerprinterAdapter implements Fingerprinter {
 			AtomContainerManipulator.convertImplicitToExplicitHydrogens(containerToFingerprint);
 		}
 		
-		IAtomContainer iac= CdkUtil.getUsableFormOfAtomContainer(containerToFingerprint);
+		IAtomContainer iac= 
+//		        containerToFingerprint;
+		        CdkUtil.getUsableFormOfAtomContainer(containerToFingerprint);
 		
 		//TODO:
 		// IF IAtomContainer is a query container, it simply doesn't produce
 		// ANY fingerprint, and something needs to be done.
 
+		if(iac instanceof QueryAtomContainer) {
+		    iac=CdkUtil.getSimplifiedContainer(iac);
+		}
+		
 		try {
 		    IBitFingerprint bitFingerprint = delegate.getBitFingerprint(iac);
 		    BitSet bs = bitFingerprint.asBitSet();

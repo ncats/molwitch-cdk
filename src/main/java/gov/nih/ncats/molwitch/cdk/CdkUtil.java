@@ -23,7 +23,10 @@ package gov.nih.ncats.molwitch.cdk;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 import org.openscience.cdk.AtomRef;
@@ -33,9 +36,14 @@ import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.Cycles;
-import org.openscience.cdk.interfaces.*;
+import org.openscience.cdk.interfaces.IAtom;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IBond.Order;
+import org.openscience.cdk.interfaces.IChemObjectBuilder;
+import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.isomorphism.matchers.Expr;
+import org.openscience.cdk.isomorphism.matchers.Expr.Type;
 import org.openscience.cdk.isomorphism.matchers.QueryAtom;
 import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.cdk.isomorphism.matchers.QueryBond;
@@ -46,6 +54,7 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.periodictable.PeriodicTable;
 
 import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.ChemicalSource;
 
 public class CdkUtil {
 
@@ -53,10 +62,36 @@ public class CdkUtil {
 
     public static void aromatize(IAtomContainer container) throws CDKException {
 		setImplicitHydrogensIfNeeded(container, false);
-		 Aromaticity.cdkLegacy().apply(container);
-//        AROMATICITY.apply(container);
-
+//		 Aromaticity.cdkLegacy().apply(container);
+        AROMATICITY.apply(container);
     }
+    
+    public static IAtomContainer safeClone(IAtomContainer iac) {
+        //the CDK clone doesn't actually clone deep, but still allows modifications
+        return (IAtomContainer)asChemical(iac).copy().getImpl().getWrappedObject();
+    }
+    public static Chemical asChemical(IAtomContainer iac) {
+        return new Chemical(new CdkChemicalImpl(iac,(ChemicalSource)null));
+    }
+    
+    public static void poorMansKekulize(IAtomContainer iac) {
+        throw new UnsupportedOperationException("simple kekule not yet implemnted");
+        
+        //basic logic:
+        // 1. Find all atoms with aromatic bonds
+        // 2. For any atom that has only 1 aromatic bond: fail
+        // 3. For any atom that has 2 aromatic bonds, look at H count
+        //    and determine where double bonds could go.
+        
+//        for(IBond bond : iac.bonds()){
+//            if(bond.isAromatic()){
+//                
+//            }
+//        }
+    }
+    
+    
+    
 	public static IAtomContainer kekulizeIfNeeded(IAtomContainer container, boolean makeCopy) throws CDKException {
 		IAtomContainer possibleCopy = setImplicitHydrogensIfNeeded(container, makeCopy);
 		boolean setBonds=false;
@@ -70,8 +105,8 @@ public class CdkUtil {
 			IAtomContainer ret = possibleCopy;
 			if(possibleCopy ==container && makeCopy){
 				try {
-					ret = container.clone();
-				} catch (CloneNotSupportedException e) {
+					ret = safeClone(container);
+				} catch (Exception e) {
 					//shouldn't happen container support clones
 				}
 
@@ -128,6 +163,54 @@ public class CdkUtil {
 		return container;
 	}
 	
+	public static void removeQueryAtoms(IAtomContainer containerToFingerprint) {
+        //iterator.remove() doesn't seem to work
+        List<Integer> indexesToRemove = new ArrayList<>();
+        int i=0;
+        for(IAtom next : containerToFingerprint.atoms()){
+
+//          System.out.println("atom  = " + next + " sym = " + next.getSymbol());
+            if(next.getSymbol() ==null){
+                indexesToRemove.add(Integer.valueOf(i));
+            }
+            i++;
+        }
+        final IAtomContainer fia=containerToFingerprint;
+         //iterate in reverse to not mess up atom order of deletions
+        Comparator<Integer> ci=Comparator.naturalOrder();
+        indexesToRemove.stream().sorted(ci.reversed()).forEach(k->{
+            fia.removeAtom(k);
+        });
+	}
+	public static void removeQueryBonds(IAtomContainer containerToFingerprint) {
+
+	    Iterator<IBond> bondIter = containerToFingerprint.bonds().iterator();
+	    while(bondIter.hasNext()){
+	        IBond next = bondIter.next();
+	        System.out.println(next.getOrder());
+	        if(next.getOrder() ==null || next.getOrder() == Order.UNSET){
+	            if(!next.isAromatic()) {
+	              if(CdkUtil.isSubtleQueryBond(next) 
+	                      && !CdkUtil.simplifyQBond(next)
+	                      ) {
+	                    bondIter.remove();    
+	              }                       
+	            }
+	        }
+	    }
+	}
+	public static IAtomContainer getSimplifiedContainer(IAtomContainer iac) {
+	    if(iac instanceof QueryAtomContainer) {
+            QueryAtomContainer qac = (QueryAtomContainer)iac;
+            CdkChemicalImpl cci = new CdkChemicalImpl(qac, (ChemicalSource)null);
+            Chemical cq = new Chemical(cci);
+            Chemical qq=cq.copy();
+            IAtomContainer ii = (IAtomContainer)qq.getImpl().getWrappedObject();
+            return ii;
+        }
+	    return iac;
+	}
+
 
 	
 	private static String getSymbolForAtomExpression(Expr exp){
@@ -241,8 +324,50 @@ public class CdkUtil {
 			iat.setPoint2d(iao.getPoint2d());
     	}
     	
-    	
     	return qac;
+    }
+    
+    public static boolean isSubtleQueryBond(IBond b) {
+        if(b instanceof QueryBond) {
+            QueryBond qb = (QueryBond)b;
+            Expr ex=qb.getExpression();
+            if(ex.left()!=null || ex.right()!=null)return true;
+            
+            org.openscience.cdk.isomorphism.matchers.Expr.Type t=ex.type();
+//            org.openscience.cdk.isomorphism.matchers.Expr.Type.
+            switch(t) {
+                case IS_AROMATIC:
+                case ORDER:  
+                    return false;
+                default:
+                    return true;
+            }
+//            ex.
+//            System.out.println(t);
+        }else {
+            if(b.getOrder()==null || b.getOrder() == Order.UNSET) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static boolean simplifyQBond(IBond b) {
+        if(b instanceof QueryBond) {
+            QueryBond qb = (QueryBond)b;
+            Expr ex=qb.getExpression();
+            if(ex.left()!=null || ex.right()!=null)return false;
+            switch(ex.type()) {
+                case SINGLE_OR_AROMATIC:
+                    ex.setPrimitive(Type.ORDER, 1);
+                    return true;
+                case DOUBLE_OR_AROMATIC:
+                    ex.setPrimitive(Type.ORDER, 2);
+                    return true;
+            default:
+                break;
+            }
+        }
+        return false;
     }
     
     public static boolean canWrite(IAtomContainer mol){

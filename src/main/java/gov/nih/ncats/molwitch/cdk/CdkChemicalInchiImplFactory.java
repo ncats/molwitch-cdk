@@ -93,6 +93,9 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 			Chemical ichem=handleQueryAtoms(chemical);
 			ichem.kekulize();
 			
+			String mol = ichem.toMol();
+			System.out.println(mol);
+			
 			InChIGenerator gen = factory.getInChIGenerator(CdkUtil.toAtomContainer(ichem), Collections.emptyList());
 		
 			InChiResult.Status status = toChemkitStatus(gen.getReturnStatus());

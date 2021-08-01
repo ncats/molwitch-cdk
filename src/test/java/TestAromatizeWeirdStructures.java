@@ -24,8 +24,12 @@ import gov.nih.ncats.molwitch.cdk.CdkBond;
 import org.junit.Test;
 import org.openscience.cdk.interfaces.IBond;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.sound.midi.SysexMessage;
+
 import static org.junit.Assert.*;
 
 public class TestAromatizeWeirdStructures {
@@ -38,7 +42,38 @@ public class TestAromatizeWeirdStructures {
         assertTrue(c.toSmiles().contains("[nH]"));
         assertTrue(unsetBonds.toString(), unsetBonds.isEmpty());
     }
+    
+    @Test
+    public void testKekulize5Member() throws IOException {
+        String m = "\n"
+                + "  CDK     0801210958\n"
+                + "\n"
+                + "  7  7  0  0  0  0  0  0  0  0999 V2000\n"
+                + "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+                + "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  3  0  0\n"
+                + "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  4  0  0\n"
+                + "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  5  0  0\n"
+                + "    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  6  0  0\n"
+                + "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  7  0  0\n"
+                + "    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  8  0  0\n"
+                + "  1  2  1  0  0  0  0\n"
+                + "  2  3  1  0  0  0  0\n"
+                + "  3  4  4  0  0  0  0\n"
+                + "  4  5  4  0  0  0  0\n"
+                + "  5  6  4  0  0  0  0\n"
+                + "  6  7  4  0  0  0  0\n"
+                + "  3  7  4  0  0  0  0\n"
+                + "M  END";
+        Chemical chem = Chemical.parse(m);
+        chem.makeHydrogensExplicit();
 
+        String smi = chem.toSmiles();
+        System.out.println(smi);
+        chem.kekulize();
+        smi = chem.toSmiles();
+        System.out.println(smi);
+//        assertEquals(5, chem.getAtomCount());
+    }
     @Test
     public void parseMolWithUNIIAsName() throws Exception{
         String mol = "7PDD38B23D\n" +

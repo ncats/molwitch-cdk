@@ -95,6 +95,8 @@ public class TestParseQueryMol {
           
         
         Chemical c = Chemical.parseMol(mol);
+        c.aromatize();
+//        System.out.println(c.toMol());
 
         Fingerprinter fingerPrinterSub =  Fingerprinters.getFingerprinter(FingerprintSpecification.PATH_BASED.create().setLength(512));
         
@@ -161,6 +163,7 @@ public class TestParseQueryMol {
         		" 26 27  4  0  0  0  0\n" + 
         		" 27 24  4  0  0  0  0\n" + 
         		"M  END";
+        System.out.println(mm);
         Chemical c2 = Chemical.parseMol(mm);
 
         Fingerprint fp2=fingerPrinterSub.computeFingerprint(c2);
@@ -649,16 +652,18 @@ public class TestParseQueryMol {
 
            Fingerprint fp2 = fingerPrinterSub.computeFingerprint(c2);
 
-           boolean compatible = fp.compatible(fp2);
-           boolean compatible2 = fp2.compatible(fp);
            double sim = fp.tanimotoSimilarity(fp2);
            OptionalDouble shortSim = fp.tanimotoSimilarityShortCircuit(fp2);
            BitSet bsTemp = fp.toBitSet();
            bsTemp.and(fp2.toBitSet());
 
-           // assertEquals(fp.populationCount(), bsTemp.cardinality());
-           System.out.println(sim);
-           assertTrue(sim > .8D);
+           assertEquals(fp.populationCount(), bsTemp.cardinality());
+           
+           //Depending on how this is interpretted, it might actually be pretty low
+           //similarity, and that's okay
+           
+//           System.out.println(sim);
+//           assertTrue(sim > .8D);
 
        }
        @Test

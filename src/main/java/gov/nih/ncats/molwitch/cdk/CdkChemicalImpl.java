@@ -788,7 +788,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	         }
 	         if(atom.getImplicitHydrogenCount()==null){
 	        	 oldIH.put(atom, null);
-	        	 //this is really unfortunate, because it 
+	        	 //this is really unfortunate, because it
+	        	 //sometimes ruins other calculations
 	        	 atom.setImplicitHydrogenCount(0);	        	 
 	         }
 	         
@@ -1023,6 +1024,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		try {
 			doWithQueryFixes(()->{
 				
+			    // This turns out to have some significant issues, and doesn't
+			    // properly kekulize many 5-membered rings
+			    
 				Kekulization.kekulize(container);
 
 				//kekulize doesn't touch the aromatic bond flags
@@ -1037,7 +1041,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			// TODO: probably need a DEBUG flag to suppress this / decide to throw
 			// It gets thrown/printed a lot.
 			
-//			e.printStackTrace();
+			e.printStackTrace();
 		}
        
 		
@@ -1228,9 +1232,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	protected int setImplicitHydrogens(IAtom atom){
 	    
 	    try {
+	        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
             hydrogenAdder.addImplicitHydrogens(container, atom);
             return atom.getImplicitHydrogenCount();
         } catch (CDKException e) {
+            
+//            return atom.getImplicitHydrogenCount();
             throw new RuntimeException("error computing implicit H count for atom " +atom, e);
         }
 	    

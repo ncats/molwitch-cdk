@@ -168,8 +168,6 @@ public class CdkUtil {
         List<Integer> indexesToRemove = new ArrayList<>();
         int i=0;
         for(IAtom next : containerToFingerprint.atoms()){
-
-//          System.out.println("atom  = " + next + " sym = " + next.getSymbol());
             if(next.getSymbol() ==null){
                 indexesToRemove.add(Integer.valueOf(i));
             }
@@ -187,7 +185,6 @@ public class CdkUtil {
 	    Iterator<IBond> bondIter = containerToFingerprint.bonds().iterator();
 	    while(bondIter.hasNext()){
 	        IBond next = bondIter.next();
-	        System.out.println(next.getOrder());
 	        if(next.getOrder() ==null || next.getOrder() == Order.UNSET){
 	            if(!next.isAromatic()) {
 	              if(CdkUtil.isSubtleQueryBond(next) 
@@ -334,7 +331,6 @@ public class CdkUtil {
             if(ex.left()!=null || ex.right()!=null)return true;
             
             org.openscience.cdk.isomorphism.matchers.Expr.Type t=ex.type();
-//            org.openscience.cdk.isomorphism.matchers.Expr.Type.
             switch(t) {
                 case IS_AROMATIC:
                 case ORDER:  
@@ -342,8 +338,6 @@ public class CdkUtil {
                 default:
                     return true;
             }
-//            ex.
-//            System.out.println(t);
         }else {
             if(b.getOrder()==null || b.getOrder() == Order.UNSET) {
                 return true;

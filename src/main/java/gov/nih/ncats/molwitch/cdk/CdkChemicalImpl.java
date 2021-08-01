@@ -1031,7 +1031,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			doWithQueryFixes(()->{
 				
 			    // This turns out to have some significant issues, and doesn't
-			    // properly kekulize many 5-membered rings
+			    // properly kekulize many 5-membered rings when
+			    // implicit/explicit H counts are lost (as is often the case in
+			    // transit). Need a simple way to recover those.
 			    
 				Kekulization.kekulize(container);
 
@@ -1047,7 +1049,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			// TODO: probably need a DEBUG flag to suppress this / decide to throw
 			// It gets thrown/printed a lot.
 			
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
        
 		

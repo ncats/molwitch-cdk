@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.sound.midi.SysexMessage;
 
 import static org.junit.Assert.*;
 

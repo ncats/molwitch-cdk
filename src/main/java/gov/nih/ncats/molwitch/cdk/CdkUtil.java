@@ -357,12 +357,18 @@ public class CdkUtil {
             Expr ex=qb.getExpression();
             if(ex.left()!=null || ex.right()!=null)return false;
             switch(ex.type()) {
-                case SINGLE_OR_AROMATIC:
-                    ex.setPrimitive(Type.ORDER, 1);
-                    return true;
-                case DOUBLE_OR_AROMATIC:
-                    ex.setPrimitive(Type.ORDER, 2);
-                    return true;
+            // Under certain circumstances a parse of a smiles/smarts pattern
+            // may result in SINGLE_OR_AROMATIC or DOUBLE_OR_AROMATIC bonds
+            // when really plain single or plain double are intended
+            //
+            // For now, the feature to "rescue" these cases is turned off
+            
+//                case SINGLE_OR_AROMATIC:
+//                    ex.setPrimitive(Type.ORDER, 1);
+//                    return true;
+//                case DOUBLE_OR_AROMATIC:
+//                    ex.setPrimitive(Type.ORDER, 2);
+//                    return true;
             default:
                 break;
             }

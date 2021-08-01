@@ -400,7 +400,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    // A note here: this method used to rely on a deep "clone" of
 	    // CDK's AtomContainer. However it turns out that clone isn't
 	    // as deep as CDK suggests it is, and mutations done to the cloned
-	    // container are often also done to the original container
+	    // container are often also done to the original container.
 	    //
 	    // Instead, this makes a deep clone by copying to molfile and importing
 	    // again. This is not ideal, obviously. Furthermore, we can't just
@@ -410,25 +410,31 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    // TODO: debug CDK directly to fix
 	    //
 	    
-		try {
-		    Chemical wc = (new Chemical(this));
-		    String b = wc.toMol();
-		    Chemical p =Chemical.parse(b);
-		    wc.getPropertyIterator().forEachRemaining(ew->{
-		        if(ew.getValue()!=null) {
-		            p.setProperty(ew.getKey(), ew.getValue());
-		        }
-		    });
-		    CdkChemicalImpl imp=(CdkChemicalImpl) p.getImpl();
-			return new CdkChemicalImpl(imp.container,source);
-		} catch (Exception e) {
-			throw new IllegalStateException(e);
-		}
-//        try {
-//            return new CdkChemicalImpl(container.clone(), source);
-//        } catch (CloneNotSupportedException e) {
-//            throw new IllegalStateException(e);
-//        }
+//		try {
+//		    Chemical wc = (new Chemical(this));
+//		    String b = wc.toMol();
+//		    Chemical p =Chemical.parse(b);
+//		    wc.getPropertyIterator().forEachRemaining(ew->{
+//		        if(ew.getValue()!=null) {
+//		            p.setProperty(ew.getKey(), ew.getValue());
+//		        }
+//		    });
+//
+//            CdkChemicalImpl imp=(CdkChemicalImpl) p.getImpl();
+//            //It's unclear if this is necessary
+//		    for(int i=0;i<this.container.getAtomCount();i++) {
+//		        imp.container.getAtom(i).setImplicitHydrogenCount(this.container.getAtom(i).getImplicitHydrogenCount());
+//		    }
+//			return new CdkChemicalImpl(imp.container,source);
+//		} catch (Exception e) {
+//			throw new IllegalStateException(e);
+//		}
+	    
+        try {
+            return new CdkChemicalImpl(container.clone(), source);
+        } catch (CloneNotSupportedException e) {
+            throw new IllegalStateException(e);
+        }
 	}
 	
 

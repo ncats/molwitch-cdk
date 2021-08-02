@@ -24,8 +24,11 @@ import gov.nih.ncats.molwitch.cdk.CdkBond;
 import org.junit.Test;
 import org.openscience.cdk.interfaces.IBond;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+
 import static org.junit.Assert.*;
 
 public class TestAromatizeWeirdStructures {
@@ -38,7 +41,54 @@ public class TestAromatizeWeirdStructures {
         assertTrue(c.toSmiles().contains("[nH]"));
         assertTrue(unsetBonds.toString(), unsetBonds.isEmpty());
     }
-
+    
+    @Test
+    public void testKekulize5MemberCopy() throws IOException {
+        String m = "\n"
+                + "   JSDraw208012111172D\n"
+                + "\n"
+                + "  7  7  0  0  0  0              0 V2000\n"
+                + "   18.5975   -7.8074    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+                + "   19.7965   -6.8094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+                + "   21.2602   -7.3486    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+                + "   21.6844   -8.8500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+                + "   23.2432   -8.9105    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n"
+                + "   22.5570   -6.4815    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n"
+                + "   23.7825   -7.4466    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+                + "  1  2  1  0  0  0  0\n"
+                + "  2  3  1  0  0  0  0\n"
+                + "  3  4  2  0  0  0  0\n"
+                + "  4  5  1  0  0  0  0\n"
+                + "  3  6  1  0  0  0  0\n"
+                + "  6  7  2  0  0  0  0\n"
+                + "  5  7  1  0  0  0  0\n"
+                + "M  END\n"
+                + "";
+        Chemical chem = Chemical.parse(m);
+        chem.aromatize();
+        chem=chem.copy();
+        String molb = chem.toMol();
+        System.out.println(molb);
+        assertTrue("Aromatized 5 membered ring should have aromatic bonds",
+                molb.contains("  3  4  4  0  0  0  0\n"
+                        + "  4  5  4  0  0  0  0\n"
+                        + "  3  6  4  0  0  0  0\n"
+                        + "  6  7  4  0  0  0  0\n"
+                        + "  5  7  4  0  0  0  0")
+                );
+        chem.kekulize();
+        String mol = chem.toMol();
+        assertTrue("Kekulized 5 membered ring should have single/double bonds",
+                mol.contains("  1  2  1  0  0  0  0\n"
+                        + "  2  3  1  0  0  0  0\n"
+                        + "  3  4  2  0  0  0  0\n"
+                        + "  4  5  1  0  0  0  0\n"
+                        + "  3  6  1  0  0  0  0\n"
+                        + "  6  7  2  0  0  0  0\n"
+                        + "  5  7  1  0  0  0  0")
+                );
+    }
+    
     @Test
     public void parseMolWithUNIIAsName() throws Exception{
         String mol = "7PDD38B23D\n" +

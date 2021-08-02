@@ -122,7 +122,9 @@ public class CdkBond implements Bond{
 			if(parent.isAromatic()){
 				return BondType.AROMATIC;
 			}
-			
+		}
+		if(bond.getOrder() ==null) {
+		    return null;
 		}
 		switch(bond.getOrder()){
 			case SINGLE : return BondType.SINGLE;

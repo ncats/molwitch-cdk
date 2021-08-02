@@ -183,6 +183,10 @@ public class CdkSmilesWriterFactory implements ChemicalWriterImplFactory{
 				out.println("");
 				return;
 			}
+			
+			//TODO: having unset implicit H count makes this fail
+			//but it really probably shouldn't.
+			
 			try {
 				out.println(sg.create(modificationFunction.apply((IAtomContainer)chemicalImpl.getWrappedObject())));
 			} catch (CDKException e) {

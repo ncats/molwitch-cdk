@@ -65,7 +65,8 @@ public class DefaultFingerPrinter implements FingerprinterImpl{
 			adapter = new FingerprinterAdapter( new org.openscience.cdk.fingerprint.Fingerprinter());
 		}
 		adapter.setRemoveQueryAtomsAndBonds(true);
-		adapter.setForceExplicitH(true);
+		//We don't want this true by default
+//		adapter.setForceExplicitH(true);
 		return adapter;
 	}
 

@@ -95,6 +95,8 @@ public class TestParseQueryMol {
           
         
         Chemical c = Chemical.parseMol(mol);
+        c.aromatize();
+//        System.out.println(c.toMol());
 
         Fingerprinter fingerPrinterSub =  Fingerprinters.getFingerprinter(FingerprintSpecification.PATH_BASED.create().setLength(512));
         
@@ -161,6 +163,7 @@ public class TestParseQueryMol {
         		" 26 27  4  0  0  0  0\n" + 
         		" 27 24  4  0  0  0  0\n" + 
         		"M  END";
+        System.out.println(mm);
         Chemical c2 = Chemical.parseMol(mm);
 
         Fingerprint fp2=fingerPrinterSub.computeFingerprint(c2);
@@ -619,48 +622,49 @@ public class TestParseQueryMol {
        }
        @Test
        public void ensureAnyBondAndAromatizationInComplexExampleFromSmartsWorksForFingerprint() throws IOException {
-           String mol= "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
-                    
+           String mol = "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
+
+           Chemical c = Chemical.parse(mol);
+           try {
+               c.generateCoordinates();
+           } catch (Exception e) {
+               e.printStackTrace();
+           }
+           c.aromatize();
+           assertFalse(c.toMol().isEmpty());
+           assertFalse(c.toSmarts().isEmpty());
+
+           String mol2 = "COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
+           Chemical c2 = Chemical.parse(mol2);
+           c2.aromatize();
+           try {
+               c2.generateCoordinates();
+           } catch (Exception e) {
+               e.printStackTrace();
+           }
+           assertFalse(c2.toMol().isEmpty());
+           assertFalse(c2.toSmiles().isEmpty());
+
+           Fingerprinter fingerPrinterSub = Fingerprinters.getFingerprinter(
+                   FingerprintSpecification.PATH_BASED.create().setLength(512));
+
+           Fingerprint fp = fingerPrinterSub.computeFingerprint(c);
+
+           Fingerprint fp2 = fingerPrinterSub.computeFingerprint(c2);
+
+           double sim = fp.tanimotoSimilarity(fp2);
+           OptionalDouble shortSim = fp.tanimotoSimilarityShortCircuit(fp2);
+           BitSet bsTemp = fp.toBitSet();
+           bsTemp.and(fp2.toBitSet());
+
+           assertEquals(fp.populationCount(), bsTemp.cardinality());
            
-	       Chemical c = Chemical.parse(mol);
-	       try{
-	    	   c.generateCoordinates();
-	       }catch(Exception e){
-	    	   e.printStackTrace();
-	       }
-	       c.aromatize();
-		   assertFalse(c.toMol().isEmpty());
-		   assertFalse(c.toSmarts().isEmpty());
+           //Depending on how this is interpretted, it might actually be pretty low
+           //similarity, and that's okay
+           
+//           System.out.println(sim);
+//           assertTrue(sim > .8D);
 
-	       
-	       String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
-	       Chemical c2 = Chemical.parse(mol2);
-	       c2.aromatize();
-	       try{
-	    	   c2.generateCoordinates();
-	       }catch(Exception e){
-	    	   e.printStackTrace();
-	       }
-		   assertFalse(c2.toMol().isEmpty());
-		   assertFalse(c2.toSmiles().isEmpty());
-
-
-	        Fingerprinter fingerPrinterSub =  Fingerprinters.getFingerprinter(FingerprintSpecification.PATH_BASED.create().setLength(512));
-	        
-	        Fingerprint fp=fingerPrinterSub.computeFingerprint(c);
-	        
-	        Fingerprint fp2=fingerPrinterSub.computeFingerprint(c2);
-
-	        boolean compatible = fp.compatible(fp2);
-		   boolean compatible2 = fp2.compatible(fp);
-	      double sim = fp.tanimotoSimilarity(fp2);
-	      OptionalDouble shortSim = fp.tanimotoSimilarityShortCircuit(fp2);
-	        BitSet bsTemp = fp.toBitSet();
-	        bsTemp.and(fp2.toBitSet());
-
-//	        assertEquals(fp.populationCount(), bsTemp.cardinality());
-	        assertTrue(sim > .8D);
-	        
        }
        @Test
 	   public void removeAtomThenReAdd() throws Exception{

@@ -100,11 +100,11 @@
             <artifactId>cdk-atomtype</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.openscience.cdk</groupId>
-            <artifactId>cdk-valencycheck</artifactId>
-            <version>${cdk.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.openscience.cdk</groupId>-->
+<!--            <artifactId>cdk-valencycheck</artifactId>-->
+<!--            <version>${cdk.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-data</artifactId>
@@ -136,21 +136,21 @@
             <version>${cdk.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.openscience.cdk</groupId>
-            <artifactId>cdk-libiocml</artifactId>
-            <version>${cdk.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.openscience.cdk</groupId>-->
+<!--            <artifactId>cdk-libiocml</artifactId>-->
+<!--            <version>${cdk.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-smiles</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.openscience.cdk</groupId>
-            <artifactId>cdk-extra</artifactId>
-            <version>${cdk.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.openscience.cdk</groupId>-->
+<!--            <artifactId>cdk-extra</artifactId>-->
+<!--            <version>${cdk.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-smarts</artifactId>
@@ -161,16 +161,16 @@
             <artifactId>cdk-fingerprint</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.openscience.cdk</groupId>
-            <artifactId>cdk-charges</artifactId>
-            <version>${cdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openscience.cdk</groupId>
-            <artifactId>cdk-forcefield</artifactId>
-            <version>${cdk.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.openscience.cdk</groupId>-->
+<!--            <artifactId>cdk-charges</artifactId>-->
+<!--            <version>${cdk.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.openscience.cdk</groupId>-->
+<!--            <artifactId>cdk-forcefield</artifactId>-->
+<!--            <version>${cdk.version}</version>-->
+<!--        </dependency>-->
 
 
 
@@ -180,11 +180,7 @@
             <artifactId>cdk-inchi</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.openscience.cdk</groupId>
-            <artifactId>cdk-group</artifactId>
-            <version>${cdk.version}</version>
-        </dependency>
+
 
 <!--        <dependency>-->
 <!--            <groupId>org.openscience.cdk</groupId>-->

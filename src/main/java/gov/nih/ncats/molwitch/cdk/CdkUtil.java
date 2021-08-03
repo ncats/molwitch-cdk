@@ -257,6 +257,7 @@ public class CdkUtil {
 	}
     public static QueryAtomContainer asQueryAtomContainer(IAtomContainer ia){
     	QueryAtomContainer qac=QueryAtomContainer.create(ia);
+    	
     	for(int i=0;i<qac.getBondCount();i++){
     		QueryBond ib=(QueryBond)qac.getBond(i);
     		
@@ -265,9 +266,11 @@ public class CdkUtil {
     		if(ibo instanceof QueryBond){
     			ib.setExpression(((QueryBond)ibo).getExpression());
 
-    			if(ibo.isAromatic()){
+    			boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
+    			                      ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC;
+    			
+    			if(ibo.isAromatic() && !moreGoingon){
     				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
-    				
     			}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
 					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
     			}
@@ -304,7 +307,8 @@ public class CdkUtil {
     			}
     			
     		}else{
-    			if(iao.getAtomicNumber()==null){
+    		    Integer an = iao.getAtomicNumber();
+    			if(an==null || an ==0){
     				iat.setSymbol("A");
     			}else{
     				iat.setExpression(new Expr(Expr.Type.ELEMENT,iao.getAtomicNumber()));
@@ -320,7 +324,16 @@ public class CdkUtil {
 
 			iat.setPoint2d(iao.getPoint2d());
     	}
-    	
+    	IAtom[] iatoms = new IAtom[qac.getAtomCount()];
+    	for(int i=0;i<iatoms.length;i++) {
+    	    iatoms[i]=qac.getAtom(i);
+    	}
+    	IBond[] ibonds = new IBond[qac.getBondCount()];
+        for(int i=0;i<ibonds.length;i++) {
+            ibonds[i]=qac.getBond(i);
+        }
+    	qac.setAtoms(iatoms);
+    	qac.setBonds(ibonds);
     	return qac;
     }
     

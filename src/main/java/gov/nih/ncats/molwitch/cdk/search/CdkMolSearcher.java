@@ -26,10 +26,12 @@ import gov.nih.ncats.molwitch.cdk.CdkAtom;
 import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.search.MolSearcher;
 import org.openscience.cdk.AtomRef;
+import org.openscience.cdk.BondRef;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtomContainer;
 import org.openscience.cdk.isomorphism.matchers.IQueryBond;
@@ -56,22 +58,26 @@ public class CdkMolSearcher implements MolSearcher {
     public CdkMolSearcher(Chemical chemical){
         IAtomContainer container= CdkUtil.toAtomContainer(chemical);
         if(hasQueryAtomsOrBonds(container)){
-            query = new QueryAtomContainer(container, container.getBuilder());
+            query  = CdkUtil.asQueryAtomContainer(container);
         }else{
             query = container;
         }
 //        query = new QueryAtomContainer(container, container.getBuilder());
     }
-
+    
     private static boolean hasQueryAtomsOrBonds(IAtomContainer container){
         for(IAtom a : container.atoms()){
-            if(AtomRef.deref(a) instanceof IQueryAtom){
+            
+            IAtom aa=AtomRef.deref(a);
+            if(aa instanceof IQueryAtom || aa instanceof IPseudoAtom){
                 return true;
             }
-            for(IBond b : container.getConnectedBondsList(a)){
-                if(b instanceof IQueryBond){
-                    return true;
-                }
+        }
+
+        for(IBond b : container.bonds()){
+            IBond ib=BondRef.deref(b);
+            if(ib instanceof IQueryBond){
+                return true;
             }
         }
         return false;
@@ -86,6 +92,7 @@ public class CdkMolSearcher implements MolSearcher {
         try {
             Substructure smsd;
 
+                      
             smsd = new Substructure(query, target, true, false, true, false, false);
 
             if(!smsd.isSubgraph()){

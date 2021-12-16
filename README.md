@@ -10,18 +10,18 @@ This adds the API.
 <dependency>
   <groupId>gov.nih.ncats</groupId>
   <artifactId>molwitch</artifactId>
-  <version>0.6.0</version>
+  <version>0.6.1</version>
 </dependency>
 ```
 
 There also needs to be a molwitch implementation
 
-To add CDK molwitch implementation (NOTE: currently a snapshot until CDK 2.4 is released) :
+To add CDK molwitch implementation (this version uses CDK 2.6):
 ```
 <dependency>
         <groupId>gov.nih.ncats</groupId>
         <artifactId>molwitch-cdk</artifactId>
-        <version>1.0.4-SNAPSHOT</version>
+        <version>1.0.8</version>
 </dependency>
 ```
 
@@ -32,25 +32,28 @@ Results from running the latest code on Molwitch-cdk using the [API Contract](ht
  | ------ | ---------- | ---------- |
 | Extended Tetrahedral| FULLY |  |
 | Fingerprint| FULLY |  |
-| fullInchi| FULLY |  |
+| fullInchi | FULLY ( 998 ) |  |
+| fullInchi | NOT_COMPLIANT ( 2 ) |  |
 | Valence Error | FULLY ( 1 ) |  |
 | Valence Error | PARTIALLY ( 1 ) |  |
 | Valence Error | NOT_COMPLIANT ( 1 ) |  Hypervalent Hydrogen Incorrect Valence |
 | parse mol wierd parity| FULLY |  |
-| inchiKey| FULLY |  |
+| inchiKey | FULLY ( 998 ) |  |
+| inchiKey | NOT_COMPLIANT ( 2 ) |  |
 | Remove Non Descript Hydrogens| FULLY |  |
-| Inchi| FULLY |  |
+| Inchi| PARTIALLY |  |
 | Default Fingerprinter| FULLY |  |
 | Mol Parser| FULLY |  |
-| Create Chemical| FULLY |  |
+| Create Chemical| PARTIALLY |  |
 | MolSearcher| FULLY |  |
 | Write Mol| FULLY |  |
 | Problematic Smiles| FULLY |  |
-| Chemical Source| PARTIALLY |  |
+| Chemical Source| FULLY |  |
 | Clone Chemical| FULLY |  |
 | Atom Alias| FULLY |  |
 | mol parser unknown format| FULLY |  |
 | Tetrahedral| FULLY |  |
 | Atom Path Traversal| FULLY |  |
 | Atom Coords| FULLY |  |
+| Isotopes| FULLY |  |
 | Cis/Trans| FULLY |  |

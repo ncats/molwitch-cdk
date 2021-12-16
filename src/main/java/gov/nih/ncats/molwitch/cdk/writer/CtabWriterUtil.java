@@ -23,6 +23,7 @@ package gov.nih.ncats.molwitch.cdk.writer;
 
 import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.io.ChemFormat;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
@@ -38,17 +39,19 @@ public class CtabWriterUtil {
 //			 System.out.println("kekulizeEncoding = " + kekulizationEncoding);
         Function<IAtomContainer, IAtomContainer> adapter = c -> {
             IAtomContainer returnedContainer = c;
+            boolean isAromatic = false;
+            for (IBond bond : c.bonds()) {
+                if (bond.isAromatic()) {
+                    isAromatic = true;
+                    break;
+                }
+            }
             switch (kekulizationEncoding) {
+
                 case FORCE_AROMATIC: {
                     customSettings.setProperty("WriteAromaticBondTypes", Boolean.TRUE.toString());
                     //if we force aromaticity we need to set the aromatic flags
-                    boolean isAromatic = false;
-                    for (IBond bond : c.bonds()) {
-                        if (bond.isAromatic()) {
-                            isAromatic = true;
-                            break;
-                        }
-                    }
+
                     if (!isAromatic) {
                         try {
                             returnedContainer = returnedContainer.clone();
@@ -61,18 +64,17 @@ public class CtabWriterUtil {
                 break;
                 case KEKULE: {
                     customSettings.setProperty("WriteAromaticBondTypes", Boolean.FALSE.toString());
+                    if(isAromatic){
+                        try {
+                            returnedContainer = CdkUtil.kekulizeIfNeeded(returnedContainer, true);
+                        } catch (CDKException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
                 break;
                 case AS_IS: {
-                    boolean isAromatic = false;
-                    for (IBond bond : c.bonds()) {
-                        if (bond.isAromatic()) {
-                            isAromatic = true;
 
-                            break;
-                        }
-
-                    }
                     customSettings.setProperty("WriteAromaticBondTypes", Boolean.toString(isAromatic));
 
                 }

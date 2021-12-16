@@ -21,6 +21,7 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -37,6 +38,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -94,6 +96,7 @@ import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 import org.openscience.cdk.tools.periodictable.PeriodicTable;
 
+import gov.nih.ncats.common.Tuple;
 import gov.nih.ncats.common.util.CachedSupplier;
 import gov.nih.ncats.common.util.CachedSupplierGroup;
 import gov.nih.ncats.common.util.Unchecked;
@@ -190,12 +193,35 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     	}catch(CDKException e) {
     		
     	}
+    	
     	return null;
     }
     );
     
     CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
-	    	CIPTool.label(container);
+        try {
+            makeStereoElms() ;
+        }catch(Exception e) {
+            //TODO: log exception here. It usually happens because of query atoms
+        }
+            withModifiedForm(c->{
+               CdkChemicalImpl cimp = (CdkChemicalImpl) c.getImpl();
+//               cimp.
+               CIPTool.label(cimp.getContainer());
+               for (int i = 0; i < container.getAtomCount(); i++) {
+                   IAtom ai =container.getAtom(i);
+                   IAtom ain =cimp.getContainer().getAtom(i);
+                   Object p = ain.getProperty(CDKConstants.CIP_DESCRIPTOR);
+                   ai.removeProperty(CDKConstants.CIP_DESCRIPTOR);
+                   ai.setProperty(CDKConstants.CIP_DESCRIPTOR, p);
+                   
+               }
+               return null;
+               
+            });
+//            CIPTool.label(container);
+//	    	container;
+	    	
 	    	this.doWithQueryFixes(()->{
 	    	Stereocenters  centers   = Stereocenters.of(container);
 	    	for (int i = 0; i < container.getAtomCount(); i++) {
@@ -232,8 +258,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 									continue;
 								}
 							}
-							
-							
 							
 							container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
 							
@@ -340,13 +364,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	@Override
 	public void flipChirality(Stereocenter s) {
 		for(Atom a : s.getPeripheralAtoms()) {
+		    if(a==null)continue;
+		    a=getAtom(a.getAtomIndexInParent());
+//		    System.out.println("A:"+a);
 			for(Bond b : a.getBonds()) {
 				gov.nih.ncats.molwitch.Bond.Stereo oldStereo = b.getStereo();
 				gov.nih.ncats.molwitch.Bond.Stereo newStereo = oldStereo.flip();
 				
 				if(oldStereo !=newStereo) {
-					IAtom center = CdkAtom.getIAtomFor(s.getCenterAtom());
-					
+//					IAtom center = CdkAtom.getIAtomFor(s.getCenterAtom());
+					b.setStereo(newStereo);
 				}
 			}
 		}
@@ -389,6 +416,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public Object getWrappedObject() {
 		return container;
 	}
+	
+	
 	@Override
 	public CdkChemicalImpl shallowCopy() {
 		//shallow copy shares original atoms and bond objects
@@ -482,9 +511,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
 	}
 
-	private void setDirty() {
+	protected void setDirty() {
 
 		cachedSupplierGroup.resetCache();
+		container.notifyChanged();
 	}
 
 	@Override
@@ -984,23 +1014,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			}
 
 			if(options.computeStereo){
-	            boolean has3dCoords = true;
-	            for(IAtom atom : container.atoms()){
-	                if(atom.getPoint3d() ==null){
-	                    has3dCoords=false;
-	                    break;
-	                }
-	            }
-	            StereoElementFactory stereoElementFactory;
-	            if(has3dCoords){
-	                stereoElementFactory = StereoElementFactory.using3DCoordinates(container);
-	            }else{
-	                stereoElementFactory = StereoElementFactory.using2DCoordinates(container);
-	            }
-	
-				List<IStereoElement> stereo = stereoElementFactory.createAll();
-	
-				container.setStereoElements(stereo);
+			    makeStereoElms();
 
 			}
 
@@ -1011,6 +1025,25 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 
 
+	private void makeStereoElms() {
+	    boolean has3dCoords = true;
+        for(IAtom atom : container.atoms()){
+            if(atom.getPoint3d() ==null){
+                has3dCoords=false;
+                break;
+            }
+        }
+        StereoElementFactory stereoElementFactory;
+        if(has3dCoords){
+            stereoElementFactory = StereoElementFactory.using3DCoordinates(container);
+        }else{
+            stereoElementFactory = StereoElementFactory.using2DCoordinates(container);
+        }
+
+        List<IStereoElement> stereo = stereoElementFactory.createAll();
+
+        container.setStereoElements(stereo);
+	}
 
 	static int aromStatus(IAtomContainer mol) {
 	    int res = 0;
@@ -1115,8 +1148,139 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 		return list;
 	}
-	@Override
-	public List<TetrahedralChirality> getTetrahedrals() {
+
+    public <T> T withModifiedForm(Function<Chemical, T> calc) {
+        Chemical c = new Chemical(this);
+
+        List<Tuple<Runnable,Runnable>> operations = new ArrayList<>();
+
+
+        c.atoms()
+        .filter(at->!at.isPseudoAtom() && !at.isQueryAtom() && ! at.isRGroupAtom())
+        .filter(at->at.getAtomicNumber()>=11)
+        .map(at->Tuple.of(at,at.getBonds().stream()
+                .filter(bb->bb.getBondType().getOrder()==2)
+                .filter(bb->{
+                    Atom oat=bb.getOtherAtom(at);
+                    if(oat.getSymbol().equals("O")) {
+                        if(oat.getBondCount()==1)return true;
+                    }
+                    return false;
+                } )
+                .collect(Collectors.toList())))
+        .filter(t->t.v().size()>0)
+        .forEach(t->{
+            Atom at = t.k();
+
+            t.v().forEach(b->{
+                BondType obt=b.getBondType();
+                Atom oat = b.getOtherAtom(at);
+
+                operations.add(Tuple.of(()->{
+                    //doer
+                    b.setBondType(BondType.SINGLE);
+                    at.setCharge(at.getCharge()+1);
+                    oat.setCharge(oat.getCharge()-1);
+                },()->{
+                    //undoer
+                    b.setBondType(obt);
+                    at.setCharge(at.getCharge()-1);
+                    oat.setCharge(oat.getCharge()+1);
+                }));
+            });
+
+            at.getBonds().stream().forEach(b->{
+                if(b.getBondType().getOrder()==1) {
+                    Atom oat=b.getOtherAtom(at);
+                    if(oat.getSymbol().equals("O")) {
+                        int bcount = oat.getBondCount();
+
+                        //implicit H
+                        if(bcount==1) {
+                            if(oat.getCharge()==0) {
+                                operations.add(Tuple.of(()->{
+                                    //doer
+                                    oat.setCharge(oat.getCharge()-1);
+
+                                    at.setCharge(at.getCharge()+1);
+                                },()->{
+                                    //undoer                              
+                                    at.setCharge(at.getCharge()-1);
+                                    oat.setCharge(oat.getCharge()+1);
+                                }));
+                            }else {
+                                if(oat.getCharge()==-1) {
+                                    operations.add(Tuple.of(()->{
+                                        //doer
+                                        //                                      oat.setCharge(oat.getCharge()-1);
+
+                                        at.setCharge(at.getCharge()+1);
+                                    },()->{
+                                        //undoer                              
+                                        at.setCharge(at.getCharge()-1);
+                                        //                                      oat.setCharge(oat.getCharge()+1);
+                                    }));
+                                }
+                            }
+                        }else if ( bcount==2 ) {
+
+                            Atom hat = oat.getNeighbors().stream().filter(aa->aa.getSymbol().equals("H")).findAny().orElse(null);
+
+                            //explicit H
+                            if(hat!=null) {
+                                Optional<Bond> existBond =(Optional<Bond>) hat.bondTo(oat);
+                                operations.add(Tuple.of(()->{
+                                    //doer
+                                    Bond ob = existBond.get();
+                                    c.removeBond(ob);
+//                                    c.removeAtom(hat);
+                                    oat.setCharge(oat.getCharge()-1);
+                                    at.setCharge(at.getCharge()+1);
+                                },()->{
+                                    //undoer                              
+                                    at.setCharge(at.getCharge()-1);
+                                    oat.setCharge(oat.getCharge()+1);
+                                    Bond ob = existBond.get();
+//                                    c.addAtom(hat);
+                                    c.addBond(ob);
+
+                                }));
+                            }
+                        }
+                    }
+                }
+            });
+
+        });
+
+        try {
+            for(int i=0;i<operations.size();i++) {
+                operations.get(i).k().run();
+            }       
+
+            try {
+//                Chemical useC = Chemical.parse(c.toSd());
+                  Chemical useC = c;
+                return calc.apply(useC);
+            } catch (Exception e) {
+                return calc.apply(c);
+                // TODO Auto-generated catch block
+            }
+        }finally {
+            //Undo all of the modifications
+            for(int i=operations.size()-1;i>=0;i--) {
+                operations.get(i).v().run();
+            }
+        }
+
+    }
+
+    @Override
+    public List<TetrahedralChirality> getTetrahedrals() {
+        return withModifiedForm(cc->((CdkChemicalImpl)cc.getImpl()).getTetrahedrals1());
+    }
+    
+	public List<TetrahedralChirality> getTetrahedrals1() {
 
 		cahnIngoldPrelogSupplier.get();
 		
@@ -1148,6 +1312,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		IBond ibond = CdkBond.getIBondFor(b);
 		container.addBond(ibond);
 		setDirty();
+		setImplicitHydrogens(((CdkAtom)b.getAtom1()).getAtom());
+        setImplicitHydrogens(((CdkAtom)b.getAtom2()).getAtom());
 		return getCdkBondFor(ibond);
 	}
 
@@ -1210,7 +1376,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			case DOUBLE : order = Order.DOUBLE; break;
 			case TRIPLE : order = Order.TRIPLE; break;
 			case QUADRUPLE : order = Order.QUADRUPLE; break;
-			case AROMATIC : order = Order.SINGLE; break; 
+			case AROMATIC : order = Order.UNSET; break; 
 		}
 		int index1 = indexOf(atom1);
 		int index2 = indexOf(atom2);
@@ -1222,9 +1388,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	        bond.setIsAromatic(true);
 		}
 		container.addBond( bond);
+	
 		setImplicitHydrogens(((CdkAtom)atom1).getAtom());
 		setImplicitHydrogens(((CdkAtom)atom2).getAtom());
-
 		setDirty();
 		return getCdkBondFor(bond);
 	}
@@ -1238,11 +1404,51 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 	}
 	protected int setImplicitHydrogens(IAtom atom){
-	    
+	    return setImplicitHydrogens(getCdkAtomFor(atom));
+	}
+	protected int setImplicitHydrogens(CdkAtom catom){
+
+        IAtom atom = catom.getAtom();
 	    try {
+	        atom.setImplicitHydrogenCount(null);
 	        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
             hydrogenAdder.addImplicitHydrogens(container, atom);
-            return atom.getImplicitHydrogenCount();
+            Integer cc= atom.getImplicitHydrogenCount();
+            
+            int tb = catom.getBondCount();
+            
+            int aromSNG=0;
+            int aromDBL=0;
+            int aromUNSET=0;
+            
+            for(Bond bbb:catom.getBonds()) {
+                CdkBond cb = (CdkBond)bbb;
+                IBond bb=cb.getBond();
+                if(bb.isAromatic()) {
+                    if(bb.getOrder()==Order.UNSET) {
+                        aromUNSET++;
+                    }else if(bb.getOrder()==Order.SINGLE) {
+                        aromSNG++;
+                    }else if(bb.getOrder()==Order.DOUBLE) {
+                        aromDBL++;
+                    }
+                }
+            }
+            if((aromUNSET==3 && tb==3) || 
+               (aromUNSET==2 && tb==3)){
+                atom.setImplicitHydrogenCount(0);
+                return 0;
+            }
+            if(aromUNSET==2 && tb==2) {
+                if(catom.getSymbol().equals("C")) {
+                    atom.setImplicitHydrogenCount(1);
+                    return 1;
+                }else {
+                    atom.setImplicitHydrogenCount(0);
+                }
+            }
+            
+            return cc;
         } catch (CDKException e) {
             
 //            return atom.getImplicitHydrogenCount();

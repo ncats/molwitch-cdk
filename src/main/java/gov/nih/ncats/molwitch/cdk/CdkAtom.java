@@ -22,6 +22,7 @@
 package gov.nih.ncats.molwitch.cdk;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,6 +48,8 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.AtomCoordinates;
 import gov.nih.ncats.molwitch.Bond;
+import gov.nih.ncats.molwitch.Bond.BondType;
+import gov.nih.ncats.molwitch.Bond.Stereo;
 import gov.nih.ncats.molwitch.Chirality;
 import uk.ac.ebi.beam.Element;
 
@@ -298,6 +301,7 @@ public class CdkAtom implements Atom{
 	public Chirality getChirality() {
 		parent.cahnIngoldPrelogSupplier.get();
 		String value = atom.getProperty(CDKConstants.CIP_DESCRIPTOR);
+		
 		if("R".equals(value)) {
 			return Chirality.R;
 		}
@@ -313,7 +317,42 @@ public class CdkAtom implements Atom{
 
 	@Override
 	public void setChirality(Chirality chirality) {
+	    Chirality chir=getChirality();
+	    if(chir==chirality)return;
+	    if((chirality==Chirality.R && chir==Chirality.S) ||
+	       (chirality==Chirality.S && chir==Chirality.R)
+	            ) {
+	        this.getBonds().stream()
+	        .filter(b->b.getBondType().equals(BondType.SINGLE))
+	        .filter(b->!b.getStereo().equals(Stereo.NONE))
+	        .forEach(bb->{
+	            Stereo bbs=bb.getStereo();
+	            if((bb.getAtom1().equals(this) && (bbs.equals(Stereo.UP) || bbs.equals(Stereo.DOWN))) ||
+	                    (bb.getAtom2().equals(this) && (bbs.equals(Stereo.UP_INVERTED) || bbs.equals(Stereo.DOWN_INVERTED)))
+	                    ) {
+	                bb.setStereo(bbs.flip());
+	            }
+	        });
 
+	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,chirality.toString());
+//	        atom.setStereoParity((atom.getStereoParity()+1)%2);
+//	        parent.getContainer().setStereoElements(new ArrayList<>());
+	    }else if(chirality.equals(Chirality.Parity_Either)) {
+	        this.getBonds().stream()
+            .filter(b->b.getBondType().equals(BondType.SINGLE))
+            .filter(b->!b.getStereo().equals(Stereo.NONE))
+            .forEach(bb->{
+                Stereo bbs=bb.getStereo();
+                if((bb.getAtom1().equals(this) && (bbs.equals(Stereo.UP) || bbs.equals(Stereo.DOWN))) ||
+                        (bb.getAtom2().equals(this) && (bbs.equals(Stereo.UP_INVERTED) || bbs.equals(Stereo.DOWN_INVERTED)))
+                        ) {
+                    bb.setStereo(Stereo.NONE);
+                }
+            });
+
+	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,"EITHER");
+	    }
+//	    parent.cahnIngoldPrelogSupplier.resetCache();
 	}
 
 	@Override

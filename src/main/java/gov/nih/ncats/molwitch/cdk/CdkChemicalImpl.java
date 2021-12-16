@@ -1148,6 +1148,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		IBond ibond = CdkBond.getIBondFor(b);
 		container.addBond(ibond);
 		setDirty();
+		setImplicitHydrogens(((CdkAtom)b.getAtom1()).getAtom());
+        setImplicitHydrogens(((CdkAtom)b.getAtom2()).getAtom());
 		return getCdkBondFor(ibond);
 	}
 
@@ -1210,7 +1212,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			case DOUBLE : order = Order.DOUBLE; break;
 			case TRIPLE : order = Order.TRIPLE; break;
 			case QUADRUPLE : order = Order.QUADRUPLE; break;
-			case AROMATIC : order = Order.SINGLE; break; 
+			case AROMATIC : order = Order.UNSET; break; 
 		}
 		int index1 = indexOf(atom1);
 		int index2 = indexOf(atom2);
@@ -1222,9 +1224,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	        bond.setIsAromatic(true);
 		}
 		container.addBond( bond);
+	
 		setImplicitHydrogens(((CdkAtom)atom1).getAtom());
 		setImplicitHydrogens(((CdkAtom)atom2).getAtom());
-
 		setDirty();
 		return getCdkBondFor(bond);
 	}
@@ -1238,11 +1240,51 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 	}
 	protected int setImplicitHydrogens(IAtom atom){
-	    
+	    return setImplicitHydrogens(getCdkAtomFor(atom));
+	}
+	protected int setImplicitHydrogens(CdkAtom catom){
+
+        IAtom atom = catom.getAtom();
 	    try {
+	        atom.setImplicitHydrogenCount(null);
 	        AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
             hydrogenAdder.addImplicitHydrogens(container, atom);
-            return atom.getImplicitHydrogenCount();
+            Integer cc= atom.getImplicitHydrogenCount();
+            
+            int tb = catom.getBondCount();
+            
+            int aromSNG=0;
+            int aromDBL=0;
+            int aromUNSET=0;
+            
+            for(Bond bbb:catom.getBonds()) {
+                CdkBond cb = (CdkBond)bbb;
+                IBond bb=cb.getBond();
+                if(bb.isAromatic()) {
+                    if(bb.getOrder()==Order.UNSET) {
+                        aromUNSET++;
+                    }else if(bb.getOrder()==Order.SINGLE) {
+                        aromSNG++;
+                    }else if(bb.getOrder()==Order.DOUBLE) {
+                        aromDBL++;
+                    }
+                }
+            }
+            if((aromUNSET==3 && tb==3) || 
+               (aromUNSET==2 && tb==3)){
+                atom.setImplicitHydrogenCount(0);
+                return 0;
+            }
+            if(aromUNSET==2 && tb==2) {
+                if(catom.getSymbol().equals("C")) {
+                    atom.setImplicitHydrogenCount(1);
+                    return 1;
+                }else {
+                    atom.setImplicitHydrogenCount(0);
+                }
+            }
+            
+            return cc;
         } catch (CDKException e) {
             
 //            return atom.getImplicitHydrogenCount();

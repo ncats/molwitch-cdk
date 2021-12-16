@@ -199,7 +199,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     );
     
     CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
+        try {
             makeStereoElms() ;
+        }catch(Exception e) {
+            //TODO: log exception here. It usually happens because of query atoms
+        }
             withModifiedForm(c->{
                CdkChemicalImpl cimp = (CdkChemicalImpl) c.getImpl();
 //               cimp.

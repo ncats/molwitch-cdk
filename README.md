@@ -30,7 +30,7 @@ Results from running the latest code on Molwitch-cdk using the [API Contract](ht
 
 | Feature | Compliance Level | Comments|
  | ------ | ---------- | ---------- |
-| Extended Tetrahedral| FULLY |  |
+| Extended Tetrahedral| PARTIALLY |  |
 | Fingerprint| FULLY |  |
 | fullInchi | FULLY ( 998 ) |  |
 | fullInchi | NOT_COMPLIANT ( 2 ) |  |
@@ -41,10 +41,10 @@ Results from running the latest code on Molwitch-cdk using the [API Contract](ht
 | inchiKey | FULLY ( 998 ) |  |
 | inchiKey | NOT_COMPLIANT ( 2 ) |  |
 | Remove Non Descript Hydrogens| FULLY |  |
-| Inchi| PARTIALLY |  |
+| Inchi| FULLY |  |
 | Default Fingerprinter| FULLY |  |
 | Mol Parser| FULLY |  |
-| Create Chemical| PARTIALLY |  |
+| Create Chemical| FULLY |  |
 | MolSearcher| FULLY |  |
 | Write Mol| FULLY |  |
 | Problematic Smiles| FULLY |  |
@@ -52,6 +52,7 @@ Results from running the latest code on Molwitch-cdk using the [API Contract](ht
 | Clone Chemical| FULLY |  |
 | Atom Alias| FULLY |  |
 | mol parser unknown format| FULLY |  |
+| Hetero Atom Tetrahedral| FULLY |  |
 | Tetrahedral| FULLY |  |
 | Atom Path Traversal| FULLY |  |
 | Atom Coords| FULLY |  |

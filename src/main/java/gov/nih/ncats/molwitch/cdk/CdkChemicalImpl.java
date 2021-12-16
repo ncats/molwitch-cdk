@@ -193,13 +193,29 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     	}catch(CDKException e) {
     		
     	}
+    	
     	return null;
     }
     );
     
     CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
             makeStereoElms() ;
-            CIPTool.label(container);
+            withModifiedForm(c->{
+               CdkChemicalImpl cimp = (CdkChemicalImpl) c.getImpl();
+//               cimp.
+               CIPTool.label(cimp.getContainer());
+               for (int i = 0; i < container.getAtomCount(); i++) {
+                   IAtom ai =container.getAtom(i);
+                   IAtom ain =cimp.getContainer().getAtom(i);
+                   Object p = ain.getProperty(CDKConstants.CIP_DESCRIPTOR);
+                   ai.removeProperty(CDKConstants.CIP_DESCRIPTOR);
+                   ai.setProperty(CDKConstants.CIP_DESCRIPTOR, p);
+                   
+               }
+               return null;
+               
+            });
+//            CIPTool.label(container);
 //	    	container;
 	    	
 	    	this.doWithQueryFixes(()->{
@@ -345,6 +361,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public void flipChirality(Stereocenter s) {
 		for(Atom a : s.getPeripheralAtoms()) {
 		    if(a==null)continue;
+		    a=getAtom(a.getAtomIndexInParent());
 //		    System.out.println("A:"+a);
 			for(Bond b : a.getBonds()) {
 				gov.nih.ncats.molwitch.Bond.Stereo oldStereo = b.getStereo();
@@ -1212,7 +1229,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                                     //doer
                                     Bond ob = existBond.get();
                                     c.removeBond(ob);
-                                    c.removeAtom(hat);
+//                                    c.removeAtom(hat);
                                     oat.setCharge(oat.getCharge()-1);
                                     at.setCharge(at.getCharge()+1);
                                 },()->{
@@ -1220,7 +1237,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                                     at.setCharge(at.getCharge()-1);
                                     oat.setCharge(oat.getCharge()+1);
                                     Bond ob = existBond.get();
-                                    c.addAtom(hat);
+//                                    c.addAtom(hat);
                                     c.addBond(ob);
 
                                 }));
@@ -1238,10 +1255,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             }       
 
             try {
-                Chemical useC = Chemical.parse(c.toSd());
-                //              Chemical useC = c;
+//                Chemical useC = Chemical.parse(c.toSd());
+                  Chemical useC = c;
                 return calc.apply(useC);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 return calc.apply(c);
                 // TODO Auto-generated catch block
             }

@@ -138,6 +138,8 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 			if(toStruc.getReturnStatus() == INCHI_RET.OKAY || toStruc.getReturnStatus() == INCHI_RET.WARNING) {
 				
 				return ChemicalBuilder._fromImpl(new CdkChemicalImpl( toStruc.getAtomContainer(), new StringSource(inchi, Type.INCHI)))
+								.computeCoordinates(true)
+//								.computeStereo(true)
 								.build();
 							
 			}

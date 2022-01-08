@@ -46,13 +46,13 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
  * that can guess the file format and return the appropriate
  * {@link IIteratingChemObjectReader} for it, but it does have one
  * for the non-iterating, read everything into memory Reader.
- * 
+ *
  * <p>
  * This is a very basic factory that can only determine
  * a file encoded in SMILES format or MOL/SDF format.
- * If the file is compressed, it must be uncompressed before it is 
+ * If the file is compressed, it must be uncompressed before it is
  * given to this factory.
- * 
+ *
  * @author katzelda
  *
  */
@@ -62,36 +62,48 @@ public class ReaderFactory {
 	/**
 	 * Get the file format for the contents of the given {@link BufferedReader}
 	 * and return the appropriate {@link IIteratingChemObjectReader} for that format.
-	 * 
+	 *
 	 * @param reader the {@link BufferedReader} to parse; can not be null
 	 * and must support mark/reset.
-	 * 
+	 *
 	 * @return a new {@link IIteratingChemObjectReader} that can parse
 	 * the input.
 	 * @throws IOException if there is a problem reading the input data.
 	 */
 	public static GuessResult guessReaderFor(BufferedReader reader) throws IOException{
-		IResourceFormat format;
-		try {
-			format = new FormatFactory().guessFormat(reader);
-		}catch(Throwable e){
-			e.printStackTrace();
-			//TODO should probably make a smiles or smarts reader...
-
-			format = SMILESFormat.getInstance();
-		}
-		if(format ==null){
-			//if more than 1 line default to mol otherwise smiles
-			reader.reset();
-			reader.readLine();
-			if(reader.readLine() !=null){
-				//more than 1 line assume mol ?
+		//CDK reader gets confused by mol files with a name in the first line because
+		//depending on the format of the name it can guess the wrong format
+		//so check for mol file first and if it's not then use cdk to guess
+		IResourceFormat format=null;
+		reader.mark(2000);
+		reader.readLine();
+		reader.readLine();
+		reader.readLine();
+		String molLine = reader.readLine();
+		if(molLine !=null) {
+			if (molLine.endsWith("V2000")) {
 				format = MDLV2000Format.getInstance();
-			}else {
+			} else if (molLine.endsWith("V3000")) {
+				format = MDLV3000Format.getInstance();
+			}
+		}
+		if(format ==null) {
+			try {
+				reader.reset();
+				format = new FormatFactory().guessFormat(reader);
+			} catch (Throwable e) {
+				e.printStackTrace();
+				//TODO should probably make a smiles or smarts reader...
+
 				format = SMILESFormat.getInstance();
 			}
-			reader.reset();
 		}
+		if(format ==null){
+			//default to smiles?
+			format = SMILESFormat.getInstance();
+		}
+
+		reader.reset();
 		return create(reader, format);
 
 	}
@@ -115,7 +127,7 @@ public class ReaderFactory {
 		}
 		if(format instanceof SDFFormat){
 			SavedBufferedReader savedReader = new SavedBufferedReader(new ProgramClearingMol2000Wrapper(reader));
-				return new GuessResult(new IdAwareSdfReader(savedReader, SilentChemObjectBuilder.getInstance()), savedReader);
+			return new GuessResult(new IdAwareSdfReader(savedReader, SilentChemObjectBuilder.getInstance()), savedReader);
 
 		}
 		throw new IOException ("not configured to parse " + format.getFormatName());
@@ -125,12 +137,12 @@ public class ReaderFactory {
 		public final IIteratingChemObjectReader<IAtomContainer> cdkReader;
 		public final SavedBufferedReader savedBufferedReader;
 		public GuessResult(IIteratingChemObjectReader<IAtomContainer> cdkReader,
-				SavedBufferedReader savedBufferedReader) {
+						   SavedBufferedReader savedBufferedReader) {
 			this.cdkReader = cdkReader;
 			this.savedBufferedReader = savedBufferedReader;
 		}
-		
-		
+
+
 	}
 
 	static class IteratingSmartsReader extends DefaultIteratingChemObjectReader<IAtomContainer>{
@@ -223,7 +235,7 @@ public class ReaderFactory {
 		}
 
 	}
-	
-	
-	
+
+
+
 }

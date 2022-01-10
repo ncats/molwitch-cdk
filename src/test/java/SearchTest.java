@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 import static org.junit.Assert.*;
-@Ignore("substructure impl is bad")
 public class SearchTest {
 
     @Test

@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.util.Collections;
 
 import gov.nih.ncats.molwitch.Atom;
+import io.github.dan2097.jnainchi.InchiFlag;
+import io.github.dan2097.jnainchi.InchiOptions;
+import io.github.dan2097.jnainchi.InchiStatus;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.PseudoAtom;
@@ -42,14 +45,14 @@ import gov.nih.ncats.molwitch.inchi.InChiResult;
 import gov.nih.ncats.molwitch.inchi.InChiResult.Status;
 import gov.nih.ncats.molwitch.internal.source.StringSource;
 import gov.nih.ncats.molwitch.spi.InchiImplFactory;
-import net.sf.jniinchi.INCHI_RET;
 import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 
 public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 
 	private final InChIGeneratorFactory factory;
-	
+	//CDK by default turns of auxInfo
+	private static InchiOptions MOLWITCH_INCHI_OPTIONS = new InchiOptions.InchiOptionsBuilder().build();
 	public CdkChemicalInchiImplFactory() {
 		try {
 			factory = InChIGeneratorFactory.getInstance();
@@ -93,9 +96,9 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 			Chemical ichem=handleQueryAtoms(chemical);
 			ichem.kekulize();
 			
-			InChIGenerator gen = factory.getInChIGenerator(CdkUtil.toAtomContainer(ichem), Collections.emptyList());
+			InChIGenerator gen = factory.getInChIGenerator(CdkUtil.toAtomContainer(ichem), MOLWITCH_INCHI_OPTIONS);
 		
-			InChiResult.Status status = toChemkitStatus(gen.getReturnStatus());
+			InChiResult.Status status = toChemkitStatus(gen.getStatus());
 //			System.out.println("INCHI STATUS =  " + status);
 			String inchi = gen.getInchi();
 			if(inchi ==null){
@@ -120,11 +123,11 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		} 
 	}
 
-	private InChiResult.Status toChemkitStatus(INCHI_RET returnStatus) {
-		if(returnStatus == INCHI_RET.OKAY) {
+	private InChiResult.Status toChemkitStatus(InchiStatus returnStatus) {
+		if(returnStatus == InchiStatus.SUCCESS) {
 			return Status.VALID;
 		}
-		if(returnStatus == INCHI_RET.WARNING) {
+		if(returnStatus == InchiStatus.WARNING) {
 			return Status.WARNING;
 		}
 		return Status.ERROR;
@@ -135,7 +138,7 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 			InChIToStructure toStruc= factory.getInChIToStructure(inchi, DefaultChemObjectBuilder.getInstance());
 		
 //			System.out.println(toStruc.getReturnStatus() + "  " + toStruc.getMessage());
-			if(toStruc.getReturnStatus() == INCHI_RET.OKAY || toStruc.getReturnStatus() == INCHI_RET.WARNING) {
+			if(toStruc.getStatus() == InchiStatus.SUCCESS || toStruc.getStatus() == InchiStatus.WARNING) {
 				
 				return ChemicalBuilder._fromImpl(new CdkChemicalImpl( toStruc.getAtomContainer(), new StringSource(inchi, Type.INCHI)))
 								.computeCoordinates(true)

@@ -21,7 +21,7 @@ To add CDK molwitch implementation (this version uses CDK 2.6):
 <dependency>
         <groupId>gov.nih.ncats</groupId>
         <artifactId>molwitch-cdk</artifactId>
-        <version>1.0.8</version>
+        <version>1.0.9</version>
 </dependency>
 ```
 
@@ -29,7 +29,7 @@ To add CDK molwitch implementation (this version uses CDK 2.6):
 Results from running the latest code on Molwitch-cdk using the [API Contract](https://github.com/ncats/molwitch-apitests)
 
 | Feature | Compliance Level | Comments|
- | ------ | ---------- | ---------- |
+| ------ | ---------- | ---------- |
 | Extended Tetrahedral| PARTIALLY |  |
 | Fingerprint| FULLY |  |
 | fullInchi | FULLY ( 998 ) |  |

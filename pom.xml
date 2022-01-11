@@ -6,7 +6,7 @@
 
     <groupId>gov.nih.ncats</groupId>
     <artifactId>molwitch-cdk</artifactId>
-    <version>1.0.8-SNAPSHOT</version>
+    <version>1.0.9-SNAPSHOT</version>
     <name>molwitch-cdk</name>
 
     <url>https://github.com/ncats/molwitch-cdk/</url>
@@ -17,7 +17,7 @@
     </organization>
 
     <properties>
-        <cdk.version>2.6</cdk.version>
+        <cdk.version>2.7.1</cdk.version>
     </properties>
     <repositories>
         <repository>

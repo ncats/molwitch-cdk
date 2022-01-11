@@ -100,6 +100,12 @@
             <artifactId>cdk-atomtype</artifactId>
             <version>${cdk.version}</version>
         </dependency>
+        <!-- This is required in CDK because some of their APIs use the JNI enums so this modules adds copies of them-->
+        <dependency>
+            <groupId>org.openscience.cdk</groupId>
+            <artifactId>cdk-jniinchi-support</artifactId>
+            <version>${cdk.version}</version>
+        </dependency>
 <!--        <dependency>-->
 <!--            <groupId>org.openscience.cdk</groupId>-->
 <!--            <artifactId>cdk-valencycheck</artifactId>-->

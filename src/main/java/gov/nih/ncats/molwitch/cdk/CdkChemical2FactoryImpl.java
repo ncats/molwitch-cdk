@@ -366,9 +366,16 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 	
 	@Override
 	public ChemicalImplReader create(InputStream in) throws IOException {
+		System.out.println("CdkChemical2FactoryImpl.create using default Encoding ");
 		return createFrom(new InputStreamReader(in), null);
 	}
-	
+
+	@Override
+	public ChemicalImplReader create(InputStream in, String encoding) throws IOException {
+		System.out.println("CdkChemical2FactoryImpl.create using encoding: " + encoding);
+		return createFrom(new InputStreamReader(in, encoding), null);
+	}
+
 	private static class CdkChemicalImplReader implements ChemicalImplReader{
 		private final IIteratingChemObjectReader<IAtomContainer> iter;
 		private final SavedBufferedReader savedReader;

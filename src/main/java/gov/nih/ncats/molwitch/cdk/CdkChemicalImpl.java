@@ -1811,8 +1811,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	private class CDKSgroupAdapter implements SGroup{
 
-		private Chemical parentChemical;
-
 		private Sgroup sgroup;
 		
 		public CDKSgroupAdapter( Sgroup sgroup) {
@@ -2074,15 +2072,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
              default : return Optional.empty();
          }
 		}
-		
-		public Chemical getParentChemical() {
-			return this.parentChemical;
-		}
-
-		public void setParentChemical(Chemical chem) {
-			this.parentChemical=chem;
-		}
-
 	}
 
 

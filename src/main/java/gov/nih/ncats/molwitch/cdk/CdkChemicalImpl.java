@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2019.
+ * Copyright (c) 2023.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -1811,7 +1811,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	private class CDKSgroupAdapter implements SGroup{
 
-
 		private Sgroup sgroup;
 		
 		public CDKSgroupAdapter( Sgroup sgroup) {
@@ -2073,9 +2072,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
              default : return Optional.empty();
          }
 		}
-		
-		
-
 	}
 
 

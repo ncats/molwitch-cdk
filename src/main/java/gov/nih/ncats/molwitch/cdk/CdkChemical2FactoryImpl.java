@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2019.
+ * Copyright (c) 2023.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -368,7 +368,12 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 	public ChemicalImplReader create(InputStream in) throws IOException {
 		return createFrom(new InputStreamReader(in), null);
 	}
-	
+
+	@Override
+	public ChemicalImplReader create(InputStream in, String encoding) throws IOException {
+		return createFrom(new InputStreamReader(in, encoding), null);
+	}
+
 	private static class CdkChemicalImplReader implements ChemicalImplReader{
 		private final IIteratingChemObjectReader<IAtomContainer> iter;
 		private final SavedBufferedReader savedReader;

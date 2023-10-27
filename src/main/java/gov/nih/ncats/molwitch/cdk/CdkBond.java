@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2019.
+ * Copyright (c) 2023.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -276,8 +276,15 @@ public class CdkBond implements Bond{
 
 	@Override
 	public boolean isInRing() {
-		parent.ringsSearcherSupplier.get();
-		return bond.isInRing();
+		try {
+			parent.ringsSearcherSupplier.get();
+			return bond.isInRing();
+		}
+		catch(Exception ex){
+			System.err.println("Error in isInRing()");
+			ex.printStackTrace();
+		}
+		return false;
 	}
 
 

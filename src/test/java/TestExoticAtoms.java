@@ -24,6 +24,18 @@ public class TestExoticAtoms {
         	   assertTrue(mass>0.01);
            }
        }
+	   
+	   @Test
+       public void ensureRGroupSettingAbove32Works() throws IOException {
+           String mol= "[Am]";
+                    
+           
+           Chemical c = Chemical.parse(mol);
+           for(int i=1;i<=100;i++){
+        	   c.getAtom(0).setRGroup(i);
+        	   assertTrue(c.getAtom(0).getRGroupIndex().orElse(-1)>0);
+           }
+       }
        
        @Test
        public void ensureWeightForStrangeAtomsTogether() throws IOException {

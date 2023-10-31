@@ -30,6 +30,8 @@ import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
@@ -54,6 +56,9 @@ import gov.nih.ncats.molwitch.Chirality;
 import uk.ac.ebi.beam.Element;
 
 public class CdkAtom implements Atom{
+	
+	private static final Pattern validLabelPattern = Pattern.compile("^R\\d+$");
+	 
 
 	private static IsotopeFactory isotopeFactory;
 	
@@ -299,7 +304,10 @@ public class CdkAtom implements Atom{
 
 	@Override
 	public Chirality getChirality() {
-		parent.cahnIngoldPrelogSupplier.get();
+		if(!parent.cahnIngoldPrelogSupplier.hasRun()) {
+			//forces running CIP rules
+			parent.getTetrahedrals();
+		}
 		String value = atom.getProperty(CDKConstants.CIP_DESCRIPTOR);
 		
 		if("R".equals(value)) {
@@ -489,7 +497,7 @@ public class CdkAtom implements Atom{
 		
 		return getPseudoAtomField(iPseudoAtom -> {
 			String label = iPseudoAtom.getLabel();
-			 if(label !=null && RGroupQuery.isValidRgroupQueryLabel(label)) {
+			 if(label !=null && isValidRgroupQueryLabel(label)) {
 				 return OptionalInt.of(Integer.parseInt(label.substring(1)));
 			 }
 			 return OptionalInt.empty();
@@ -583,7 +591,24 @@ public class CdkAtom implements Atom{
 		return parent.getContainer().indexOf(atom);
 	}
 
-	
+    /**
+     * Validates a Pseudo atom's label to be valid RGroup query label (R1..R32).
+     * @param Rxx R-group label like R1 or R10
+     * @return true if R1..R32+, otherwise false
+     */
+    public static boolean isValidRgroupQueryLabel(String Rxx) {
+        Matcher matcher = validLabelPattern.matcher(Rxx);
+        if (matcher.find()) {
+            int groupNumber = Integer.parseInt(Rxx.substring(1));
+            //Note that CDK restricts to only R32 and below, but we are allowing larger here
+            
+            if (groupNumber >= 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 	
 
 }

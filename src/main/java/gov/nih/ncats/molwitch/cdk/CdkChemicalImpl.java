@@ -568,8 +568,14 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    // isn't clear.
 		try {
 		    setImplicitHydrogens();
-		    AtomContainerManipulator.suppressHydrogens(container);
+		    try {
+		    	AtomContainerManipulator.suppressHydrogens(container);
+		    }catch(Exception e) {
+		    	// suppress for now, it tends to fail if there is a query atom
+		    	// but implicit Hs mean less there anyway
+		    }
 		}catch(Exception e) {
+			
 		    throw new RuntimeException(e);
 		}
 		setDirty();

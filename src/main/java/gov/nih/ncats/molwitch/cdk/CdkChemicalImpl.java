@@ -53,8 +53,17 @@ import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
+import org.openscience.cdk.config.IsotopeFactory;
+import org.openscience.cdk.config.Isotopes;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.geometry.cip.CIPTool;
+import org.openscience.cdk.geometry.cip.ILigand;
+import org.openscience.cdk.geometry.cip.ImplicitHydrogenLigand;
+import org.openscience.cdk.geometry.cip.Ligand;
+import org.openscience.cdk.geometry.cip.VisitedAtoms;
+import org.openscience.cdk.geometry.cip.CIPTool.CIP_CHIRALITY;
+import org.openscience.cdk.geometry.cip.CIPToolMod;
+import org.openscience.cdk.geometry.cip.rules.ISequenceSubRule;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.graph.GraphUtil;
@@ -67,6 +76,7 @@ import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IBond.Order;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IDoubleBondStereochemistry;
+import org.openscience.cdk.interfaces.IIsotope;
 import org.openscience.cdk.interfaces.IMolecularFormula;
 import org.openscience.cdk.interfaces.IRing;
 import org.openscience.cdk.interfaces.IRingSet;
@@ -91,6 +101,8 @@ import org.openscience.cdk.stereo.ExtendedTetrahedral;
 import org.openscience.cdk.stereo.StereoElementFactory;
 import org.openscience.cdk.stereo.Stereocenters;
 import org.openscience.cdk.tools.CDKHydrogenAdder;
+import org.openscience.cdk.tools.ILoggingTool;
+import org.openscience.cdk.tools.LoggingToolFactory;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.AtomTypeManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
@@ -198,6 +210,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     }
     );
     
+    
+    
+    
     CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
         try {
             makeStereoElms() ;
@@ -207,13 +222,22 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             withModifiedForm(c->{
                CdkChemicalImpl cimp = (CdkChemicalImpl) c.getImpl();
 //               cimp.
-               CIPTool.label(cimp.getContainer());
+               
+               //Due to a bug in CDK, this doesn't work as expected
+               //CIPTool.label(cimp.getContainer());
+               
+               //We currently have to use a modified form for now
+               CIPToolMod.label(cimp.getContainer());
+               
                for (int i = 0; i < container.getAtomCount(); i++) {
                    IAtom ai =container.getAtom(i);
                    IAtom ain =cimp.getContainer().getAtom(i);
                    Object p = ain.getProperty(CDKConstants.CIP_DESCRIPTOR);
+                   
                    ai.removeProperty(CDKConstants.CIP_DESCRIPTOR);
-                   ai.setProperty(CDKConstants.CIP_DESCRIPTOR, p);
+                   if(p!=null) {
+                	   ai.setProperty(CDKConstants.CIP_DESCRIPTOR, p);   
+                   }
                    
                }
                return null;
@@ -1156,8 +1180,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 
     public <T> T withModifiedForm(Function<Chemical, T> calc) {
+    	
+    	
         Chemical c = new Chemical(this);
 
+//        if(true)return calc.apply(c);
+        
         List<Tuple<Runnable,Runnable>> operations = new ArrayList<>();
 
 

@@ -109,6 +109,9 @@ import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
  *
  */
 public class CIPToolMod {
+
+	public static boolean USE_NEW_CENTRES=true;
+	
 	
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
 	
@@ -118,17 +121,22 @@ public class CIPToolMod {
      * @param container structure to label
      */
     public static void label(IAtomContainer container) {
-
-        for (IStereoElement stereoElement : container.stereoElements()) {
-            if (stereoElement instanceof ITetrahedralChirality) {
-                ITetrahedralChirality tc = (ITetrahedralChirality) stereoElement;
-                tc.getChiralAtom().setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, tc).toString());
-            } else if (stereoElement instanceof IDoubleBondStereochemistry) {
-                IDoubleBondStereochemistry dbs = (IDoubleBondStereochemistry) stereoElement;
-                dbs.getStereoBond()
-                        .setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, dbs).toString());
-            }
-        }
+    	//Experimental new labeller
+    	if(USE_NEW_CENTRES) {
+    		com.simolecule.centres.CdkLabeller.label(container);
+    		return;
+    	}else {
+	        for (IStereoElement stereoElement : container.stereoElements()) {
+	            if (stereoElement instanceof ITetrahedralChirality) {
+	                ITetrahedralChirality tc = (ITetrahedralChirality) stereoElement;
+	                tc.getChiralAtom().setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, tc).toString());
+	            } else if (stereoElement instanceof IDoubleBondStereochemistry) {
+	                IDoubleBondStereochemistry dbs = (IDoubleBondStereochemistry) stereoElement;
+	                dbs.getStereoBond()
+	                        .setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, dbs).toString());
+	            }
+	        }
+    	}
 
     }
     

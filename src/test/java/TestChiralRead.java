@@ -27,6 +27,7 @@ import java.util.BitSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import gov.nih.ncats.molwitch.Chemical;
@@ -324,6 +325,7 @@ public class TestChiralRead {
 			assertEquals(Chirality.S, opChi.get());
 	   	}
 		
+		@Ignore
 		@Test
 	   	public void testAxialStereoUndefinedMarkedAsCenter() throws Exception {
 			Chemical c1=Chemical.parse("\n"

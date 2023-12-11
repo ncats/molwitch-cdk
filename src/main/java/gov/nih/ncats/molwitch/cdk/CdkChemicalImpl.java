@@ -277,11 +277,20 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 						// real stereocenter. If not, it's not a real stereocenter.
 						
 						if(ai3.getProperty(CDKConstants.CIP_DESCRIPTOR) == null){
+							//The problem here is, if there IS a defined wedge/dash
+							//it shouldn't be considered a potential center
+							CdkAtom cat=new CdkAtom(container.getAtom(i),this);
 							
-							potentialSet.add(i);
-							undefinedSet.add(i);
-							if(!deepChirality) {
-								container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+							boolean hasStereo = cat.getBonds().stream()
+					        .filter(b->b.getBondType().equals(BondType.SINGLE))
+					        .filter(b->!b.getStereo().equals(Bond.Stereo.NONE))
+					        .findAny().isPresent();
+							if(!hasStereo) {
+								potentialSet.add(i);
+								undefinedSet.add(i);
+								if(!deepChirality) {
+									container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+								}
 							}
 						}
 						

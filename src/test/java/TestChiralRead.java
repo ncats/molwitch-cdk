@@ -794,6 +794,127 @@ public class TestChiralRead {
 			assertEquals("SrR", sdfChiral);
 	   	}
 		
+
+		@Test
+	   	public void testPsuedoStereocenterIn135trimethylcyclohexaneIsLowerCase() throws Exception {
+
+	   		Chemical mol=Chemical.parse("\n"
+	   				+ "   JSDraw212082315262D\n"
+	   				+ "\n"
+	   				+ "  9  9  0  0  1  0            999 V2000\n"
+	   				+ "   24.5440  -10.0360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   23.1930   -9.2560    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   23.1930   -7.6960    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   24.5440   -6.9160    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   25.8950   -7.6960    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   25.8950   -9.2560    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   24.5440   -5.3560    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   21.8420  -10.0360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   27.2460  -10.0360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "  1  2  1  0  0  0  0\n"
+	   				+ "  2  3  1  0  0  0  0\n"
+	   				+ "  3  4  1  0  0  0  0\n"
+	   				+ "  4  5  1  0  0  0  0\n"
+	   				+ "  5  6  1  0  0  0  0\n"
+	   				+ "  6  1  1  0  0  0  0\n"
+	   				+ "  4  7  1  1  0  0  0\n"
+	   				+ "  2  8  1  1  0  0  0\n"
+	   				+ "  6  9  1  6  0  0  0\n"
+	   				+ "M  END");
+	   		mol= Chemical.parse(mol.toMol());
+	   			   		assertEquals(1,mol.getAllStereocenters().size());
+	   		String sdfChiral =mol.getAllStereocenters()
+	   		.stream()
+	   		.filter(Stereocenter::isDefined)
+			.map(Stereocenter::getCenterAtom)
+			.filter(a -> a.getChirality() != null)
+			.map(a->a.getChirality())
+			.map(ch->ch.toString())
+			 .collect(Collectors.joining());
+			
+			assertEquals("r", sdfChiral);
+	   	}
+		
+		@Test
+	   	public void testPsuedoStereocenterIn135trimethylcyclohexaneIsLowerCaseC() throws Exception {
+
+			Chemical mol=Chemical.parse("\n"
+	   				+ "   JSDraw212082315262D\n"
+	   				+ "\n"
+	   				+ "  9  9  0  0  1  0            999 V2000\n"
+	   				+ "   24.5440  -10.0360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   23.1930   -9.2560    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   23.1930   -7.6960    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   24.5440   -6.9160    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   25.8950   -7.6960    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   25.8950   -9.2560    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   24.5440   -5.3560    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   21.8420  -10.0360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   27.2460  -10.0360    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "  1  2  1  0  0  0  0\n"
+	   				+ "  2  3  1  0  0  0  0\n"
+	   				+ "  3  4  1  0  0  0  0\n"
+	   				+ "  4  5  1  0  0  0  0\n"
+	   				+ "  5  6  1  0  0  0  0\n"
+	   				+ "  6  1  1  0  0  0  0\n"
+	   				+ "  4  7  1  1  0  0  0\n"
+	   				+ "  2  8  1  6  0  0  0\n"
+	   				+ "  6  9  1  6  0  0  0\n"
+	   				+ "M  END");
+	   		mol= Chemical.parse(mol.toMol());
+	   			   		assertEquals(1,mol.getAllStereocenters().size());
+	   		String sdfChiral =mol.getAllStereocenters()
+	   		.stream()
+	   		.filter(Stereocenter::isDefined)
+			.map(Stereocenter::getCenterAtom)
+			.filter(a -> a.getChirality() != null)
+			.map(a->a.getChirality())
+			.map(ch->ch.toString())
+			 .collect(Collectors.joining());
+			
+			assertEquals("r", sdfChiral);
+	   	}
+		
+		@Test
+	   	public void testPsuedoStereocenterIn135trimethylcyclohexaneIsLowerCaseB() throws Exception {
+
+	   		Chemical mol=Chemical.parse("\n"
+	   				+ "   JSDraw212082315262D\n"
+	   				+ "\n"
+	   				+ "  9  9  0  0  1  0            999 V2000\n"
+	   				+ "   21.1640  -11.4400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   19.8130  -10.6600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   19.8130   -9.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   21.1640   -8.3200    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   22.5150   -9.1000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   22.5150  -10.6600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   21.1640   -6.7600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   18.4620  -11.4400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "   23.8660  -11.4400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
+	   				+ "  1  2  1  0  0  0  0\n"
+	   				+ "  2  3  1  0  0  0  0\n"
+	   				+ "  3  4  1  0  0  0  0\n"
+	   				+ "  4  5  1  0  0  0  0\n"
+	   				+ "  5  6  1  0  0  0  0\n"
+	   				+ "  6  1  1  0  0  0  0\n"
+	   				+ "  4  7  1  1  0  0  0\n"
+	   				+ "  2  8  1  1  0  0  0\n"
+	   				+ "  6  9  1  1  0  0  0\n"
+	   				+ "M  END");
+	   		mol= Chemical.parse(mol.toMol());
+	   			   		assertEquals(3,mol.getAllStereocenters().size());
+	   		String sdfChiral =mol.getAllStereocenters()
+	   		.stream()
+	   		.filter(Stereocenter::isDefined)
+			.map(Stereocenter::getCenterAtom)
+			.filter(a -> a.getChirality() != null)
+			.map(a->a.getChirality())
+			.map(ch->ch.toString())
+			 .collect(Collectors.joining());
+			
+			assertEquals("sss", sdfChiral);
+	   	}
+		
 		@Test
 	   	public void testPsuedoStereocenterOnNonMesoNotFound() throws Exception {
 

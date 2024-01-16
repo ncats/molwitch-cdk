@@ -6,7 +6,7 @@
 
     <groupId>gov.nih.ncats</groupId>
     <artifactId>molwitch-cdk</artifactId>
-    <version>1.0.14</version>
+    <version>1.0.15-SNAPSHOT</version>
     <name>molwitch-cdk</name>
 
     <url>https://github.com/ncats/molwitch-cdk/</url>
@@ -18,6 +18,7 @@
 
     <properties>
         <cdk.version>2.9</cdk.version>
+        <centres.version>1.2.1</centres.version>
     </properties>
     <repositories>
         <repository>
@@ -28,6 +29,16 @@
             </releases>
             <snapshots>
                 <enabled>true</enabled>
+            </snapshots>
+        </repository>
+         <repository>
+            <id>oss.sonatype.org</id>
+            <url>https://repo1.maven.org/maven2/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
             </snapshots>
         </repository>
     </repositories>
@@ -73,7 +84,7 @@
         <dependency>
             <groupId>gov.nih.ncats</groupId>
             <artifactId>molwitch</artifactId>
-            <version>0.6.5</version>
+            <version>0.6.6-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.apache.logging.log4j</groupId>
@@ -112,6 +123,22 @@
             <artifactId>cdk-jniinchi-support</artifactId>
             <version>${cdk.version}</version>
         </dependency>
+        
+        
+<dependency>
+    <groupId>com.simolecule.centres</groupId>
+    <artifactId>centres-core</artifactId>
+    <version>${centres.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>com.simolecule.centres</groupId>
+    <artifactId>centres-cdk</artifactId>
+    <version>${centres.version}</version>
+</dependency>
+        
+        
+        
 <!--        <dependency>-->
 <!--            <groupId>org.openscience.cdk</groupId>-->
 <!--            <artifactId>cdk-valencycheck</artifactId>-->

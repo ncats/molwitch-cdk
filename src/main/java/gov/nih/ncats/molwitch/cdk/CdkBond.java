@@ -22,15 +22,13 @@
 package gov.nih.ncats.molwitch.cdk;
 
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IBond.Order;
-import org.openscience.cdk.interfaces.IStereoElement;
 import org.openscience.cdk.isomorphism.matchers.IQueryBond;
 
 import gov.nih.ncats.common.sneak.Sneak;
@@ -224,7 +222,7 @@ public class CdkBond implements Bond{
 			return null;
 		}
 		parent.cahnIngoldPrelogSupplier.get();
-		String value = bond.getProperty(CDKConstants.CIP_DESCRIPTOR);
+		String value = Optional.ofNullable(bond.getProperty(CDKConstants.CIP_DESCRIPTOR)).map(bt->bt.toString()).orElse(null);
 		if("Z".equals(value)) {
 			 return DoubleBondStereo.Z_CIS;
 		}

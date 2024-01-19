@@ -306,16 +306,31 @@ public class CdkAtom implements Atom{
 	public Chirality getChirality() {
 		if(!parent.cahnIngoldPrelogSupplier.hasRun()) {
 			//forces running CIP rules
+		
 			parent.getTetrahedrals();
 		}
-		String value = atom.getProperty(CDKConstants.CIP_DESCRIPTOR);
+		String value= Optional.ofNullable(atom.getProperty(CDKConstants.CIP_DESCRIPTOR))
+				.map(t->t.toString())
+				.orElse(null);
 		
-		if("R".equals(value)) {
+//		if(dd!=nu)
+//		String value = atom.getProperty(CDKConstants.CIP_DESCRIPTOR);
+//		
+		if("R".equals(value) || "M".equals(value)) {
 			return Chirality.R;
 		}
-		if("S".equals(value)) {
+		if("r".equals(value)) {
+			return Chirality.r;
+		}
+		
+		if("S".equals(value) || "P".equals(value)) {
 			return Chirality.S;
 		}
+		
+		if("s".equals(value)) {
+			return Chirality.s;
+		}
+		
 		if("EITHER".equals(value)) {
 			return Chirality.Parity_Either;
 		}
@@ -327,8 +342,10 @@ public class CdkAtom implements Atom{
 	public void setChirality(Chirality chirality) {
 	    Chirality chir=getChirality();
 	    if(chir==chirality)return;
-	    if((chirality==Chirality.R && chir==Chirality.S) ||
-	       (chirality==Chirality.S && chir==Chirality.R)
+	    
+	    //simple inversion
+	    if(((chirality==Chirality.R || chirality==Chirality.r)  && (chir==Chirality.S||chir==Chirality.s)) ||
+	       ((chirality==Chirality.S || chirality==Chirality.s)  && (chir==Chirality.R||chir==Chirality.r)) 
 	            ) {
 	        this.getBonds().stream()
 	        .filter(b->b.getBondType().equals(BondType.SINGLE))
@@ -345,6 +362,8 @@ public class CdkAtom implements Atom{
 	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,chirality.toString());
 //	        atom.setStereoParity((atom.getStereoParity()+1)%2);
 //	        parent.getContainer().setStereoElements(new ArrayList<>());
+	        
+	    //simple removal
 	    }else if(chirality.equals(Chirality.Parity_Either)) {
 	        this.getBonds().stream()
             .filter(b->b.getBondType().equals(BondType.SINGLE))
@@ -359,7 +378,39 @@ public class CdkAtom implements Atom{
             });
 
 	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,"EITHER");
+	    }else if(chirality.isDefined() && (chir.isEither() || chir == Chirality.Non_Chiral)) {
+	    
+	    	Optional<? extends Bond> sBond = this.getBonds().stream()
+            .filter(b->b.getBondType().equals(BondType.SINGLE))
+            .filter(b->b.getStereo().equals(Stereo.NONE))
+            .findFirst();
+	    	
+	    	
+            sBond.ifPresent(b->{
+            	if(b.getAtom1().getAtomIndexInParent()==this.getAtomIndexInParent()){
+            		b.setStereo(Stereo.UP);
+            	}else {
+            		b.setStereo(Stereo.UP_INVERTED);
+            	}
+            });
+            
+            
+	    	parent.cahnIngoldPrelogSupplier.resetCache();
+	    	Chirality co=this.getChirality();
+	    	if((co.isRForm() && chirality.isRForm()) || 
+	    			(co.isSForm() && chirality.isSForm())
+	    			) {
+	    		//do nothing	
+	    	}else if((co.isSForm() && chirality.isRForm()) || 
+	    			(co.isRForm() && chirality.isSForm())
+	    			) {
+	    		setChirality(chirality);
+	    	}else {
+	    		//could not set
+	    	}
+	        
 	    }
+	    
 //	    parent.cahnIngoldPrelogSupplier.resetCache();
 	}
 

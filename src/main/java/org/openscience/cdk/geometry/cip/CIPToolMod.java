@@ -45,7 +45,7 @@ import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
  * The 4 postion [C] is a stereo center with S configuration (as demonstrated
  * with the : dashed bond to the methyl group below). The carbon atoms at 3, 4
  * and 5 positions are tied for priority based on first pass CIP rules (atom
- * numbner and mass). However, 3 and 5 are quickly seen as higher priority than
+ * number and mass). However, 3 and 5 are quickly seen as higher priority than
  * 4' in the first tie-break as 4' has no sub-ligands. 3 and 5, however, both
  * have 2 sub-ligands. 3 has [3',2] and 5 has [5',6] as sub-ligands. The next 
  * step CDK CIP rules do is to ORDER these sub-ligands and then compare them.
@@ -117,16 +117,19 @@ public class CIPToolMod {
     }
 	
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
-	
-	/**
+
+    private final static int MAX_RINGS = 10;
+
+    /**
 	 * GSRS-MODIFIED: Temporary bug fix for {@link CIPTool#label(IAtomContainer)}
 	 * 
      * @param container structure to label
      */
     public static void label(IAtomContainer container) {
     	//Experimental new labeller
-    	if(USE_NEW_CENTRES) {
-            System.out.println("using USE_NEW_CENTRES");
+        int ringCount = container.getBondCount() - container.getAtomCount() + 1;
+    	if(ringCount <= MAX_RINGS) {
+            System.out.printf("using USE_NEW_CENTRES %d\n", ringCount);
     		com.simolecule.centres.CdkLabeller.label(container);
     		return;
     	}else {

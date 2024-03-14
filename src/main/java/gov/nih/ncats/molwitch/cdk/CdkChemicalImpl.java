@@ -52,6 +52,7 @@ import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.geometry.cip.CIPTool;
 import org.openscience.cdk.geometry.cip.CIPToolMod;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.Cycles;
@@ -141,8 +142,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	private boolean deepChirality = true;
 	
-
-    static{
+	static{
 		
 		mostStable[94]=244;
 		mostStable[96]=247;
@@ -215,8 +215,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                //CIPTool.label(cimp.getContainer());
                
                //We currently have to use a modified form for now
-               CIPToolMod.label(cimp.getContainer());
-               
+				CIPToolMod.label(cimp.getContainer());
+
                for (int i = 0; i < container.getAtomCount(); i++) {
                    IAtom ai =container.getAtom(i);
                    IAtom ain =cimp.getContainer().getAtom(i);

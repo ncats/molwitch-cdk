@@ -1511,17 +1511,16 @@ public class TestChiralRead {
 				"M  END\n");
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
-		//CIPToolMod.setUseNewCentres(false);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
-		CIPTool.label(chem.getContainer());
+		CIPToolMod.label(chem.getContainer());
 		List<Chirality> listChi=c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.map(ca->ca.getChirality())
 				.collect(Collectors.toList());
 		assertTrue(listChi.size() > 0);
 		for (Chirality chirality : listChi) {
-			System.out.printf("chirality: ");
+			System.out.printf("chirality: %s\n", chirality);
 		}
 	}
 
@@ -1739,10 +1738,9 @@ public class TestChiralRead {
 				"M  END\n");
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
-		//CIPTool.setUseNewCentres(true);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
-		CIPTool.label(chem.getContainer());
+		CIPToolMod.label(chem.getContainer());
 		List<Chirality> listChi=c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.map(ca->ca.getChirality())

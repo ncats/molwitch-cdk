@@ -111,7 +111,10 @@ import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
 public class CIPToolMod {
 
 	public static boolean USE_NEW_CENTRES=true;
-	
+
+    public static void setUseNewCentres(boolean centresRule) {
+        USE_NEW_CENTRES=centresRule;
+    }
 	
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
 	
@@ -123,9 +126,11 @@ public class CIPToolMod {
     public static void label(IAtomContainer container) {
     	//Experimental new labeller
     	if(USE_NEW_CENTRES) {
+            System.out.println("using USE_NEW_CENTRES");
     		com.simolecule.centres.CdkLabeller.label(container);
     		return;
     	}else {
+            System.out.println("NOT using USE_NEW_CENTRES");
 	        for (IStereoElement stereoElement : container.stereoElements()) {
 	            if (stereoElement instanceof ITetrahedralChirality) {
 	                ITetrahedralChirality tc = (ITetrahedralChirality) stereoElement;

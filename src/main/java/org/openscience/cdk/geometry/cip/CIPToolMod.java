@@ -2,6 +2,8 @@ package org.openscience.cdk.geometry.cip;
 
 import java.util.List;
 
+import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
+import jdk.internal.net.http.common.Log;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.geometry.cip.CIPTool.CIP_CHIRALITY;
 import org.openscience.cdk.geometry.cip.rules.CIPLigandRule;
@@ -127,9 +129,18 @@ public class CIPToolMod {
      */
     public static void label(IAtomContainer container) {
     	//Experimental new labeller
-        int ringCount = container.getBondCount() - container.getAtomCount() + 1;
-    	if(ringCount <= MAX_RINGS) {
-            System.out.printf("using USE_NEW_CENTRES %d\n", ringCount);
+        int fragmentCount = 0;
+        if(container instanceof CdkChemicalImpl) {
+            CdkChemicalImpl chem = (CdkChemicalImpl) container;
+            while(chem.connectedComponents().hasNext() ){
+                fragmentCount++;
+                chem.connectedComponents().next();
+            }
+        }
+        int ringCount = container.getBondCount() - container.getAtomCount() + 2 - fragmentCount;
+        System.out.printf("got ringCount %d and fragmentCount %d\n", ringCount, fragmentCount);
+
+        if(ringCount <= MAX_RINGS) {
     		com.simolecule.centres.CdkLabeller.label(container);
     		return;
     	}else {

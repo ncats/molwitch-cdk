@@ -215,7 +215,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                //CIPTool.label(cimp.getContainer());
                
                //We currently have to use a modified form for now
-				CIPToolMod.label(cimp.getContainer());
+				CIPToolMod.label(cimp.getContainer(), cimp);
 
                for (int i = 0; i < container.getAtomCount(); i++) {
                    IAtom ai =container.getAtom(i);

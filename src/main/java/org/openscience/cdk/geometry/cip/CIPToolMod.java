@@ -1,9 +1,18 @@
 package org.openscience.cdk.geometry.cip;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.List;
 
+import gov.nih.ncats.molwitch.Atom;
+import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
-import jdk.internal.net.http.common.Log;
+import gov.nih.ncats.molwitch.cdk.writer.Mdl2000WriterFactory;
+import gov.nih.ncats.molwitch.io.ChemFormat;
+import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.geometry.cip.CIPTool.CIP_CHIRALITY;
 import org.openscience.cdk.geometry.cip.rules.CIPLigandRule;
@@ -120,24 +129,28 @@ public class CIPToolMod {
 	
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
 
-    private final static int MAX_RINGS = 10;
+    private final static int MAX_RINGS = 5;
 
     /**
 	 * GSRS-MODIFIED: Temporary bug fix for {@link CIPTool#label(IAtomContainer)}
 	 * 
      * @param container structure to label
      */
-    public static void label(IAtomContainer container) {
+    public static void label(IAtomContainer container, CdkChemicalImpl chemical) {
     	//Experimental new labeller
         int fragmentCount = 0;
-        if(container instanceof CdkChemicalImpl) {
-            CdkChemicalImpl chem = (CdkChemicalImpl) container;
-            while(chem.connectedComponents().hasNext() ){
-                fragmentCount++;
-                chem.connectedComponents().next();
-            }
+        Iterator<CdkChemicalImpl> iterator = chemical.connectedComponents();
+        while(iterator.hasNext() ){
+            fragmentCount++;
+            CdkChemicalImpl fragment = iterator.next();
+            System.out.printf("fragment %d has %d atoms and %d bonds\n", fragmentCount, fragment.getAtomCount(),
+                    fragment.getBondCount());
         }
-        int ringCount = container.getBondCount() - container.getAtomCount() + 2 - fragmentCount;
+        if( fragmentCount == 0) {
+            fragmentCount = 1;
+        }
+
+        int ringCount = getSizeOfLargestRingSystem(chemical);
         System.out.printf("got ringCount %d and fragmentCount %d\n", ringCount, fragmentCount);
 
         if(ringCount <= MAX_RINGS) {
@@ -270,7 +283,7 @@ public class CIPToolMod {
     private static int permParity(final ILigand[] ligands) {
     	
         // count the number of swaps made by insertion sort - if duplicates
-        // are fount the parity is 0
+        // are found the parity is 0
         int swaps = 0;
 
         for (int j = 1, hi = ligands.length; j < hi; j++) {
@@ -290,8 +303,54 @@ public class CIPToolMod {
         return (swaps & 0x1) == 0x1 ? -1 : +1;
     
     }
-    
 
-    
-   
+    public static int getSizeOfLargestRingSystem(CdkChemicalImpl chemical) {
+        CdkChemicalImpl copy = chemical.deepCopy();
+        int maxRings = 0;
+        for(int i = copy.getBondCount()-1; i >=0; i--) {
+            Bond bond = copy.getBond(i);
+            if(!bond.isInRing() ) {
+                copy.removeBond(i);
+            }
+        }
+
+        for(int i = copy.getAtomCount()-1; i >=0; i--) {
+            Atom atom = copy.getAtom(i);
+            if(atom.getBondCount() == 0) {
+                System.out.printf("atom %d of symbol %s has no bonds and will be deleted\n", i, atom.getSymbol());
+                copy.removeAtom(i);
+            }
+        }
+
+        Iterator<CdkChemicalImpl> iterator = copy.connectedComponents();
+        int fragmentCount=0;
+        while(iterator.hasNext() ){
+            CdkChemicalImpl fragment = iterator.next();
+            int currentRingTotal= fragment.getBondCount() - fragment.getAtomCount() + 1;
+            fragmentCount++;
+            System.out.printf("fragment %d has %d atoms and %d bonds\n", fragmentCount, fragment.getAtomCount(),
+                    fragment.getBondCount());
+            if( currentRingTotal >maxRings) {
+                maxRings = currentRingTotal;
+            }
+        }
+        return maxRings;
+    }
+
+    private void writeMolTemp(CdkChemicalImpl chem) {
+        Mdl2000WriterFactory writerFactory = new Mdl2000WriterFactory();
+        Path temp = null;
+        try {
+            temp = Files.createTempFile("temp", ".mol");
+            FileOutputStream stream = new FileOutputStream(temp.toFile());
+            ChemFormat.MolFormatSpecification DEFAULT_MOL_SPEC = new ChemFormat.MolFormatSpecification();
+            ChemicalWriterImpl writer= writerFactory.newInstance(stream, DEFAULT_MOL_SPEC);
+            writer.write(chem);
+            writer.close();
+            System.out.printf("wrote file to %s\n", temp);
+
+        } catch (IOException e) {
+            System.err.println("Error writing molecule to file: " + e.getMessage());
+        }
+    }
 }

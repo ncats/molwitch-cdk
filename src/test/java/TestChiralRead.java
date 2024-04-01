@@ -23,6 +23,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,7 +37,6 @@ import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.Chirality;
 import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
-import org.openscience.cdk.geometry.cip.CIPTool;
 import org.openscience.cdk.geometry.cip.CIPToolMod;
 
 public class TestChiralRead {
@@ -1513,7 +1514,7 @@ public class TestChiralRead {
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
-		CIPToolMod.label(chem.getContainer());
+		CIPToolMod.label(chem.getContainer(), chem);
 		List<Chirality> listChi=c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.map(ca->ca.getChirality())
@@ -1740,7 +1741,7 @@ public class TestChiralRead {
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
-		CIPToolMod.label(chem.getContainer());
+		CIPToolMod.label(chem.getContainer(), chem);
 		List<Chirality> listChi=c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.map(ca->ca.getChirality())
@@ -1749,6 +1750,78 @@ public class TestChiralRead {
 		for (Chirality chirality : listChi) {
 			System.out.printf("chirality: ");
 		}
+	}
+
+	@Test
+	public void testSlowChiralitySmall() throws Exception {
+		String path = System.getenv(".");
+		System.out.println("path: " + path);
+		String userDirectory = new File("").getAbsolutePath();
+		System.out.println("userDire: " + userDirectory);
+		String fileName =userDirectory + "/src/test/resources/mols/pared_down.mol";
+		File paredMol = new File(fileName);
+		Chemical c1=Chemical.parse(Files.readString(paredMol.toPath()));
+		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
+
+		CIPToolMod.label(chem.getContainer(), chem);
+		List<Chirality> listChi=c1.atoms()
+				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+				.map(ca->ca.getChirality())
+				.collect(Collectors.toList());
+		assertEquals(0, listChi.size());
+		for (Chirality chirality : listChi) {
+			System.out.printf("chirality: ");
+		}
+	}
+
+	@Test
+	public void testRingSystem() throws Exception {
+		String path = System.getenv(".");
+		System.out.println("path: " + path);
+		String userDirectory = new File("").getAbsolutePath();
+		System.out.println("userDirectory: " + userDirectory);
+		String fileName =userDirectory + "/src/test/resources/mols/pared_down.mol";
+		File paredMol = new File(fileName);
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(Files.readString(paredMol.toPath())).getImpl();
+		CIPToolMod cipToolMod = new CIPToolMod();
+		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
+
+		assertEquals(5, ringSystemCount);
+	}
+
+	@Test
+	public void testRingSystem2() throws Exception {
+		String path = System.getenv(".");
+		System.out.println("path: " + path);
+		String userDirectory = new File("").getAbsolutePath();
+		System.out.println("userDirectory: " + userDirectory);
+		String fileName =userDirectory + "/src/test/resources/mols/large.symmetric.mol";
+		File paredMol = new File(fileName);
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(Files.readString(paredMol.toPath())).getImpl();
+		CIPToolMod cipToolMod = new CIPToolMod();
+		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
+
+		assertEquals(15, ringSystemCount);
+	}
+
+	@Test
+	public void testRingSystem3() throws Exception {
+		String path = System.getenv(".");
+		System.out.println("path: " + path);
+		String userDirectory = new File("").getAbsolutePath();
+		System.out.println("userDirectory: " + userDirectory);
+		String fileName =userDirectory + "/src/test/resources/mols/large.rings.pieces.mol";
+		File paredMol = new File(fileName);
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(Files.readString(paredMol.toPath())).getImpl();
+		CIPToolMod cipToolMod = new CIPToolMod();
+		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
+
+		assertEquals(5, ringSystemCount);
 	}
 
 }

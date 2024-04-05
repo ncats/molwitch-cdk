@@ -141,7 +141,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     private final static BitSet cdkMissing = new BitSet();
 
 	private boolean deepChirality = true;
-	
+
+	private boolean hasBeenLabeled = false;
+
 	static{
 		
 		mostStable[94]=244;
@@ -215,7 +217,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                //CIPTool.label(cimp.getContainer());
                
                //We currently have to use a modified form for now
-				CIPToolMod.label(cimp.getContainer(), cimp);
+				if( !hasBeenLabeled) {
+					CIPToolMod.label(cimp.getContainer(), cimp);
+					hasBeenLabeled = true;
+				}
 
                for (int i = 0; i < container.getAtomCount(); i++) {
                    IAtom ai =container.getAtom(i);
@@ -495,7 +500,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					b.setStereo(newStereo);
 				}
 			}
-		}		
+		}
+		hasBeenLabeled = false;
 	}
 	
 	public void setDeepChirality(boolean chir) {
@@ -595,7 +601,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public Atom addAtom(String symbol) {
 		IAtom atom = CHEM_OBJECT_BUILDER.newAtom();
 		atom.setSymbol(symbol);
-		   
+		hasBeenLabeled = false;
 		return addAtom(atom);
 	}
 
@@ -610,6 +616,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	@Override
 	public Atom addAtom(Atom a) {
 		IAtom iatom = CdkAtom.getIAtomFor(a);
+		hasBeenLabeled = false;
 		return addAtom(iatom);
 	}
 	private Atom addAtom(IAtom iatom) {
@@ -625,11 +632,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		a.setExactMass(Double.valueOf(isotope.getMassNumber()));
 		//TODO how to set the values with ranges/intervals?
 		a.setNaturalAbundance(isotope.getRelativeAtomicMass().getValue().doubleValue());
+		hasBeenLabeled = false;
 		return addAtom(a);
 	}
 	
 	@Override
 	public Atom addAtomByAtomicNum(int atomicNumber) {
+		hasBeenLabeled = false;
 		return addAtom(PeriodicTable.getSymbol(atomicNumber));
 		
 	}
@@ -638,6 +647,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 		cachedSupplierGroup.resetCache();
 		container.notifyChanged();
+		hasBeenLabeled = false;
 	}
 
 	@Override
@@ -665,7 +675,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
         setImplicitHydrogens();
 
 	    AtomContainerManipulator.convertImplicitToExplicitHydrogens(container);
-	    
+		hasBeenLabeled = false;
 	    setDirty();
 	}
 
@@ -918,7 +928,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	@Override
 	public Bond removeBond(Bond b) {
-		
+
 		IBond iBond= ((CdkBond)b).getBond();
 		container.removeBond(iBond);
 		setDirty();
@@ -1410,7 +1420,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
     @Override
     public List<TetrahedralChirality> getTetrahedrals() {
-    	
+		//so calling routine will not call this again
+    	cahnIngoldPrelogSupplier.get();
+        try {
+            cahnIngoldPrelogSupplier.call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return withModifiedForm(cc->((CdkChemicalImpl)cc.getImpl()).getTetrahedrals1());
     }
     
@@ -1497,6 +1513,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		Sgroup cdkSgroup = new Sgroup();
 		cdkSgroup.setType(SgroupType.parseCtabKey(typeToUse.getTypeName()));
 		sgroups.add(cdkSgroup);
+		hasBeenLabeled = false;
 		return new CDKSgroupAdapter(cdkSgroup);
 	}
 	@Override
@@ -2050,28 +2067,33 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 		@Override
 		public void addAtom(Atom a) {
+			hasBeenLabeled = false;
 			sgroup.addAtom(CdkAtom.getIAtomFor(a));
 			
 		}
 
 		@Override
 		public void addBond(Bond b) {
+			hasBeenLabeled = false;
 			sgroup.addBond(CdkBond.getIBondFor(b));
 			
 		}
 
 		@Override
 		public void removeAtom(Atom a) {
+			hasBeenLabeled = false;
 			sgroup.removeAtom(CdkAtom.getIAtomFor(a));
 			
 		}
 		public void removeAtom(IAtom a) {
+			hasBeenLabeled = false;
 			sgroup.removeAtom(a);
 
 		}
 
 		@Override
 		public void removeBond(Bond b) {
+			hasBeenLabeled = false;
 			sgroup.removeBond(CdkBond.getIBondFor(b));
 			
 		}

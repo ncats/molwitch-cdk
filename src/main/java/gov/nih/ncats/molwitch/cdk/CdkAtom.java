@@ -309,7 +309,7 @@ public class CdkAtom implements Atom{
 		
 			parent.getTetrahedrals();
 		}
-		String value= Optional.ofNullable(atom.getProperty(CDKConstants.CIP_DESCRIPTOR))
+ 		String value= Optional.ofNullable(atom.getProperty(CDKConstants.CIP_DESCRIPTOR))
 				.map(t->t.toString())
 				.orElse(null);
 		

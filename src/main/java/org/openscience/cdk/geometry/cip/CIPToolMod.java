@@ -126,32 +126,23 @@ public class CIPToolMod {
     public static void setUseNewCentres(boolean centresRule) {
         USE_NEW_CENTRES=centresRule;
     }
-	
+
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
 
-    private final static int MAX_RINGS = 5;
+    private final static int MAX_RINGS = 1;
 
+    private static int totalCallsToLabel = 0;
     /**
 	 * GSRS-MODIFIED: Temporary bug fix for {@link CIPTool#label(IAtomContainer)}
-	 * 
+	 *
      * @param container structure to label
      */
     public static void label(IAtomContainer container, CdkChemicalImpl chemical) {
+        totalCallsToLabel++;
+        System.out.printf("totalCallsToLabel: %d\n", totalCallsToLabel);
     	//Experimental new labeller
-        int fragmentCount = 0;
-        Iterator<CdkChemicalImpl> iterator = chemical.connectedComponents();
-        while(iterator.hasNext() ){
-            fragmentCount++;
-            CdkChemicalImpl fragment = iterator.next();
-            System.out.printf("fragment %d has %d atoms and %d bonds\n", fragmentCount, fragment.getAtomCount(),
-                    fragment.getBondCount());
-        }
-        if( fragmentCount == 0) {
-            fragmentCount = 1;
-        }
-
         int ringCount = getSizeOfLargestRingSystem(chemical);
-        System.out.printf("got ringCount %d and fragmentCount %d\n", ringCount, fragmentCount);
+        System.out.printf("got ring system Count %d \n", ringCount);
 
         if(ringCount <= MAX_RINGS) {
     		com.simolecule.centres.CdkLabeller.label(container);
@@ -317,7 +308,7 @@ public class CIPToolMod {
         for(int i = copy.getAtomCount()-1; i >=0; i--) {
             Atom atom = copy.getAtom(i);
             if(atom.getBondCount() == 0) {
-                System.out.printf("atom %d of symbol %s has no bonds and will be deleted\n", i, atom.getSymbol());
+                //System.out.printf("atom %d of symbol %s has no bonds and will be deleted\n", i, atom.getSymbol());
                 copy.removeAtom(i);
             }
         }
@@ -352,5 +343,9 @@ public class CIPToolMod {
         } catch (IOException e) {
             System.err.println("Error writing molecule to file: " + e.getMessage());
         }
+    }
+
+    public static void setTotalCallsToLabel(int newNumber) {
+        totalCallsToLabel = newNumber;
     }
 }

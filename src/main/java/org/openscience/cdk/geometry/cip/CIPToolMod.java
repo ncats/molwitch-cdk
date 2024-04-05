@@ -129,7 +129,7 @@ public class CIPToolMod {
 
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
 
-    private final static int MAX_RINGS = 1;
+    private final static int MAX_RINGS = 15;
 
     private static int totalCallsToLabel = 0;
     /**

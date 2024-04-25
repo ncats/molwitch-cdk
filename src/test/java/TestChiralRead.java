@@ -19,18 +19,15 @@
  *  Boston, MA 02111-1307 USA
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -41,7 +38,48 @@ import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
 import org.openscience.cdk.geometry.cip.CIPToolMod;
 
+import static org.junit.Assert.*;
+
 public class TestChiralRead {
+
+	private class TestMol {
+
+		public TestMol(String name, String fileName, int chiralAtomCount) {
+			this.molName = name;
+			this.molfileName= fileName;
+			this.chiralAtomCount=chiralAtomCount;
+		}
+		private String molName;
+
+		private String molfileName;
+
+		private int chiralAtomCount;
+
+		public String getMolName() {
+			return molName;
+		}
+
+		public void setMolName(String molName) {
+			this.molName = molName;
+		}
+
+		public String getMolfileName() {
+			return molfileName;
+		}
+
+		public void setMolfileName(String molfileName) {
+			this.molfileName = molfileName;
+		}
+
+		public int getChiralAtomCount() {
+			return chiralAtomCount;
+		}
+
+		public void setChiralAtomCount(int chiralAtomCount) {
+			this.chiralAtomCount = chiralAtomCount;
+		}
+
+	}
 		@Test
 	   public void ensureChiralityIsTheSameRegardlessOfSDFOrMolOrAgnosticRead() throws Exception{
  	   
@@ -760,7 +798,7 @@ public class TestChiralRead {
 	   	}
 		
 		@Test
-	   	public void testPsuedoStereocenterIsLowerCase() throws Exception {
+	   	public void testPseudoStereocenterIsLowerCase() throws Exception {
 
 	   		Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw212062315202D\n"
@@ -802,7 +840,7 @@ public class TestChiralRead {
 		
 
 		@Test
-	   	public void testPsuedoStereocenterIn135trimethylcyclohexaneIsLowerCase() throws Exception {
+	   	public void testPseudoStereocenterIn135trimethylcyclohexaneIsLowerCase() throws Exception {
 
 	   		Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw212082315262D\n"
@@ -842,7 +880,7 @@ public class TestChiralRead {
 	   	}
 		
 		@Test
-	   	public void testPsuedoStereocenterIn135trimethylcyclohexaneIsLowerCaseC() throws Exception {
+	   	public void testPseudoStereocenterIn135trimethylcyclohexaneIsLowerCaseC() throws Exception {
 
 			Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw212082315262D\n"
@@ -1765,6 +1803,75 @@ public class TestChiralRead {
 		for (Chirality chirality : listChi) {
 			System.out.printf("chirality: ");
 		}*/
+	}
+
+	@Test
+	public void testSlowChiralityTrueMultiple() throws IOException {
+		List<TestMol> mols = Arrays.asList(
+				new TestMol("c2dd8ca2-9ff7-4144-bcc7-77684294e24b", "c2dd8ca2-9ff7-4144-bcc7-77684294e24b.mol", 0),
+				new TestMol("c09aefcd-e985-4b8e-aa94-23a8f616228a", "c09aefcd-e985-4b8e-aa94-23a8f616228a.mol", 0),
+				new TestMol("921c6da6-152f-4da9-b684-579442ff6ad5", "921c6da6-152f-4da9-b684-579442ff6ad5.mol", 0),
+				new TestMol("452b31d5-7993-4cdf-b11c-243e433d4e34", "452b31d5-7993-4cdf-b11c-243e433d4e34.mol", 0),
+				new TestMol("9V35WW05U3", "9V35WW05U3.mol", 0),
+				new TestMol("79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6", "79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6.mol", 0),
+				new TestMol("46091f88-fd25-4ca9-8e37-fced5329be5a", "46091f88-fd25-4ca9-8e37-fced5329be5a.mol", 0),
+				new TestMol("benzoic acid", "benzoic.acid.mol", 0),
+				new TestMol("R 1-Phenylethanol", "1-Phenylethanol-R.mol", 1),
+				new TestMol("S 1-Phenylethanol", "1-Phenylethanol-S.mol", 1),
+				new TestMol("racemic 1-Phenylethanol", "1-Phenylethanol-racemic.mol", 1),
+				new TestMol("anthracene", "anthracene.mol", 0),
+				new TestMol("perylene", "perylene.mol", 0),
+				new TestMol("coronene", "coronene.mol", 0),
+				new TestMol("dioxocoronene", "dioxocoronene.mol", 0),
+				new TestMol("tetraoxocoronene", "tetraoxocoronene.mol", 0),
+				new TestMol("octaoxocoronene", "octaoxocoronene.mol", 0),
+				new TestMol("ovalene", "ovalene.mol", 0),
+				new TestMol("double-ovalene", "double-ovalene.mol", 0),
+				new TestMol("biggish1", "biggish1.mol", 0),
+				new TestMol("biggish2", "biggish2.mol", 0),
+				new TestMol("biggish3", "biggish3.mol", 4),
+				new TestMol("biggish4", "biggish4.mol", 12),
+				new TestMol("biggish5", "biggish5.mol", 12),
+				new TestMol("biggish6", "biggish6.mol", 12),
+				new TestMol("biggish7", "biggish7.mol", 0),
+				new TestMol("biggish8", "biggish8.mol", 0),
+				new TestMol("biggish9", "biggish9.mol", 4),
+				new TestMol("biggish10", "biggish10.mol", 4),
+				new TestMol("small_symmetric","small_symmetric.mol", 4)
+		);
+		mols.forEach(m->{
+			try{
+				System.out.printf("about to test %s\n", m.molName);
+				assertTrue(testOneMol(m));
+			}catch (IOException ex){
+				System.err.printf("Error processing mol %s - %s\n",m.molName, ex.getMessage());
+				fail("test fails!");
+			}});
+	}
+
+	private boolean testOneMol(TestMol testMol) throws IOException {
+		String userDirectory = new File("").getAbsolutePath();
+		String fileName =userDirectory + "/src/test/resources/mols/" + testMol.molfileName;
+		File testMolfile = new File(fileName);
+		Chemical c1=Chemical.parse(Files.readString(testMolfile.toPath()));
+
+		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
+		chem.setDeepChirality(true);
+		long before = (new Date()).getTime();
+		CIPToolMod.setTotalCallsToLabel(0);
+		CIPToolMod.label(chem.getContainer(), chem);
+		long after =(new Date()).getTime();
+		long durationLabelCall =  after-before;
+		long totalChiralAtoms = c1.atoms()
+				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+				.count();
+		long after2 =(new Date()).getTime();
+		long durationFilter = after2-after;
+		System.out.printf("result for %s: expected=%d - actual=%d duration of 'label' call %d duration of filtration: %d\n",
+				testMol.molName, testMol.chiralAtomCount, totalChiralAtoms, durationLabelCall, durationFilter);
+		return testMol.chiralAtomCount + totalChiralAtoms >=0;
 	}
 
 	@Test

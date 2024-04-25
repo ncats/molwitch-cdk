@@ -9,6 +9,7 @@ import java.util.List;
 
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.Bond;
+import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import gov.nih.ncats.molwitch.cdk.writer.Mdl2000WriterFactory;
 import gov.nih.ncats.molwitch.io.ChemFormat;
@@ -141,8 +142,12 @@ public class CIPToolMod {
         totalCallsToLabel++;
         System.out.printf("totalCallsToLabel: %d\n", totalCallsToLabel);
     	//Experimental new labeller
-        int ringCount = getSizeOfLargestRingSystem(chemical);
+        int ringCount =getSizeOfLargestRingSystem(chemical);
         System.out.printf("got ring system Count %d \n", ringCount);
+        if( totalCallsToLabel > 1000) {
+            System.out.printf("this structure is taking a lot of resources.  Formula: %s, Mass: %.2f\n",
+                    chemical.getFormula(), chemical.getMass());
+        }
 
         if(ringCount <= MAX_RINGS) {
     		com.simolecule.centres.CdkLabeller.label(container);

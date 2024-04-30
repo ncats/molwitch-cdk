@@ -15,6 +15,7 @@ import gov.nih.ncats.molwitch.cdk.writer.Mdl2000WriterFactory;
 import gov.nih.ncats.molwitch.io.ChemFormat;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
 import org.openscience.cdk.CDKConstants;
+import org.openscience.cdk.ChemObject;
 import org.openscience.cdk.geometry.cip.CIPTool.CIP_CHIRALITY;
 import org.openscience.cdk.geometry.cip.rules.CIPLigandRule;
 import org.openscience.cdk.geometry.cip.rules.CIPLigandRule2;
@@ -130,7 +131,7 @@ public class CIPToolMod {
 
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
 
-    private final static int MAX_RINGS = 15;
+    private final static int MAX_RINGS = 5;
 
     private static int totalCallsToLabel = 0;
     /**
@@ -141,18 +142,14 @@ public class CIPToolMod {
     public static void label(IAtomContainer container, CdkChemicalImpl chemical) {
         totalCallsToLabel++;
         System.out.printf("totalCallsToLabel: %d\n", totalCallsToLabel);
-    	//Experimental new labeller
-        int ringCount =getSizeOfLargestRingSystem(chemical);
-        System.out.printf("got ring system Count %d \n", ringCount);
         if( totalCallsToLabel > 1000) {
-            System.out.printf("this structure is taking a lot of resources.  Formula: %s, Mass: %.2f\n",
+            System.out.printf("this structure is taking a lot of resources   .  Formula: %s, Mass: %.2f\n",
                     chemical.getFormula(), chemical.getMass());
         }
 
-        if(ringCount <= MAX_RINGS) {
-    		com.simolecule.centres.CdkLabeller.label(container);
-    		return;
-    	}else {
+        //Experimental new labeller
+        com.simolecule.centres.CdkLabeller.label(container);
+    	/*}else {
             System.out.println("NOT using USE_NEW_CENTRES");
 	        for (IStereoElement stereoElement : container.stereoElements()) {
 	            if (stereoElement instanceof ITetrahedralChirality) {
@@ -164,7 +161,7 @@ public class CIPToolMod {
 	                        .setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, dbs).toString());
 	            }
 	        }
-    	}
+    	}*/
 
     }
     
@@ -318,6 +315,8 @@ public class CIPToolMod {
             }
         }
 
+        ChemObject chemObject = new ChemObject();
+
         Iterator<CdkChemicalImpl> iterator = copy.connectedComponents();
         int fragmentCount=0;
         while(iterator.hasNext() ){
@@ -330,6 +329,7 @@ public class CIPToolMod {
                 maxRings = currentRingTotal;
             }
         }
+        System.out.printf("total number of fragments for this chemical: %d\n", fragmentCount);
         return maxRings;
     }
 

@@ -119,6 +119,9 @@ import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.isotopes.Isotope;
 import gov.nih.ncats.molwitch.isotopes.NISTIsotopeFactory;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
+import org.xmlcml.euclid.Int;
+
+import static org.openscience.cdk.geometry.cip.CIPToolMod.getSizeOfLargestRingSystem;
 
 public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
@@ -131,6 +134,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private boolean isAromatic;
 	private static IChemObjectBuilder CHEM_OBJECT_BUILDER = SilentChemObjectBuilder.getInstance();
 	private CDKHydrogenAdder hydrogenAdder;
+
+	private static final int COMPLEXITY_CUTOFF = 10;
+
 //	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
 
     Map<Integer, Map<Integer, CdkBond>> bondMap = new HashMap<>();
@@ -189,21 +195,26 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
     }
 
-    CachedSupplier<Void> perceiveAtomTypesOfNonQueryAtoms = CachedSupplier.of(()->{
+	CachedSupplier<Boolean> complexitySupplier =CachedSupplier.of(()->{
+		return getSizeOfLargestRingSystem(this)> COMPLEXITY_CUTOFF;
+	});
+
+	CachedSupplier<Integer> perceiveAtomTypesOfNonQueryAtoms = CachedSupplier.of(()->{
     	try {
     		percieveAtomTypeAndConfigureNonQueryAtoms();
     	}catch(CDKException e) {
     		
     	}
     	
-    	return null;
+    	return 1;
     }
     );
-    
-    
-    
-    
-    CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
+
+
+	private Boolean isComplex = false;
+
+    CachedSupplier<Integer> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
+		this.isComplex = complexitySupplier.get();
         try {
             makeStereoElms() ;
         }catch(Exception e) {
@@ -220,7 +231,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                //We currently have to use a modified form for now
 				if( !hasBeenLabeled) {
 					hasBeenLabeled = true;
-					CIPToolMod.label(cimp.getContainer(), cimp);
+					if( isComplex) {
+						System.out.println("molecular considered complex");
+						CIPTool.label(cimp.getContainer());
+					} else {
+						System.out.println("molecular considered NOT complex");
+						CIPToolMod.label(cimp.getContainer(), cimp);
+					}
 				}
 
                for (int i = 0; i < container.getAtomCount(); i++) {
@@ -249,7 +266,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                    
                }
                
-               return null;
+               return 1;
                
             });
 //            CIPTool.label(container);
@@ -397,7 +414,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    	return null;
     }
     	);
-    CachedSupplier<Void> ringsSearcherSupplier = CachedSupplier.of(()->{
+    CachedSupplier<Integer> ringsSearcherSupplier = CachedSupplier.of(()->{
 		    	AllRingsFinder arf = new AllRingsFinder();
 		    	IRingSet ringSet;
 				try {
@@ -415,14 +432,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			                aring.setIsInRing(true);
 			            }
 					}
-					return null;
+					return 1;
 				} catch (CDKException e) {
 					throw new RuntimeException(e);
 				}
 		    	
-		    	
+
 		
     });
+
+
 	private final CachedSupplierGroup cachedSupplierGroup = new CachedSupplierGroup();
 	private final ChemicalSource source;
 	
@@ -903,7 +922,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 		container.removeAtom(atom);
 		Atom retAtom = getCdkAtomFor(atom);
-		System.out.println("removeAtom setDirty");
 		setDirty();
 		return retAtom;
 	}
@@ -2096,7 +2114,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		@Override
 		public void removeAtom(Atom a) {
 			hasBeenLabeled = false;
-			System.out.println("removeAtom sgroup hasBeenLabeled = false");
 			sgroup.removeAtom(CdkAtom.getIAtomFor(a));
 			
 		}

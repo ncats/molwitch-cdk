@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1038,7 +1039,6 @@ public class TestChiralRead {
 		
 		@Test
 	   	public void testHavingExplicitHydrogenOnStereoCenterDoesNotInvalidatePhosphateCenter() throws Exception {
-
 	   		Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw210312314162D\n"
 	   				+ "\n"
@@ -1808,6 +1808,8 @@ public class TestChiralRead {
 	@Test
 	public void testSlowChiralityTrueMultiple() throws IOException {
 		List<TestMol> mols = Arrays.asList(
+				//new TestMol("FDA_polymer1", "FDA_polymer1.mol", 3),
+				new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 0),
 				new TestMol("c2dd8ca2-9ff7-4144-bcc7-77684294e24b", "c2dd8ca2-9ff7-4144-bcc7-77684294e24b.mol", 0),
 				new TestMol("c09aefcd-e985-4b8e-aa94-23a8f616228a", "c09aefcd-e985-4b8e-aa94-23a8f616228a.mol", 0),
 				new TestMol("921c6da6-152f-4da9-b684-579442ff6ad5", "921c6da6-152f-4da9-b684-579442ff6ad5.mol", 0),
@@ -1858,19 +1860,20 @@ public class TestChiralRead {
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
-		chem.setDeepChirality(true);
+		chem.setDeepChirality(false);
 		long before = (new Date()).getTime();
 		CIPToolMod.setTotalCallsToLabel(0);
-		CIPToolMod.label(chem.getContainer(), chem);
+
+		//CIPToolMod.label(chem.getContainer(), chem);
+		List<TetrahedralChirality> chemTetrahedrals =chem.getTetrahedrals();
 		long after =(new Date()).getTime();
 		long durationLabelCall =  after-before;
-		long totalChiralAtoms = c1.atoms()
+		/*long totalChiralAtoms = c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
-				.count();
-		long after2 =(new Date()).getTime();
-		long durationFilter = after2-after;
-		System.out.printf("result for %s: expected=%d - actual=%d duration of 'label' call %d duration of filtration: %d\n",
-				testMol.molName, testMol.chiralAtomCount, totalChiralAtoms, durationLabelCall, durationFilter);
+				.count();*/
+		int totalChiralAtoms = chemTetrahedrals.size();
+		System.out.printf("result for %s: expected=%d - actual=%d duration of 'label' call %d\n",
+				testMol.molName, testMol.chiralAtomCount, totalChiralAtoms, durationLabelCall);
 		return testMol.chiralAtomCount + totalChiralAtoms >=0;
 	}
 
@@ -1888,14 +1891,17 @@ public class TestChiralRead {
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
 		CIPToolMod.label(chem.getContainer(), chem);
-		List<Chirality> listChi=c1.atoms()
+		List<TetrahedralChirality> listChi= chem.getTetrahedrals();/*c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.map(ca->ca.getChirality())
-				.collect(Collectors.toList());
-		assertEquals(0, listChi.size());
-		for (Chirality chirality : listChi) {
-			System.out.printf("chirality: ");
+				.collect(Collectors.toList());*/
+		long totalChiral= listChi.stream()
+				.filter(c->c.getChirality() == Chirality.S || c.getChirality() == Chirality.r || c.getChirality() == Chirality.R || c.getChirality() == Chirality.s)
+				.count();
+		for (TetrahedralChirality chirality : listChi) {
+			System.out.printf("chirality: %s\n", chirality.getChirality());
 		}
+		assertEquals(0, totalChiral);
 	}
 
 	@Test

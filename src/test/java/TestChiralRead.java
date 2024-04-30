@@ -1070,6 +1070,8 @@ public class TestChiralRead {
 	   				+ "M  END");
 	   		mol= Chemical.parse(mol.toMol());
 	   		mol.removeNonDescriptHydrogens();
+			   mol.getTetrahedrals().stream()
+							   .forEach(t-> System.out.printf(" atom %s chirality %s\n", t.getCenterAtom().getSymbol(), t.getChirality()));
 	   		System.out.println(mol.toMol());
 	   		assertEquals(2,mol.getTetrahedrals().size());
 	   	}

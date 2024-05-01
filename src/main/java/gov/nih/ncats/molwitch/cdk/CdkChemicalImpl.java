@@ -135,7 +135,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private static IChemObjectBuilder CHEM_OBJECT_BUILDER = SilentChemObjectBuilder.getInstance();
 	private CDKHydrogenAdder hydrogenAdder;
 
-	private static final int COMPLEXITY_CUTOFF = 10;
+	private static final int COMPLEXITY_CUTOFF = 50;
 
 //	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
 
@@ -146,7 +146,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     private final static int[] mostStable = new int[119];
     private final static BitSet cdkMissing = new BitSet();
 
-	private boolean deepChirality = false;
+	private boolean deepChirality = true;
 
 	private boolean hasBeenLabeled = false;
 
@@ -361,7 +361,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 						break;
 	    		}
 	    	}
-	    	
+
+				System.out.printf("number of potential centers: %d\n", potentialSet.size());
 	    	//TODO fix for potential cases
 //	    	container.getAtom(i);
 	    	
@@ -483,6 +484,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		cachedSupplierGroup.add(ringsSearcherSupplier);
 		cachedSupplierGroup.add(cahnIngoldPrelogSupplier);
 		cachedSupplierGroup.add(perceiveAtomTypesOfNonQueryAtoms);
+		cachedSupplierGroup.add(complexitySupplier);
 
 		   /*for (IAtom atom : container.atoms()) {
 			   //query atoms don't have everything set
@@ -1447,13 +1449,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
     @Override
     public List<TetrahedralChirality> getTetrahedrals() {
-		//so calling routine will not call this again
-    	cahnIngoldPrelogSupplier.get();
-        try {
-            cahnIngoldPrelogSupplier.call();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         return withModifiedForm(cc->((CdkChemicalImpl)cc.getImpl()).getTetrahedrals1());
     }
     
@@ -2119,7 +2114,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 		public void removeAtom(IAtom a) {
 			hasBeenLabeled = false;
-			System.out.println("removeAtom sgroup hasBeenLabeled = false");
 			sgroup.removeAtom(a);
 
 		}
@@ -2127,7 +2121,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		@Override
 		public void removeBond(Bond b) {
 			hasBeenLabeled = false;
-			System.out.println("removeBond sgroup setDirty");
 			sgroup.removeBond(CdkBond.getIBondFor(b));
 			
 		}

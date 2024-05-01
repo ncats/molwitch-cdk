@@ -1070,9 +1070,8 @@ public class TestChiralRead {
 	   				+ "M  END");
 	   		mol= Chemical.parse(mol.toMol());
 	   		mol.removeNonDescriptHydrogens();
-			   mol.getTetrahedrals().stream()
+			mol.getTetrahedrals().stream()
 							   .forEach(t-> System.out.printf(" atom %s chirality %s\n", t.getCenterAtom().getSymbol(), t.getChirality()));
-	   		System.out.println(mol.toMol());
 	   		assertEquals(2,mol.getTetrahedrals().size());
 	   	}
 		
@@ -1810,7 +1809,7 @@ public class TestChiralRead {
 	@Test
 	public void testSlowChiralityTrueMultiple() throws IOException {
 		List<TestMol> mols = Arrays.asList(
-				//new TestMol("FDA_polymer1", "FDA_polymer1.mol", 3),
+				new TestMol("FDA_polymer1", "FDA_polymer1.mol", 3),
 				new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 0),
 				new TestMol("c2dd8ca2-9ff7-4144-bcc7-77684294e24b", "c2dd8ca2-9ff7-4144-bcc7-77684294e24b.mol", 0),
 				new TestMol("c09aefcd-e985-4b8e-aa94-23a8f616228a", "c09aefcd-e985-4b8e-aa94-23a8f616228a.mol", 0),

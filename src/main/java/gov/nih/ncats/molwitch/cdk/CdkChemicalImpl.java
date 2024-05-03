@@ -2500,4 +2500,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			
 		};
 	}
+
+	@Override
+	public Class getFactoryClass() {
+		return CdkChemical2FactoryImpl.class;
+	}
 }

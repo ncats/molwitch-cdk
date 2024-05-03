@@ -531,7 +531,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 	}
 
 	public static void applyParameters(Map<String, Object> params){
-		System.out.println("in CdkChemicalImpl.applyParameters");
+		System.out.println("in CdkChemical2FactoryImpl.applyParameters");
 		if( params.get("complexityCutoff") != null) {
 			CdkChemicalImpl.setComplexityCutoff((Integer) params.get("complexityCutoff"));
 			System.out.printf("complexityCutoff: %s\n", params.get("complexityCutoff"));
@@ -541,5 +541,4 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			System.out.printf("maxUndefined: %s\n", params.get("maxUndefined"));
 		}
 	}
-
 }

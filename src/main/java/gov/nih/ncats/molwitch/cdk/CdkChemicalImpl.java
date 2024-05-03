@@ -262,10 +262,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				//if( !hasBeenLabeled) {
 				//	hasBeenLabeled = true;
 					if( isComplex) {
-						System.out.println("molecular considered complex");
+						System.out.println("This molecule is considered complex");
 						CIPTool.label(cimp.getContainer());
 					} else {
-						System.out.println("molecular considered NOT complex");
+						System.out.println("This molecule is considered NOT complex");
 						CIPToolMod.label(cimp.getContainer(), cimp);
 					}
 				//}
@@ -403,10 +403,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    	if(deepChirality && !potentialSet.isEmpty() && undefinedSet.size() <= maxUndefined) {
 	    		CdkChemicalImpl cimp2=this.deepCopy();
 	    		cimp2.setDeepChirality(false);
-				System.out.printf("starting object: %s; clone: %s; size of undefinedSet: %d\n",
-						this, cimp2, undefinedSet.size());
-
-		    	Chemical c22 = new Chemical(cimp2);
+				Chemical c22 = new Chemical(cimp2);
 		    	
 		    	Set<Integer> isDefinable = new HashSet<>();
 		    	for(long ii=0;ii<Math.pow(2, undefinedSet.size());ii++) {
@@ -706,10 +703,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 	@Override
 	public Atom addAtomByAtomicNum(int atomicNumber) {
-		//hasBeenLabeled = false;
-		//System.out.println("addAtomByAtomicNum hasBeenLabeled = false;");
 		return addAtom(PeriodicTable.getSymbol(atomicNumber));
-		
 	}
 
 	protected void setDirty() {
@@ -979,7 +973,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 		
 		container.removeAtom(iatom);
-		System.out.println("removeAtom setDirty (2)");
 		setDirty();
 		return a;
 	}
@@ -1604,7 +1597,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	
 		setImplicitHydrogens(((CdkAtom)atom1).getAtom());
 		setImplicitHydrogens(((CdkAtom)atom2).getAtom());
-		System.out.println("addBond setDirty");
 		setDirty();
 		return getCdkBondFor(bond);
 	}

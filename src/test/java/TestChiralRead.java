@@ -1857,6 +1857,8 @@ public class TestChiralRead {
 		String fileName =userDirectory + "/src/test/resources/mols/" + testMol.molfileName;
 		File testMolfile = new File(fileName);
 		Chemical c1=Chemical.parse(Files.readString(testMolfile.toPath()));
+		((CdkChemicalImpl) c1.getImpl()).setMaxUndefined(100);
+		((CdkChemicalImpl) c1.getImpl()).setComplexityCutoff(10);
 
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);

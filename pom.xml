@@ -21,7 +21,7 @@
         <centres.version>1.2.1</centres.version>
     </properties>
     <repositories>
-        <repository>
+        <!--repository>
             <id>oss.sonatype.org-snapshot</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <releases>
@@ -30,7 +30,7 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-        </repository>
+        </repository-->
          <repository>
             <id>oss.sonatype.org</id>
             <url>https://repo1.maven.org/maven2/</url>

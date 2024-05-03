@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -527,6 +528,19 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 	@Override
 	public boolean isDefault() {
 		return true;
+	}
+
+	@Override
+	public void applyParameters(Map<String, Object> params){
+		System.out.println("in CdkChemicalImpl.applyParameters");
+		if( params.get("complexityCutoff") != null) {
+			CdkChemicalImpl.setComplexityCutoff((Integer) params.get("complexityCutoff"));
+			System.out.printf("complexityCutoff: %s\n", params.get("complexityCutoff"));
+		}
+		if( params.get("maxUndefined") != null ) {
+			CdkChemicalImpl.setMaxUndefined((Integer)params.get("maxUndefined"));
+			System.out.printf("maxUndefined: %s\n", params.get("maxUndefined"));
+		}
 	}
 
 }

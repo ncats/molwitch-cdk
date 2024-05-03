@@ -134,29 +134,29 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private static IChemObjectBuilder CHEM_OBJECT_BUILDER = SilentChemObjectBuilder.getInstance();
 	private CDKHydrogenAdder hydrogenAdder;
 
-	private int complexityCutoff = 7;
+	private static int complexityCutoff = 7;
 
-	public int getComplexityCutoff() {
-		return complexityCutoff;
+	public static int getComplexityCutoff() {
+		return CdkChemicalImpl.complexityCutoff;
 	}
 
-	public void setComplexityCutoff(int complexityCutoff) {
-		this.complexityCutoff = complexityCutoff;
+	public static void setComplexityCutoff(int complexityCutoff) {
+		CdkChemicalImpl.complexityCutoff = complexityCutoff;
 	}
 
-	public void setComplexityCutoff(String complexityCutoff) {
+	public static void setComplexityCutoff(String complexityCutoff) {
 		try {
-			this.complexityCutoff = Integer.parseInt(complexityCutoff);
+			CdkChemicalImpl.complexityCutoff = Integer.parseInt(complexityCutoff);
 		}
 		catch (NumberFormatException ignore){
 		}
 	}
-	public int getMaxUndefined() {
-		return maxUndefined;
+	public static Integer getMaxUndefined() {
+		return CdkChemicalImpl.maxUndefined;
 	}
 
-	public void setMaxUndefined(int maxUndefined) {
-		this.maxUndefined = maxUndefined;
+	public static void setMaxUndefined(int maxUndefined) {
+		CdkChemicalImpl.maxUndefined = maxUndefined;
 	}
 
 	public void setMaxUndefined(String maxUndefined) {
@@ -165,7 +165,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		} catch (NumberFormatException ignore){}
 	}
 
-	private int maxUndefined = 20;
+	private static int maxUndefined = 20;
 
 //	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
 
@@ -554,19 +554,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			}
 		}
 		//hasBeenLabeled = false;
-	}
-
-	@Override
-	public void applyParameters(Map<String, Object> params){
-		System.out.println("in CdkChemicalImpl.applyParameters");
-		if( params.get("complexityCutoff") != null) {
-			setComplexityCutoff((Integer) params.get("complexityCutoff"));
-			System.out.printf("complexityCutoff: %s\n", params.get("complexityCutoff"));
-		}
-		if( params.get("maxUndefined") != null ) {
-			setMaxUndefined((Integer)params.get("maxUndefined"));
-			System.out.printf("maxUndefined: %s\n", params.get("maxUndefined"));
-		}
 	}
 
 	public void setDeepChirality(boolean chir) {

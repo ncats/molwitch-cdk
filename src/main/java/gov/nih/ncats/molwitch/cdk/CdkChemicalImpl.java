@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -134,6 +135,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private static IChemObjectBuilder CHEM_OBJECT_BUILDER = SilentChemObjectBuilder.getInstance();
 	private CDKHydrogenAdder hydrogenAdder;
 
+	//this parameter allows us to control whether to use the newer (more accurate but prohibitively slow in some complex
+	// chemical systems) or the older (faster but incorrect, in some cases) methods of atom labelling.
+	// The default value is 7, a guess and a setter allows a calling routine to change this cutoff
 	private static int complexityCutoff = 7;
 
 	public static int getComplexityCutoff() {
@@ -144,28 +148,15 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		CdkChemicalImpl.complexityCutoff = complexityCutoff;
 	}
 
-	public static void setComplexityCutoff(String complexityCutoff) {
-		try {
-			CdkChemicalImpl.complexityCutoff = Integer.parseInt(complexityCutoff);
-		}
-		catch (NumberFormatException ignore){
-		}
-	}
-	public static Integer getMaxUndefined() {
-		return CdkChemicalImpl.maxUndefined;
+	public static Integer getMaxUndefinedStereoCenters() {
+		return CdkChemicalImpl.maxUndefinedStereoCenters;
 	}
 
-	public static void setMaxUndefined(int maxUndefined) {
-		CdkChemicalImpl.maxUndefined = maxUndefined;
+	public static void setMaxUndefinedStereoCenters(int maxUndefinedStereoCenters) {
+		CdkChemicalImpl.maxUndefinedStereoCenters = maxUndefinedStereoCenters;
 	}
 
-	public void setMaxUndefined(String maxUndefined) {
-		try {
-			this.maxUndefined = Integer.parseInt(maxUndefined);
-		} catch (NumberFormatException ignore){}
-	}
-
-	private static int maxUndefined = 20;
+	private static int maxUndefinedStereoCenters = 20;
 
 //	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
 
@@ -177,8 +168,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     private final static BitSet cdkMissing = new BitSet();
 
 	private boolean deepChirality = true;
-
-	//private boolean hasBeenLabeled = false;
 
 	static{
 		
@@ -241,10 +230,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     );
 
 
-	private Boolean isComplex = false;
-
-    CachedSupplier<Integer> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
-		this.isComplex = complexitySupplier.get();
+	CachedSupplier<Integer> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
+		boolean isComplex = complexitySupplier.get();
         try {
             makeStereoElms() ;
         }catch(Exception e) {
@@ -256,19 +243,14 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                
                //Due to a bug in CDK, this doesn't work as expected
                //CIPTool.label(cimp.getContainer());
-				//System.out.printf("checking hasBeenLabeled (%b) in chemical (%s) with %d atoms\n", hasBeenLabeled,
-				//		this.toString(), this.getAtomCount());
                //We currently have to use a modified form for now
-				//if( !hasBeenLabeled) {
-				//	hasBeenLabeled = true;
-					if( isComplex) {
-						System.out.println("This molecule is considered complex");
-						CIPTool.label(cimp.getContainer());
-					} else {
-						System.out.println("This molecule is considered NOT complex");
-						CIPToolMod.label(cimp.getContainer(), cimp);
-					}
-				//}
+				if( isComplex) {
+					Logger.getLogger(this.getClass().getName()).fine("This molecule is considered complex");
+					CIPTool.label(cimp.getContainer());
+				} else {
+					Logger.getLogger(this.getClass().getName()).fine("This molecule is considered NOT complex");
+					CIPToolMod.label(cimp.getContainer(), cimp);
+				}
 
                for (int i = 0; i < container.getAtomCount(); i++) {
                    IAtom ai =container.getAtom(i);
@@ -392,15 +374,15 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    		}
 	    	}
 
-			System.out.printf("number of potential centers: %d; number of undefined center: %d\n", potentialSet.size(),
-					undefinedSet.size());
+				Logger.getLogger(this.getClass().getName()).fine(String.format("number of potential centers: %d; number of undefined center: %d\n",
+						potentialSet.size(), undefinedSet.size()));
 	    	//TODO fix for potential cases
 //	    	container.getAtom(i);
 	    	
 //	    	BitSet.valueOf(null);
 	    	
 	    	
-	    	if(deepChirality && !potentialSet.isEmpty() && undefinedSet.size() <= maxUndefined) {
+	    	if(deepChirality && !potentialSet.isEmpty() && undefinedSet.size() <= maxUndefinedStereoCenters) {
 	    		CdkChemicalImpl cimp2=this.deepCopy();
 	    		cimp2.setDeepChirality(false);
 				Chemical c22 = new Chemical(cimp2);
@@ -553,7 +535,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				}
 			}
 		}
-		//hasBeenLabeled = false;
 	}
 
 	public void setDeepChirality(boolean chir) {
@@ -653,7 +634,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public Atom addAtom(String symbol) {
 		IAtom atom = CHEM_OBJECT_BUILDER.newAtom();
 		atom.setSymbol(symbol);
-		//hasBeenLabeled = false;
 		return addAtom(atom);
 	}
 
@@ -668,7 +648,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	@Override
 	public Atom addAtom(Atom a) {
 		IAtom iatom = CdkAtom.getIAtomFor(a);
-		//hasBeenLabeled = false;
 		return addAtom(iatom);
 	}
 	private Atom addAtom(IAtom iatom) {
@@ -684,7 +663,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		a.setExactMass(Double.valueOf(isotope.getMassNumber()));
 		//TODO how to set the values with ranges/intervals?
 		a.setNaturalAbundance(isotope.getRelativeAtomicMass().getValue().doubleValue());
-		//hasBeenLabeled = false;
 		return addAtom(a);
 	}
 	
@@ -1553,7 +1531,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		Sgroup cdkSgroup = new Sgroup();
 		cdkSgroup.setType(SgroupType.parseCtabKey(typeToUse.getTypeName()));
 		sgroups.add(cdkSgroup);
-		//hasBeenLabeled = false;
 		return new CDKSgroupAdapter(cdkSgroup);
 	}
 	@Override
@@ -2107,35 +2084,29 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 		@Override
 		public void addAtom(Atom a) {
-			//hasBeenLabeled = false;
 			sgroup.addAtom(CdkAtom.getIAtomFor(a));
 			
 		}
 
 		@Override
 		public void addBond(Bond b) {
-			//hasBeenLabeled = false;
 			sgroup.addBond(CdkBond.getIBondFor(b));
 			
 		}
 
 		@Override
 		public void removeAtom(Atom a) {
-			//hasBeenLabeled = false;
 			sgroup.removeAtom(CdkAtom.getIAtomFor(a));
 			
 		}
 		public void removeAtom(IAtom a) {
-			//hasBeenLabeled = false;
 			sgroup.removeAtom(a);
 
 		}
 
 		@Override
 		public void removeBond(Bond b) {
-			//hasBeenLabeled = false;
 			sgroup.removeBond(CdkBond.getIBondFor(b));
-			
 		}
 
 		@Override
@@ -2501,8 +2472,4 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		};
 	}
 
-	@Override
-	public Class getFactoryClass() {
-		return CdkChemical2FactoryImpl.class;
-	}
 }

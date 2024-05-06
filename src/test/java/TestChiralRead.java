@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
+import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -1785,7 +1786,6 @@ public class TestChiralRead {
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
 		long before = (new Date()).getTime();
-		CIPToolMod.setTotalCallsToLabel(0);
 		CIPToolMod.label(chem.getContainer(), chem);
 		long after =(new Date()).getTime();
 		System.out.printf("duration of 'label' call %d\n", (after-before));
@@ -1807,7 +1807,7 @@ public class TestChiralRead {
 	}
 
 	@Test
-	public void testSlowChiralityTrueMultiple() throws IOException {
+	public void testSlowChiralityTrueMultiple() {
 		List<TestMol> mols = Arrays.asList(
 				new TestMol("large_polymer1", "large_polymer1.mol", 3),
 				new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 0),
@@ -1854,10 +1854,12 @@ public class TestChiralRead {
 
 	private boolean testOneMol(TestMol testMol) throws IOException {
 		String userDirectory = new File("").getAbsolutePath();
-		String fileName =userDirectory + "/src/test/resources/mols/" + testMol.molfileName;
-		File testMolfile = new File(fileName);
-		Chemical c1=Chemical.parse(Files.readString(testMolfile.toPath()));
-		((CdkChemicalImpl) c1.getImpl()).setMaxUndefined(100);
+		String molfileText = IOUtils.toString(
+				this.getClass().getResourceAsStream("mols/" + testMol.molfileName),
+				"UTF-8"
+		);
+		Chemical c1=Chemical.parse(molfileText );
+		((CdkChemicalImpl) c1.getImpl()).setMaxUndefinedStereoCenters(100);
 		((CdkChemicalImpl) c1.getImpl()).setComplexityCutoff(10);
 
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
@@ -1865,7 +1867,6 @@ public class TestChiralRead {
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 		chem.setDeepChirality(false);
 		long before = (new Date()).getTime();
-		CIPToolMod.setTotalCallsToLabel(0);
 
 		//CIPToolMod.label(chem.getContainer(), chem);
 		List<TetrahedralChirality> chemTetrahedrals =chem.getTetrahedrals();
@@ -1882,13 +1883,11 @@ public class TestChiralRead {
 
 	@Test
 	public void testSlowChiralitySmall() throws Exception {
-		String path = System.getenv(".");
-		System.out.println("path: " + path);
-		String userDirectory = new File("").getAbsolutePath();
-		System.out.println("userDire: " + userDirectory);
-		String fileName =userDirectory + "/src/test/resources/mols/pared_down.mol";
-		File paredMol = new File(fileName);
-		Chemical c1=Chemical.parse(Files.readString(paredMol.toPath()));
+		String molfileText = IOUtils.toString(
+				this.getClass().getResourceAsStream("mols/pared_down.mol"),
+				"UTF-8"
+		);
+		Chemical c1=Chemical.parse(molfileText);
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
@@ -1909,13 +1908,8 @@ public class TestChiralRead {
 
 	@Test
 	public void testRingSystem() throws Exception {
-		String path = System.getenv(".");
-		System.out.println("path: " + path);
-		String userDirectory = new File("").getAbsolutePath();
-		System.out.println("userDirectory: " + userDirectory);
-		String fileName =userDirectory + "/src/test/resources/mols/pared_down.mol";
-		File paredMol = new File(fileName);
-		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(Files.readString(paredMol.toPath())).getImpl();
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/pared_down.mol"));
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 		CIPToolMod cipToolMod = new CIPToolMod();
 		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
@@ -1925,13 +1919,9 @@ public class TestChiralRead {
 
 	@Test
 	public void testRingSystem2() throws Exception {
-		String path = System.getenv(".");
-		System.out.println("path: " + path);
-		String userDirectory = new File("").getAbsolutePath();
-		System.out.println("userDirectory: " + userDirectory);
-		String fileName =userDirectory + "/src/test/resources/mols/large.symmetric.mol";
-		File paredMol = new File(fileName);
-		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(Files.readString(paredMol.toPath())).getImpl();
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/large.symmetric.mol"));
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+
 		CIPToolMod cipToolMod = new CIPToolMod();
 		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
@@ -1941,13 +1931,8 @@ public class TestChiralRead {
 
 	@Test
 	public void testRingSystem3() throws Exception {
-		String path = System.getenv(".");
-		System.out.println("path: " + path);
-		String userDirectory = new File("").getAbsolutePath();
-		System.out.println("userDirectory: " + userDirectory);
-		String fileName =userDirectory + "/src/test/resources/mols/large.rings.pieces.mol";
-		File paredMol = new File(fileName);
-		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(Files.readString(paredMol.toPath())).getImpl();
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/large.rings.pieces.mol"));
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 		CIPToolMod cipToolMod = new CIPToolMod();
 		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);

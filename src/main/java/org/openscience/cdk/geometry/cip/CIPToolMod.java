@@ -131,27 +131,17 @@ public class CIPToolMod {
 
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
 
-    private final static int MAX_RINGS = 5;
-
-    private static int totalCallsToLabel = 0;
     /**
 	 * GSRS-MODIFIED: Temporary bug fix for {@link CIPTool#label(IAtomContainer)}
 	 *
      * @param container structure to label
      */
     public static void label(IAtomContainer container, CdkChemicalImpl chemical) {
-        totalCallsToLabel++;
-        System.out.printf("totalCallsToLabel: %d\n", totalCallsToLabel);
-        if( totalCallsToLabel > 1000) {
-            System.out.printf("this structure is taking a lot of resources   .  Formula: %s, Mass: %.2f\n",
-                    chemical.getFormula(), chemical.getMass());
-        }
 
         //Experimental new labeller
         com.simolecule.centres.CdkLabeller.label(container);
     	/*}else {
-            System.out.println("NOT using USE_NEW_CENTRES");
-	        for (IStereoElement stereoElement : container.stereoElements()) {
+            for (IStereoElement stereoElement : container.stereoElements()) {
 	            if (stereoElement instanceof ITetrahedralChirality) {
 	                ITetrahedralChirality tc = (ITetrahedralChirality) stereoElement;
 	                tc.getChiralAtom().setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, tc).toString());
@@ -306,6 +296,10 @@ public class CIPToolMod {
                 copy.removeBond(i);
             }
         }
+        if( copy.getBondCount() == 0) {
+            //we have removed all non-ring bonds. When we have no bonds, that means no rings
+            return 0;
+        }
 
         for(int i = copy.getAtomCount()-1; i >=0; i--) {
             Atom atom = copy.getAtom(i);
@@ -323,34 +317,10 @@ public class CIPToolMod {
             CdkChemicalImpl fragment = iterator.next();
             int currentRingTotal= fragment.getBondCount() - fragment.getAtomCount() + 1;
             fragmentCount++;
-            System.out.printf("fragment %d has %d atoms and %d bonds\n", fragmentCount, fragment.getAtomCount(),
-                    fragment.getBondCount());
             if( currentRingTotal >maxRings) {
                 maxRings = currentRingTotal;
             }
         }
-        System.out.printf("total number of fragments for this chemical: %d\n", fragmentCount);
         return maxRings;
-    }
-
-    private void writeMolTemp(CdkChemicalImpl chem) {
-        Mdl2000WriterFactory writerFactory = new Mdl2000WriterFactory();
-        Path temp = null;
-        try {
-            temp = Files.createTempFile("temp", ".mol");
-            FileOutputStream stream = new FileOutputStream(temp.toFile());
-            ChemFormat.MolFormatSpecification DEFAULT_MOL_SPEC = new ChemFormat.MolFormatSpecification();
-            ChemicalWriterImpl writer= writerFactory.newInstance(stream, DEFAULT_MOL_SPEC);
-            writer.write(chem);
-            writer.close();
-            System.out.printf("wrote file to %s\n", temp);
-
-        } catch (IOException e) {
-            System.err.println("Error writing molecule to file: " + e.getMessage());
-        }
-    }
-
-    public static void setTotalCallsToLabel(int newNumber) {
-        totalCallsToLabel = newNumber;
     }
 }

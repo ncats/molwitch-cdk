@@ -54,10 +54,8 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 	//CDK by default turns of auxInfo
 	private static InchiOptions MOLWITCH_INCHI_OPTIONS = new InchiOptions.InchiOptionsBuilder().build();
 	public CdkChemicalInchiImplFactory() {
-		System.out.println("in CdkChemicalInchiImplFactory ctor");
 		try {
 			factory = InChIGeneratorFactory.getInstance();
-			System.out.printf("got factor: %s\n", factory.getClass().getName());
 		} catch (CDKException e) {
 			throw new IllegalStateException("could not initialize Inchi generator", e);
 		}
@@ -89,7 +87,6 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 
 	@Override
 	public InChiResult asStdInchi(Chemical chemical, boolean trustCoordinates) throws IOException {
-		System.out.println("in asStdInchi");
 		try {
 			//need to pass list options (even empty) to get AuxInfo...
 //			System.out.println("computing inchi for " + (chemical.getSource().isPresent()? chemical.getSource().get().getData() : "NO SOURCE"));
@@ -136,11 +133,9 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 	}
 	@Override
 	public Chemical parseInchi(String inchi) throws IOException {
-		System.out.println("in CdkChemicalInchiImplFactory.parseInchi");
 		try {
 			InChIToStructure toStruc= factory.getInChIToStructure(inchi, DefaultChemObjectBuilder.getInstance());
 		
-//			System.out.println(toStruc.getReturnStatus() + "  " + toStruc.getMessage());
 			if(toStruc.getStatus() == InchiStatus.SUCCESS || toStruc.getStatus() == InchiStatus.WARNING) {
 				
 				return ChemicalBuilder._fromImpl(new CdkChemicalImpl( toStruc.getAtomContainer(), new StringSource(inchi, Type.INCHI)))

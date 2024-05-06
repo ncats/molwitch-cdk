@@ -537,7 +537,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			System.out.printf("complexityCutoff: %s\n", params.get("complexityCutoff"));
 		}
 		if( params.get("maxUndefined") != null ) {
-			CdkChemicalImpl.setMaxUndefined((Integer)params.get("maxUndefined"));
+			CdkChemicalImpl.setMaxUndefinedStereoCenters((Integer)params.get("maxUndefined"));
 			System.out.printf("maxUndefined: %s\n", params.get("maxUndefined"));
 		}
 	}

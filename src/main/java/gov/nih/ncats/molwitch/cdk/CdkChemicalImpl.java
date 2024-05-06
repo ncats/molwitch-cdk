@@ -215,6 +215,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     }
 
 	CachedSupplier<Boolean> complexitySupplier =CachedSupplier.of(()->{
+		Logger.getLogger(this.getClass().getName()).info("getSizeOfLargestRingSystem(this): " + getSizeOfLargestRingSystem(this));
 		return getSizeOfLargestRingSystem(this)> complexityCutoff;
 	});
 

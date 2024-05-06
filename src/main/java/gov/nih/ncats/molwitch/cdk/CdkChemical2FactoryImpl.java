@@ -530,7 +530,8 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		return true;
 	}
 
-	public static void applyParameters(Map<String, Object> params){
+	@Override
+	public void applyParameters(Map<String, Object> params){
 		System.out.println("in CdkChemical2FactoryImpl.applyParameters");
 		if( params.get("complexityCutoff") != null) {
 			CdkChemicalImpl.setComplexityCutoff((Integer) params.get("complexityCutoff"));

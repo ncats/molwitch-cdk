@@ -419,7 +419,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    			container.getAtom(pi).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");	
 		    		}
 		    	}	    
-	    	}
+	    	} else {
+				for(int pi:potentialSet) {
+					container.getAtom(pi).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+				}
+			}
 	    	
 	    	},false);
 	    	

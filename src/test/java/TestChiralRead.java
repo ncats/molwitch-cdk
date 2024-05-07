@@ -1809,15 +1809,15 @@ public class TestChiralRead {
 	@Test
 	public void testSlowChiralityTrueMultiple() {
 		List<TestMol> mols = Arrays.asList(
-				new TestMol("large_polymer1", "large_polymer1.mol", 3),
-				new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 0),
+				new TestMol("large_polymer1", "large_polymer1.mol", 21),
+				new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 15),
 				new TestMol("c2dd8ca2-9ff7-4144-bcc7-77684294e24b", "c2dd8ca2-9ff7-4144-bcc7-77684294e24b.mol", 0),
 				new TestMol("c09aefcd-e985-4b8e-aa94-23a8f616228a", "c09aefcd-e985-4b8e-aa94-23a8f616228a.mol", 0),
 				new TestMol("921c6da6-152f-4da9-b684-579442ff6ad5", "921c6da6-152f-4da9-b684-579442ff6ad5.mol", 0),
 				new TestMol("452b31d5-7993-4cdf-b11c-243e433d4e34", "452b31d5-7993-4cdf-b11c-243e433d4e34.mol", 0),
-				new TestMol("9V35WW05U3", "9V35WW05U3.mol", 0),
-				new TestMol("79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6", "79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6.mol", 0),
-				new TestMol("46091f88-fd25-4ca9-8e37-fced5329be5a", "46091f88-fd25-4ca9-8e37-fced5329be5a.mol", 0),
+				new TestMol("9V35WW05U3", "9V35WW05U3.mol", 6),
+				new TestMol("79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6", "79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6.mol", 2),
+				new TestMol("46091f88-fd25-4ca9-8e37-fced5329be5a", "46091f88-fd25-4ca9-8e37-fced5329be5a.mol", 6),
 				new TestMol("benzoic acid", "benzoic.acid.mol", 0),
 				new TestMol("R 1-Phenylethanol", "1-Phenylethanol-R.mol", 1),
 				new TestMol("S 1-Phenylethanol", "1-Phenylethanol-S.mol", 1),
@@ -1853,19 +1853,18 @@ public class TestChiralRead {
 	}
 
 	private boolean testOneMol(TestMol testMol) throws IOException {
-		String userDirectory = new File("").getAbsolutePath();
 		String molfileText = IOUtils.toString(
 				this.getClass().getResourceAsStream("mols/" + testMol.molfileName),
 				"UTF-8"
 		);
 		Chemical c1=Chemical.parse(molfileText );
-		((CdkChemicalImpl) c1.getImpl()).setMaxUndefinedStereoCenters(100);
-		((CdkChemicalImpl) c1.getImpl()).setComplexityCutoff(10);
+		((CdkChemicalImpl) c1.getImpl()).setMaxUndefinedStereoCenters(10);
+		((CdkChemicalImpl) c1.getImpl()).setComplexityCutoff(7);
 
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
-		chem.setDeepChirality(false);
+		//chem.setDeepChirality(false);
 		long before = (new Date()).getTime();
 
 		//CIPToolMod.label(chem.getContainer(), chem);
@@ -1878,7 +1877,7 @@ public class TestChiralRead {
 		int totalChiralAtoms = chemTetrahedrals.size();
 		System.out.printf("result for %s: expected=%d - actual=%d duration of 'label' call %d\n",
 				testMol.molName, testMol.chiralAtomCount, totalChiralAtoms, durationLabelCall);
-		return testMol.chiralAtomCount + totalChiralAtoms >=0;
+		return testMol.chiralAtomCount == totalChiralAtoms;
 	}
 
 	@Test

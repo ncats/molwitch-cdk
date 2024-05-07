@@ -4,6 +4,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -290,12 +291,16 @@ public class CIPToolMod {
     public static int getSizeOfLargestRingSystem(CdkChemicalImpl chemical) {
         CdkChemicalImpl copy = chemical.deepCopy();
         int maxRings = 0;
+        List<Bond> bondsToRemove = new ArrayList<>();
         for(int i = copy.getBondCount()-1; i >=0; i--) {
             Bond bond = copy.getBond(i);
             if(!bond.isInRing() ) {
-                copy.removeBond(i);
+                //copy.removeBond(i);
+                bondsToRemove.add(bond);
             }
         }
+        bondsToRemove.forEach(b-> copy.removeBond(b));
+        
         if( copy.getBondCount() == 0) {
             //we have removed all non-ring bonds. When we have no bonds, that means no rings
             return 0;

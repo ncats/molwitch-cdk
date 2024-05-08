@@ -20,7 +20,9 @@
  */
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Date;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.simolecule.centres.CdkMol;
 import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import org.apache.commons.io.IOUtils;
@@ -38,7 +41,13 @@ import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.Chirality;
 import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.geometry.cip.CIPToolMod;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IRingSet;
+import org.openscience.cdk.io.MDLV2000Reader;
+import org.openscience.cdk.io.Mol2Reader;
+import org.openscience.cdk.ringsearch.AllRingsFinder;
 
 import static org.junit.Assert.*;
 
@@ -1938,5 +1947,4 @@ public class TestChiralRead {
 
 		assertEquals(5, ringSystemCount);
 	}
-
 }

@@ -449,8 +449,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			            }
 					}
 					return 1;
-				} catch (CDKException e) {
-					throw new RuntimeException(e);
+				} catch (CDKException | IllegalArgumentException e) {
+					Logger.getLogger(this.getClass().getName()).fine(String.format("Error processing rings in molecule with formula %s (%s; ring size limit %d)",
+							this.getFormula(), e.getMessage(), Math.min(container.getAtomCount(),12)));
+					return 0;
 				}
 		    	
 

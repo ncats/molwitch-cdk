@@ -300,7 +300,7 @@ public class CIPToolMod {
             }
         }
         bondsToRemove.forEach(b-> copy.removeBond(b));
-        
+
         if( copy.getBondCount() == 0) {
             //we have removed all non-ring bonds. When we have no bonds, that means no rings
             return 0;

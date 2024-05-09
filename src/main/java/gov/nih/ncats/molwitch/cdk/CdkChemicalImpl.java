@@ -156,7 +156,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		CdkChemicalImpl.maxUndefinedStereoCenters = maxUndefinedStereoCenters;
 	}
 
-	private static int maxUndefinedStereoCenters = 20;
+	//This parameter allows us to prevent a long calculation that enumerates all possibilities of undefined stereocenters.
+	//  this should typically be set to values < 10
+	private static int maxUndefinedStereoCenters = 5;
 
 //	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
 
@@ -215,8 +217,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     }
 
 	CachedSupplier<Boolean> complexitySupplier =CachedSupplier.of(()->{
-		Logger.getLogger(this.getClass().getName()).info("getSizeOfLargestRingSystem(this): " + getSizeOfLargestRingSystem(this));
-		return getSizeOfLargestRingSystem(this)> complexityCutoff;
+		int sizeOfLargestRingSystem = getSizeOfLargestRingSystem(this);
+		Logger.getLogger(this.getClass().getName()).info("getSizeOfLargestRingSystem(this): " + sizeOfLargestRingSystem);
+		return sizeOfLargestRingSystem > complexityCutoff;
 	});
 
 	CachedSupplier<Integer> perceiveAtomTypesOfNonQueryAtoms = CachedSupplier.of(()->{

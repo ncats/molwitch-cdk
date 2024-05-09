@@ -31,6 +31,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
@@ -532,14 +533,16 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
 	@Override
 	public void applyParameters(Map<String, Object> params){
-		System.out.println("in CdkChemical2FactoryImpl.applyParameters");
+		Logger.getLogger(this.getClass().getName()).fine("in CdkChemical2FactoryImpl.applyParameters");
 		if( params.get("complexityCutoff") != null) {
 			CdkChemicalImpl.setComplexityCutoff((Integer) params.get("complexityCutoff"));
-			System.out.printf("complexityCutoff: %s\n", params.get("complexityCutoff"));
+			Logger.getLogger(this.getClass().getName()).fine(
+					String.format("complexityCutoff: %s\n", params.get("complexityCutoff")));
 		}
-		if( params.get("maxUndefined") != null ) {
-			CdkChemicalImpl.setMaxUndefinedStereoCenters((Integer)params.get("maxUndefined"));
-			System.out.printf("maxUndefined: %s\n", params.get("maxUndefined"));
+		if( params.get("maxUndefinedStereoCenters") != null ) {
+			CdkChemicalImpl.setMaxUndefinedStereoCenters((Integer)params.get("maxUndefinedStereoCenters"));
+			Logger.getLogger(this.getClass().getName()).fine(
+					String.format("maxUndefinedStereoCenters: %s\n", params.get("maxUndefinedStereoCenters")));
 		}
 	}
 }

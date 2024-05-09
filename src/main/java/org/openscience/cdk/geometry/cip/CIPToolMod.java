@@ -306,15 +306,16 @@ public class CIPToolMod {
             return 0;
         }
 
+        List<Atom> atomsToRemove = new ArrayList<>();
         for(int i = copy.getAtomCount()-1; i >=0; i--) {
             Atom atom = copy.getAtom(i);
             if(atom.getBondCount() == 0) {
                 //System.out.printf("atom %d of symbol %s has no bonds and will be deleted\n", i, atom.getSymbol());
-                copy.removeAtom(i);
+                //copy.removeAtom(i);
+                atomsToRemove.add(atom);
             }
         }
-
-        ChemObject chemObject = new ChemObject();
+        atomsToRemove.forEach(a->copy.removeAtom(a));
 
         Iterator<CdkChemicalImpl> iterator = copy.connectedComponents();
         int fragmentCount=0;

@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2023.
+ * Copyright (c) 2024.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,14 +19,21 @@
  *  Boston, MA 02111-1307 USA
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.BitSet;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.simolecule.centres.CdkMol;
+import gov.nih.ncats.molwitch.TetrahedralChirality;
+import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
+import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -34,8 +41,56 @@ import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.Chirality;
 import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
+import org.openscience.cdk.AtomContainer;
+import org.openscience.cdk.geometry.cip.CIPToolMod;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IRingSet;
+import org.openscience.cdk.io.MDLV2000Reader;
+import org.openscience.cdk.io.Mol2Reader;
+import org.openscience.cdk.ringsearch.AllRingsFinder;
+
+import static org.junit.Assert.*;
 
 public class TestChiralRead {
+
+	private class TestMol {
+
+		public TestMol(String name, String fileName, int chiralAtomCount) {
+			this.molName = name;
+			this.molfileName= fileName;
+			this.chiralAtomCount=chiralAtomCount;
+		}
+		private String molName;
+
+		private String molfileName;
+
+		private int chiralAtomCount;
+
+		public String getMolName() {
+			return molName;
+		}
+
+		public void setMolName(String molName) {
+			this.molName = molName;
+		}
+
+		public String getMolfileName() {
+			return molfileName;
+		}
+
+		public void setMolfileName(String molfileName) {
+			this.molfileName = molfileName;
+		}
+
+		public int getChiralAtomCount() {
+			return chiralAtomCount;
+		}
+
+		public void setChiralAtomCount(int chiralAtomCount) {
+			this.chiralAtomCount = chiralAtomCount;
+		}
+
+	}
 		@Test
 	   public void ensureChiralityIsTheSameRegardlessOfSDFOrMolOrAgnosticRead() throws Exception{
  	   
@@ -754,7 +809,7 @@ public class TestChiralRead {
 	   	}
 		
 		@Test
-	   	public void testPsuedoStereocenterIsLowerCase() throws Exception {
+	   	public void testPseudoStereocenterIsLowerCase() throws Exception {
 
 	   		Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw212062315202D\n"
@@ -796,7 +851,7 @@ public class TestChiralRead {
 		
 
 		@Test
-	   	public void testPsuedoStereocenterIn135trimethylcyclohexaneIsLowerCase() throws Exception {
+	   	public void testPseudoStereocenterIn135trimethylcyclohexaneIsLowerCase() throws Exception {
 
 	   		Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw212082315262D\n"
@@ -836,7 +891,7 @@ public class TestChiralRead {
 	   	}
 		
 		@Test
-	   	public void testPsuedoStereocenterIn135trimethylcyclohexaneIsLowerCaseC() throws Exception {
+	   	public void testPseudoStereocenterIn135trimethylcyclohexaneIsLowerCaseC() throws Exception {
 
 			Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw212082315262D\n"
@@ -994,7 +1049,6 @@ public class TestChiralRead {
 		
 		@Test
 	   	public void testHavingExplicitHydrogenOnStereoCenterDoesNotInvalidatePhosphateCenter() throws Exception {
-
 	   		Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw210312314162D\n"
 	   				+ "\n"
@@ -1026,7 +1080,8 @@ public class TestChiralRead {
 	   				+ "M  END");
 	   		mol= Chemical.parse(mol.toMol());
 	   		mol.removeNonDescriptHydrogens();
-	   		System.out.println(mol.toMol());
+			mol.getTetrahedrals().stream()
+							   .forEach(t-> System.out.printf(" atom %s chirality %s\n", t.getCenterAtom().getSymbol(), t.getChirality()));
 	   		assertEquals(2,mol.getTetrahedrals().size());
 	   	}
 		
@@ -1268,5 +1323,628 @@ public class TestChiralRead {
 			  .findFirst();
 			assertFalse(opChi.isPresent());
 	   	}
-	  	
+
+	@Test
+	public void testSimpleChirality() throws Exception {
+		Chemical c1=Chemical.parse("\n" +
+				"  \n" +
+				"\n" +
+				"  5  4  0  0  1  0  0  0  0  0999 V2000\n" +
+				"    6.4688   -5.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    7.4916   -4.4094    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n" +
+				"    7.4916   -3.2280    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5148   -5.0002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.5380   -4.4094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"  1  2  1  0  0  0  0\n" +
+				"  2  3  1  1  0  0  0\n" +
+				"  2  4  1  0  0  0  0\n" +
+				"  4  5  1  0  0  0  0\n" +
+				"M  END\n");
+		System.out.println(c1.toMol());
+		Optional<Chirality> opChi=c1.atoms()
+				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+				.map(ca->ca.getChirality())
+				.findFirst();
+		assertTrue(opChi.isPresent());
+		assertEquals(Chirality.R, opChi.get());
+	}
+
+	@Test
+	public void testSlowChiralityFalse() throws Exception {
+		Chemical c1=Chemical.parse("\n" +
+				"   JSDraw203122416262D\n" +
+				"\n" +
+				" 94104  0  0  0  0              0 V2000\n" +
+				"   17.9069   -5.6149    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   16.4061   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   23.3259   -5.5592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   21.7975   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   28.6894   -5.6149    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   27.1888   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   32.5801   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   34.1364   -5.8788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.8730   -6.1554    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.8730   -4.5813    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5251   -6.9187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   20.4217   -5.4621    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   20.5439  -10.0938    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   21.7975   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   15.0723  -10.1724    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   16.4061   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.9937   -5.2968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   24.6875   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   15.0693   -5.4184    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.9048   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   31.3711   -5.2462    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   30.0510   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   36.6725   -4.5311    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   26.8171   -7.8935    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   32.2085   -7.8935    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   21.4269   -7.8935    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   16.0429   -7.6984    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   19.7188   -7.9213    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   19.2685   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   30.5001   -7.9213    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.9048   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   19.2685   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   30.0510   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   27.1888   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   32.5523   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.9328  -10.0938    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   24.6875   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   31.3223  -10.0938    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   18.0178  -10.0335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   23.4093  -10.0335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   28.8006  -10.0335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.2155   -7.7888    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   36.6258   -6.1554    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   36.6725  -10.8178    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   36.6725   -9.2578    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.4585   -9.7479    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   34.0807   -9.7479    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   15.1555   -3.8084    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   31.3223   -3.8084    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.8730  -10.8178    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.8730   -9.2578    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.9328   -3.8084    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   20.5439   -3.8084    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   15.1555  -11.7565    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   20.5439  -11.7565    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.9328  -11.7565    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   31.3223  -11.7565    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.3209   -5.8788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   35.3095   -8.4880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   35.3095   -6.9756    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.2208   -6.9187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   38.0012   -6.9187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.2208   -8.4880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   38.0012   -8.4880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5251   -8.4880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.2996   -7.7888    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   38.0235  -11.5978    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   39.3745  -10.8178    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.7255  -11.5978    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   38.1025   -3.7593    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   39.4858   -4.6118    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.9158   -3.8401    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5098   -3.7942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    7.1466   -4.5813    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.7834   -3.7942    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5220  -11.5978    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    7.1710  -10.8178    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.8200  -11.5978    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.9158   -2.2801    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.9158   -5.4001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.7255  -10.0378    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.7255  -13.1578    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.8200  -13.1578    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.8200  -10.0378    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.7834   -5.3542    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.7834   -2.2342    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    4.2234   -3.7942    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" +
+				"    4.2600  -11.5978    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" +
+				"   42.4758   -3.8401    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" +
+				"   42.2855  -11.5978    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" +
+				"   44.3576   -7.9040    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0\n" +
+				"   44.3576   -7.9040    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0\n" +
+				"   44.3576   -7.9040    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0\n" +
+				"   44.3576   -7.9040    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0\n" +
+				"  2 27  1  0  0  0  0\n" +
+				" 58 61  1  0  0  0  0\n" +
+				" 14 40  1  0  0  0  0\n" +
+				" 15 16  1  0  0  0  0\n" +
+				" 33 38  1  0  0  0  0\n" +
+				" 33 41  1  0  0  0  0\n" +
+				" 12 29  1  0  0  0  0\n" +
+				" 61 63  1  0  0  0  0\n" +
+				" 24 34  1  0  0  0  0\n" +
+				" 47 59  1  0  0  0  0\n" +
+				" 23 43  1  0  0  0  0\n" +
+				" 36 56  2  0  0  0  0\n" +
+				"  5 22  1  0  0  0  0\n" +
+				" 50 51  1  0  0  0  0\n" +
+				" 11 65  2  0  0  0  0\n" +
+				" 15 31  1  0  0  0  0\n" +
+				" 21 22  1  0  0  0  0\n" +
+				" 31 46  1  0  0  0  0\n" +
+				" 14 26  1  0  0  0  0\n" +
+				"  3 18  1  0  0  0  0\n" +
+				" 17 18  1  0  0  0  0\n" +
+				" 26 28  1  0  0  0  0\n" +
+				" 36 37  1  0  0  0  0\n" +
+				" 13 55  2  0  0  0  0\n" +
+				" 35 47  1  0  0  0  0\n" +
+				"  9 61  2  0  0  0  0\n" +
+				" 45 59  1  0  0  0  0\n" +
+				" 28 32  1  0  0  0  0\n" +
+				" 28 29  1  0  0  0  0\n" +
+				"  3  4  1  0  0  0  0\n" +
+				" 38 57  2  0  0  0  0\n" +
+				"  7  8  1  0  0  0  0\n" +
+				" 35 38  1  0  0  0  0\n" +
+				" 59 60  2  0  0  0  0\n" +
+				" 32 39  1  0  0  0  0\n" +
+				"  6 17  1  0  0  0  0\n" +
+				" 19 48  2  0  0  0  0\n" +
+				" 62 64  1  0  0  0  0\n" +
+				" 45 64  2  0  0  0  0\n" +
+				" 25 35  1  0  0  0  0\n" +
+				" 22 30  1  0  0  0  0\n" +
+				" 13 32  1  0  0  0  0\n" +
+				" 19 20  1  0  0  0  0\n" +
+				" 16 27  1  0  0  0  0\n" +
+				" 51 63  2  0  0  0  0\n" +
+				" 15 54  2  0  0  0  0\n" +
+				" 51 65  1  0  0  0  0\n" +
+				" 21 49  2  0  0  0  0\n" +
+				"  6 24  1  0  0  0  0\n" +
+				" 18 42  1  0  0  0  0\n" +
+				"  9 11  1  0  0  0  0\n" +
+				" 30 33  1  0  0  0  0\n" +
+				" 27 66  1  0  0  0  0\n" +
+				" 43 60  1  0  0  0  0\n" +
+				" 16 39  1  0  0  0  0\n" +
+				"  4 12  1  0  0  0  0\n" +
+				" 43 62  2  0  0  0  0\n" +
+				" 24 42  1  0  0  0  0\n" +
+				" 31 66  1  0  0  0  0\n" +
+				"  4 26  1  0  0  0  0\n" +
+				" 13 14  1  0  0  0  0\n" +
+				"  8 60  1  0  0  0  0\n" +
+				" 34 36  1  0  0  0  0\n" +
+				" 17 52  2  0  0  0  0\n" +
+				"  1 29  1  0  0  0  0\n" +
+				" 34 41  1  0  0  0  0\n" +
+				" 46 63  1  0  0  0  0\n" +
+				" 25 30  1  0  0  0  0\n" +
+				"  2 19  1  0  0  0  0\n" +
+				"  1  2  1  0  0  0  0\n" +
+				" 44 45  1  0  0  0  0\n" +
+				"  5  6  1  0  0  0  0\n" +
+				" 37 42  1  0  0  0  0\n" +
+				" 12 53  2  0  0  0  0\n" +
+				"  9 10  1  0  0  0  0\n" +
+				" 37 40  1  0  0  0  0\n" +
+				"  7 25  1  0  0  0  0\n" +
+				" 20 58  1  0  0  0  0\n" +
+				"  7 21  1  0  0  0  0\n" +
+				" 20 66  1  0  0  0  0\n" +
+				" 44 67  1  0  0  0  0\n" +
+				" 67 68  1  0  0  0  0\n" +
+				" 68 69  1  0  0  0  0\n" +
+				" 23 70  1  0  0  0  0\n" +
+				" 70 71  1  0  0  0  0\n" +
+				" 71 72  1  0  0  0  0\n" +
+				" 10 73  1  0  0  0  0\n" +
+				" 73 74  1  0  0  0  0\n" +
+				" 74 75  1  0  0  0  0\n" +
+				" 50 76  1  0  0  0  0\n" +
+				" 76 77  1  0  0  0  0\n" +
+				" 77 78  1  0  0  0  0\n" +
+				" 72 79  2  0  0  0  0\n" +
+				" 72 80  2  0  0  0  0\n" +
+				" 69 81  2  0  0  0  0\n" +
+				" 69 82  2  0  0  0  0\n" +
+				" 78 83  2  0  0  0  0\n" +
+				" 78 84  2  0  0  0  0\n" +
+				" 75 85  2  0  0  0  0\n" +
+				" 75 86  2  0  0  0  0\n" +
+				" 75 87  1  0  0  0  0\n" +
+				" 78 88  1  0  0  0  0\n" +
+				" 72 89  1  0  0  0  0\n" +
+				" 69 90  1  0  0  0  0\n" +
+				"M  STY  1   1 MUL\n" +
+				"M  SAL   1  4  91  92  93  94\n" +
+				"M  SPA   1  1  91\n" +
+				"M  SDI   1  4   43.5776   -9.1000   43.5776   -6.7080\n" +
+				"M  SDI   1  4   45.9176   -6.7080   45.9176   -9.1000\n" +
+				"M  SMT   1 4\n" +
+				"M  CHG  8  87  -1  88  -1  89  -1  90  -1  91   1  92   1  93   1  94   1\n" +
+				"M  END\n");
+		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
+
+		CIPToolMod.label(chem.getContainer(), chem);
+		assertTrue(chem.getAtomCount()>0);
+		//List<TetrahedralChirality> chiralities= chem.getTetrahedrals();
+		/*List<Chirality> listChi=c1.atoms()
+				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+				.map(ca->ca.getChirality())
+				.collect(Collectors.toList());*/
+		//assertTrue(chiralities.size() > 0);
+		/*for (TetrahedralChirality chirality : chiralities) {
+			System.out.printf("chirality: %s\n", chirality);
+		}*/
+	}
+
+	@Test
+	public void testSlowChiralityTrue() throws Exception {
+		Chemical c1=Chemical.parse("\n" +
+				"   JSDraw203122416262D\n" +
+				"\n" +
+				" 94104  0  0  0  0              0 V2000\n" +
+				"   17.9069   -5.6149    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   16.4061   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   23.3259   -5.5592    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   21.7975   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   28.6894   -5.6149    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   27.1888   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   32.5801   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   34.1364   -5.8788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.8730   -6.1554    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.8730   -4.5813    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5251   -6.9187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   20.4217   -5.4621    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   20.5439  -10.0938    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   21.7975   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   15.0723  -10.1724    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   16.4061   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.9937   -5.2968    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   24.6875   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   15.0693   -5.4184    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.9048   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   31.3711   -5.2462    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   30.0510   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   36.6725   -4.5311    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   26.8171   -7.8935    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   32.2085   -7.8935    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   21.4269   -7.8935    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   16.0429   -7.6984    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   19.7188   -7.9213    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   19.2685   -6.3095    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   30.5001   -7.9213    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   13.9048   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   19.2685   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   30.0510   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   27.1888   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   32.5523   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.9328  -10.0938    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   24.6875   -9.2578    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   31.3223  -10.0938    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   18.0178  -10.0335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   23.4093  -10.0335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   28.8006  -10.0335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.2155   -7.7888    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   36.6258   -6.1554    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   36.6725  -10.8178    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   36.6725   -9.2578    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.4585   -9.7479    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   34.0807   -9.7479    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   15.1555   -3.8084    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   31.3223   -3.8084    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.8730  -10.8178    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    9.8730   -9.2578    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.9328   -3.8084    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   20.5439   -3.8084    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   15.1555  -11.7565    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   20.5439  -11.7565    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   25.9328  -11.7565    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   31.3223  -11.7565    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   12.3209   -5.8788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   35.3095   -8.4880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   35.3095   -6.9756    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.2208   -6.9187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   38.0012   -6.9187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   11.2208   -8.4880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   38.0012   -8.4880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5251   -8.4880    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   14.2996   -7.7888    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   38.0235  -11.5978    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   39.3745  -10.8178    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.7255  -11.5978    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   38.1025   -3.7593    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   39.4858   -4.6118    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.9158   -3.8401    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5098   -3.7942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    7.1466   -4.5813    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.7834   -3.7942    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    8.5220  -11.5978    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    7.1710  -10.8178    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.8200  -11.5978    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.9158   -2.2801    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.9158   -5.4001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.7255  -10.0378    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"   40.7255  -13.1578    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.8200  -13.1578    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.8200  -10.0378    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.7834   -5.3542    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    5.7834   -2.2342    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+				"    4.2234   -3.7942    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" +
+				"    4.2600  -11.5978    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" +
+				"   42.4758   -3.8401    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" +
+				"   42.2855  -11.5978    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0\n" +
+				"   44.3576   -7.9040    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0\n" +
+				"   44.3576   -7.9040    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0\n" +
+				"   44.3576   -7.9040    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0\n" +
+				"   44.3576   -7.9040    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0\n" +
+				"  2 27  1  0  0  0  0\n" +
+				" 58 61  1  0  0  0  0\n" +
+				" 14 40  1  0  0  0  0\n" +
+				" 15 16  1  0  0  0  0\n" +
+				" 33 38  1  0  0  0  0\n" +
+				" 33 41  1  0  0  0  0\n" +
+				" 12 29  1  0  0  0  0\n" +
+				" 61 63  1  0  0  0  0\n" +
+				" 24 34  1  0  0  0  0\n" +
+				" 47 59  1  0  0  0  0\n" +
+				" 23 43  1  0  0  0  0\n" +
+				" 36 56  2  0  0  0  0\n" +
+				"  5 22  1  0  0  0  0\n" +
+				" 50 51  1  0  0  0  0\n" +
+				" 11 65  2  0  0  0  0\n" +
+				" 15 31  1  0  0  0  0\n" +
+				" 21 22  1  0  0  0  0\n" +
+				" 31 46  1  0  0  0  0\n" +
+				" 14 26  1  0  0  0  0\n" +
+				"  3 18  1  0  0  0  0\n" +
+				" 17 18  1  0  0  0  0\n" +
+				" 26 28  1  0  0  0  0\n" +
+				" 36 37  1  0  0  0  0\n" +
+				" 13 55  2  0  0  0  0\n" +
+				" 35 47  1  0  0  0  0\n" +
+				"  9 61  2  0  0  0  0\n" +
+				" 45 59  1  0  0  0  0\n" +
+				" 28 32  1  0  0  0  0\n" +
+				" 28 29  1  0  0  0  0\n" +
+				"  3  4  1  0  0  0  0\n" +
+				" 38 57  2  0  0  0  0\n" +
+				"  7  8  1  0  0  0  0\n" +
+				" 35 38  1  0  0  0  0\n" +
+				" 59 60  2  0  0  0  0\n" +
+				" 32 39  1  0  0  0  0\n" +
+				"  6 17  1  0  0  0  0\n" +
+				" 19 48  2  0  0  0  0\n" +
+				" 62 64  1  0  0  0  0\n" +
+				" 45 64  2  0  0  0  0\n" +
+				" 25 35  1  0  0  0  0\n" +
+				" 22 30  1  0  0  0  0\n" +
+				" 13 32  1  0  0  0  0\n" +
+				" 19 20  1  0  0  0  0\n" +
+				" 16 27  1  0  0  0  0\n" +
+				" 51 63  2  0  0  0  0\n" +
+				" 15 54  2  0  0  0  0\n" +
+				" 51 65  1  0  0  0  0\n" +
+				" 21 49  2  0  0  0  0\n" +
+				"  6 24  1  0  0  0  0\n" +
+				" 18 42  1  0  0  0  0\n" +
+				"  9 11  1  0  0  0  0\n" +
+				" 30 33  1  0  0  0  0\n" +
+				" 27 66  1  0  0  0  0\n" +
+				" 43 60  1  0  0  0  0\n" +
+				" 16 39  1  0  0  0  0\n" +
+				"  4 12  1  0  0  0  0\n" +
+				" 43 62  2  0  0  0  0\n" +
+				" 24 42  1  0  0  0  0\n" +
+				" 31 66  1  0  0  0  0\n" +
+				"  4 26  1  0  0  0  0\n" +
+				" 13 14  1  0  0  0  0\n" +
+				"  8 60  1  0  0  0  0\n" +
+				" 34 36  1  0  0  0  0\n" +
+				" 17 52  2  0  0  0  0\n" +
+				"  1 29  1  0  0  0  0\n" +
+				" 34 41  1  0  0  0  0\n" +
+				" 46 63  1  0  0  0  0\n" +
+				" 25 30  1  0  0  0  0\n" +
+				"  2 19  1  0  0  0  0\n" +
+				"  1  2  1  0  0  0  0\n" +
+				" 44 45  1  0  0  0  0\n" +
+				"  5  6  1  0  0  0  0\n" +
+				" 37 42  1  0  0  0  0\n" +
+				" 12 53  2  0  0  0  0\n" +
+				"  9 10  1  0  0  0  0\n" +
+				" 37 40  1  0  0  0  0\n" +
+				"  7 25  1  0  0  0  0\n" +
+				" 20 58  1  0  0  0  0\n" +
+				"  7 21  1  0  0  0  0\n" +
+				" 20 66  1  0  0  0  0\n" +
+				" 44 67  1  0  0  0  0\n" +
+				" 67 68  1  0  0  0  0\n" +
+				" 68 69  1  0  0  0  0\n" +
+				" 23 70  1  0  0  0  0\n" +
+				" 70 71  1  0  0  0  0\n" +
+				" 71 72  1  0  0  0  0\n" +
+				" 10 73  1  0  0  0  0\n" +
+				" 73 74  1  0  0  0  0\n" +
+				" 74 75  1  0  0  0  0\n" +
+				" 50 76  1  0  0  0  0\n" +
+				" 76 77  1  0  0  0  0\n" +
+				" 77 78  1  0  0  0  0\n" +
+				" 72 79  2  0  0  0  0\n" +
+				" 72 80  2  0  0  0  0\n" +
+				" 69 81  2  0  0  0  0\n" +
+				" 69 82  2  0  0  0  0\n" +
+				" 78 83  2  0  0  0  0\n" +
+				" 78 84  2  0  0  0  0\n" +
+				" 75 85  2  0  0  0  0\n" +
+				" 75 86  2  0  0  0  0\n" +
+				" 75 87  1  0  0  0  0\n" +
+				" 78 88  1  0  0  0  0\n" +
+				" 72 89  1  0  0  0  0\n" +
+				" 69 90  1  0  0  0  0\n" +
+				"M  STY  1   1 MUL\n" +
+				"M  SAL   1  4  91  92  93  94\n" +
+				"M  SPA   1  1  91\n" +
+				"M  SDI   1  4   43.5776   -9.1000   43.5776   -6.7080\n" +
+				"M  SDI   1  4   45.9176   -6.7080   45.9176   -9.1000\n" +
+				"M  SMT   1 4\n" +
+				"M  CHG  8  87  -1  88  -1  89  -1  90  -1  91   1  92   1  93   1  94   1\n" +
+				"M  END\n");
+		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
+
+		long before = (new Date()).getTime();
+		CIPToolMod.label(chem.getContainer(), chem);
+		long after =(new Date()).getTime();
+		System.out.printf("duration of 'label' call %d\n", (after-before));
+		assertTrue(chem.getAtomCount() >0);
+		long totalChiralAtoms = c1.atoms()
+				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+				.count();
+		long after2 =(new Date()).getTime();
+		System.out.printf("duration of filter  %d\n", (after2-after));
+		assertTrue(totalChiralAtoms >0);
+		/*List<Chirality> listChi=c1.atoms()
+				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+				.map(ca->ca.getChirality())
+				.collect(Collectors.toList());
+		assertTrue(listChi.size() > 0);
+		for (Chirality chirality : listChi) {
+			System.out.printf("chirality: ");
+		}*/
+	}
+
+	@Test
+	public void testSlowChiralityTrueMultiple() {
+		List<TestMol> mols = Arrays.asList(
+				new TestMol("large_polymer1", "large_polymer1.mol", 21),
+				new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 15),
+				new TestMol("c2dd8ca2-9ff7-4144-bcc7-77684294e24b", "c2dd8ca2-9ff7-4144-bcc7-77684294e24b.mol", 0),
+				new TestMol("c09aefcd-e985-4b8e-aa94-23a8f616228a", "c09aefcd-e985-4b8e-aa94-23a8f616228a.mol", 0),
+				new TestMol("921c6da6-152f-4da9-b684-579442ff6ad5", "921c6da6-152f-4da9-b684-579442ff6ad5.mol", 0),
+				new TestMol("452b31d5-7993-4cdf-b11c-243e433d4e34", "452b31d5-7993-4cdf-b11c-243e433d4e34.mol", 0),
+				new TestMol("9V35WW05U3", "9V35WW05U3.mol", 6),
+				new TestMol("79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6", "79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6.mol", 2),
+				new TestMol("46091f88-fd25-4ca9-8e37-fced5329be5a", "46091f88-fd25-4ca9-8e37-fced5329be5a.mol", 6),
+				new TestMol("benzoic acid", "benzoic.acid.mol", 0),
+				new TestMol("R 1-Phenylethanol", "1-Phenylethanol-R.mol", 1),
+				new TestMol("S 1-Phenylethanol", "1-Phenylethanol-S.mol", 1),
+				new TestMol("racemic 1-Phenylethanol", "1-Phenylethanol-racemic.mol", 1),
+				new TestMol("anthracene", "anthracene.mol", 0),
+				new TestMol("perylene", "perylene.mol", 0),
+				new TestMol("coronene", "coronene.mol", 0),
+				new TestMol("dioxocoronene", "dioxocoronene.mol", 0),
+				new TestMol("tetraoxocoronene", "tetraoxocoronene.mol", 0),
+				new TestMol("octaoxocoronene", "octaoxocoronene.mol", 0),
+				new TestMol("ovalene", "ovalene.mol", 0),
+				new TestMol("double-ovalene", "double-ovalene.mol", 0),
+				new TestMol("biggish1", "biggish1.mol", 0),
+				new TestMol("biggish2", "biggish2.mol", 0),
+				new TestMol("biggish3", "biggish3.mol", 4),
+				new TestMol("biggish4", "biggish4.mol", 12),
+				new TestMol("biggish5", "biggish5.mol", 12),
+				new TestMol("biggish6", "biggish6.mol", 12),
+				new TestMol("biggish7", "biggish7.mol", 0),
+				new TestMol("biggish8", "biggish8.mol", 0),
+				new TestMol("biggish9", "biggish9.mol", 4),
+				new TestMol("biggish10", "biggish10.mol", 4),
+				new TestMol("small_symmetric","small_symmetric.mol", 4)
+		);
+		mols.forEach(m->{
+			try{
+				System.out.printf("about to test %s\n", m.molName);
+				assertTrue(testOneMol(m));
+			}catch (IOException ex){
+				System.err.printf("Error processing mol %s - %s\n",m.molName, ex.getMessage());
+				fail("test fails!");
+			}});
+	}
+
+	private boolean testOneMol(TestMol testMol) throws IOException {
+		String molfileText = IOUtils.toString(
+				this.getClass().getResourceAsStream("mols/" + testMol.molfileName),
+				"UTF-8"
+		);
+		Chemical c1=Chemical.parse(molfileText );
+		((CdkChemicalImpl) c1.getImpl()).setMaxUndefinedStereoCenters(10);
+		((CdkChemicalImpl) c1.getImpl()).setComplexityCutoff(7);
+
+		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
+		//chem.setDeepChirality(false);
+		long before = (new Date()).getTime();
+
+		//CIPToolMod.label(chem.getContainer(), chem);
+		List<TetrahedralChirality> chemTetrahedrals =chem.getTetrahedrals();
+		long after =(new Date()).getTime();
+		long durationLabelCall =  after-before;
+		/*long totalChiralAtoms = c1.atoms()
+				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+				.count();*/
+		int totalChiralAtoms = chemTetrahedrals.size();
+		System.out.printf("result for %s: expected=%d - actual=%d duration of 'label' call %d\n",
+				testMol.molName, testMol.chiralAtomCount, totalChiralAtoms, durationLabelCall);
+		return testMol.chiralAtomCount == totalChiralAtoms;
+	}
+
+	@Test
+	public void testSlowChiralitySmall() throws Exception {
+		String molfileText = IOUtils.toString(
+				this.getClass().getResourceAsStream("mols/pared_down.mol"),
+				"UTF-8"
+		);
+		Chemical c1=Chemical.parse(molfileText);
+		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
+
+		CIPToolMod.label(chem.getContainer(), chem);
+		List<TetrahedralChirality> listChi= chem.getTetrahedrals();/*c1.atoms()
+				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
+				.map(ca->ca.getChirality())
+				.collect(Collectors.toList());*/
+		long totalChiral= listChi.stream()
+				.filter(c->c.getChirality() == Chirality.S || c.getChirality() == Chirality.r || c.getChirality() == Chirality.R || c.getChirality() == Chirality.s)
+				.count();
+		for (TetrahedralChirality chirality : listChi) {
+			System.out.printf("chirality: %s\n", chirality.getChirality());
+		}
+		assertEquals(0, totalChiral);
+	}
+
+	@Test
+	public void testRingSystem() throws Exception {
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/pared_down.mol"));
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+		CIPToolMod cipToolMod = new CIPToolMod();
+		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
+
+		assertEquals(5, ringSystemCount);
+	}
+
+	@Test
+	public void testRingSystem2() throws Exception {
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/large.symmetric.mol"));
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+
+		CIPToolMod cipToolMod = new CIPToolMod();
+		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
+
+		assertEquals(15, ringSystemCount);
+	}
+
+	@Test
+	public void testRingSystem3() throws Exception {
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/large.rings.pieces.mol"));
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+		CIPToolMod cipToolMod = new CIPToolMod();
+		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
+
+		assertEquals(5, ringSystemCount);
+	}
 }

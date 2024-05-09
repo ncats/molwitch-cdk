@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2023.
+ * Copyright (c) 2024.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,6 +53,7 @@ import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.geometry.cip.CIPTool;
 import org.openscience.cdk.geometry.cip.CIPToolMod;
 import org.openscience.cdk.graph.ConnectivityChecker;
 import org.openscience.cdk.graph.Cycles;
@@ -119,6 +121,8 @@ import gov.nih.ncats.molwitch.isotopes.Isotope;
 import gov.nih.ncats.molwitch.isotopes.NISTIsotopeFactory;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 
+import static org.openscience.cdk.geometry.cip.CIPToolMod.getSizeOfLargestRingSystem;
+
 public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 
@@ -130,6 +134,32 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private boolean isAromatic;
 	private static IChemObjectBuilder CHEM_OBJECT_BUILDER = SilentChemObjectBuilder.getInstance();
 	private CDKHydrogenAdder hydrogenAdder;
+
+	//this parameter allows us to control whether to use the newer (more accurate but prohibitively slow in some complex
+	// chemical systems) or the older (faster but incorrect, in some cases) methods of atom labelling.
+	// The default value is 7, a guess and a setter allows a calling routine to change this cutoff
+	private static int complexityCutoff = 7;
+
+	public static int getComplexityCutoff() {
+		return CdkChemicalImpl.complexityCutoff;
+	}
+
+	public static void setComplexityCutoff(int complexityCutoff) {
+		CdkChemicalImpl.complexityCutoff = complexityCutoff;
+	}
+
+	public static Integer getMaxUndefinedStereoCenters() {
+		return CdkChemicalImpl.maxUndefinedStereoCenters;
+	}
+
+	public static void setMaxUndefinedStereoCenters(int maxUndefinedStereoCenters) {
+		CdkChemicalImpl.maxUndefinedStereoCenters = maxUndefinedStereoCenters;
+	}
+
+	//This parameter allows us to prevent a long calculation that enumerates all possibilities of undefined stereocenters.
+	//  this should typically be set to values < 10
+	private static int maxUndefinedStereoCenters = 5;
+
 //	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
 
     Map<Integer, Map<Integer, CdkBond>> bondMap = new HashMap<>();
@@ -140,9 +170,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     private final static BitSet cdkMissing = new BitSet();
 
 	private boolean deepChirality = true;
-	
 
-    static{
+	static{
 		
 		mostStable[94]=244;
 		mostStable[96]=247;
@@ -187,21 +216,26 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		
     }
 
-    CachedSupplier<Void> perceiveAtomTypesOfNonQueryAtoms = CachedSupplier.of(()->{
+	CachedSupplier<Boolean> complexitySupplier =CachedSupplier.of(()->{
+		int sizeOfLargestRingSystem = getSizeOfLargestRingSystem(this);
+		Logger.getLogger(this.getClass().getName()).info("getSizeOfLargestRingSystem(this): " + sizeOfLargestRingSystem);
+		return sizeOfLargestRingSystem > complexityCutoff;
+	});
+
+	CachedSupplier<Integer> perceiveAtomTypesOfNonQueryAtoms = CachedSupplier.of(()->{
     	try {
     		percieveAtomTypeAndConfigureNonQueryAtoms();
     	}catch(CDKException e) {
     		
     	}
     	
-    	return null;
+    	return 1;
     }
     );
-    
-    
-    
-    
-    CachedSupplier<Void> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
+
+
+	CachedSupplier<Integer> cahnIngoldPrelogSupplier = CachedSupplier.of(()->{
+		boolean isComplex = complexitySupplier.get();
         try {
             makeStereoElms() ;
         }catch(Exception e) {
@@ -213,10 +247,15 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                
                //Due to a bug in CDK, this doesn't work as expected
                //CIPTool.label(cimp.getContainer());
-               
                //We currently have to use a modified form for now
-               CIPToolMod.label(cimp.getContainer());
-               
+				if( isComplex) {
+					Logger.getLogger(this.getClass().getName()).fine("This molecule is considered complex");
+					CIPTool.label(cimp.getContainer());
+				} else {
+					Logger.getLogger(this.getClass().getName()).fine("This molecule is considered NOT complex");
+					CIPToolMod.label(cimp.getContainer(), cimp);
+				}
+
                for (int i = 0; i < container.getAtomCount(); i++) {
                    IAtom ai =container.getAtom(i);
                    IAtom ain =cimp.getContainer().getAtom(i);
@@ -243,7 +282,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                    
                }
                
-               return null;
+               return 1;
                
             });
 //            CIPTool.label(container);
@@ -338,23 +377,24 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 						break;
 	    		}
 	    	}
-	    	
+
+				Logger.getLogger(this.getClass().getName()).fine(String.format("number of potential centers: %d; number of undefined center: %d\n",
+						potentialSet.size(), undefinedSet.size()));
 	    	//TODO fix for potential cases
 //	    	container.getAtom(i);
 	    	
 //	    	BitSet.valueOf(null);
 	    	
 	    	
-	    	if(deepChirality && !potentialSet.isEmpty()) {
+	    	if(deepChirality && !potentialSet.isEmpty() && undefinedSet.size() <= maxUndefinedStereoCenters) {
 	    		CdkChemicalImpl cimp2=this.deepCopy();
 	    		cimp2.setDeepChirality(false);
-	    		
-		    	Chemical c22 = new Chemical(cimp2);
+				Chemical c22 = new Chemical(cimp2);
 		    	
 		    	Set<Integer> isDefinable = new HashSet<>();
 		    	for(long ii=0;ii<Math.pow(2, undefinedSet.size());ii++) {
 		    		cimp2.setDirty();
-	    			BitSet bs= BitSet.valueOf(new long[] {ii});
+					BitSet bs= BitSet.valueOf(new long[] {ii});
 		    		for(int ks=0;ks<undefinedSet.size();ks++) {
 	//	    			int rs = Integer.
 		    			if(bs.get(ks)) {
@@ -382,14 +422,18 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    			container.getAtom(pi).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");	
 		    		}
 		    	}	    
-	    	}
+	    	} else {
+				for(int pi:potentialSet) {
+					container.getAtom(pi).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+				}
+			}
 	    	
 	    	},false);
 	    	
 	    	return null;
     }
     	);
-    CachedSupplier<Void> ringsSearcherSupplier = CachedSupplier.of(()->{
+    CachedSupplier<Integer> ringsSearcherSupplier = CachedSupplier.of(()->{
 		    	AllRingsFinder arf = new AllRingsFinder();
 		    	IRingSet ringSet;
 				try {
@@ -407,14 +451,18 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			                aring.setIsInRing(true);
 			            }
 					}
-					return null;
-				} catch (CDKException e) {
-					throw new RuntimeException(e);
+					return 1;
+				} catch (CDKException | IllegalArgumentException e) {
+					Logger.getLogger(this.getClass().getName()).fine(String.format("Error processing rings in molecule with formula %s (%s; ring size limit %d)",
+							this.getFormula(), e.getMessage(), Math.min(container.getAtomCount(),12)));
+					return 0;
 				}
 		    	
-		    	
+
 		
     });
+
+
 	private final CachedSupplierGroup cachedSupplierGroup = new CachedSupplierGroup();
 	private final ChemicalSource source;
 	
@@ -456,6 +504,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		cachedSupplierGroup.add(ringsSearcherSupplier);
 		cachedSupplierGroup.add(cahnIngoldPrelogSupplier);
 		cachedSupplierGroup.add(perceiveAtomTypesOfNonQueryAtoms);
+		cachedSupplierGroup.add(complexitySupplier);
 
 		   /*for (IAtom atom : container.atoms()) {
 			   //query atoms don't have everything set
@@ -495,9 +544,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					b.setStereo(newStereo);
 				}
 			}
-		}		
+		}
 	}
-	
+
 	public void setDeepChirality(boolean chir) {
 		this.deepChirality=chir;
 	}
@@ -595,7 +644,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	public Atom addAtom(String symbol) {
 		IAtom atom = CHEM_OBJECT_BUILDER.newAtom();
 		atom.setSymbol(symbol);
-		   
 		return addAtom(atom);
 	}
 
@@ -631,7 +679,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	@Override
 	public Atom addAtomByAtomicNum(int atomicNumber) {
 		return addAtom(PeriodicTable.getSymbol(atomicNumber));
-		
 	}
 
 	protected void setDirty() {
@@ -665,8 +712,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
         setImplicitHydrogens();
 
 	    AtomContainerManipulator.convertImplicitToExplicitHydrogens(container);
-	    
-	    setDirty();
+		setDirty();
 	}
 
 	@Override
@@ -902,7 +948,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 		
 		container.removeAtom(iatom);
-		
 		setDirty();
 		return a;
 	}
@@ -918,7 +963,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	@Override
 	public Bond removeBond(Bond b) {
-		
+
 		IBond iBond= ((CdkBond)b).getBond();
 		container.removeBond(iBond);
 		setDirty();
@@ -1410,7 +1455,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
     @Override
     public List<TetrahedralChirality> getTetrahedrals() {
-    	
         return withModifiedForm(cc->((CdkChemicalImpl)cc.getImpl()).getTetrahedrals1());
     }
     
@@ -2073,7 +2117,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		@Override
 		public void removeBond(Bond b) {
 			sgroup.removeBond(CdkBond.getIBondFor(b));
-			
 		}
 
 		@Override
@@ -2438,8 +2481,5 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			
 		};
 	}
-	
-	
-	
 
 }

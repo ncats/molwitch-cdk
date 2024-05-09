@@ -1,8 +1,22 @@
 package org.openscience.cdk.geometry.cip;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+import gov.nih.ncats.molwitch.Atom;
+import gov.nih.ncats.molwitch.Bond;
+import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
+import gov.nih.ncats.molwitch.cdk.writer.Mdl2000WriterFactory;
+import gov.nih.ncats.molwitch.io.ChemFormat;
+import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
 import org.openscience.cdk.CDKConstants;
+import org.openscience.cdk.ChemObject;
 import org.openscience.cdk.geometry.cip.CIPTool.CIP_CHIRALITY;
 import org.openscience.cdk.geometry.cip.rules.CIPLigandRule;
 import org.openscience.cdk.geometry.cip.rules.CIPLigandRule2;
@@ -45,7 +59,7 @@ import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
  * The 4 postion [C] is a stereo center with S configuration (as demonstrated
  * with the : dashed bond to the methyl group below). The carbon atoms at 3, 4
  * and 5 positions are tied for priority based on first pass CIP rules (atom
- * numbner and mass). However, 3 and 5 are quickly seen as higher priority than
+ * number and mass). However, 3 and 5 are quickly seen as higher priority than
  * 4' in the first tie-break as 4' has no sub-ligands. 3 and 5, however, both
  * have 2 sub-ligands. 3 has [3',2] and 5 has [5',6] as sub-ligands. The next 
  * step CDK CIP rules do is to ORDER these sub-ligands and then compare them.
@@ -111,22 +125,24 @@ import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
 public class CIPToolMod {
 
 	public static boolean USE_NEW_CENTRES=true;
-	
-	
+
+    public static void setUseNewCentres(boolean centresRule) {
+        USE_NEW_CENTRES=centresRule;
+    }
+
 	private static ISequenceSubRule<ILigand> cipRule = new CIPLigandRule2();
-	
-	/**
+
+    /**
 	 * GSRS-MODIFIED: Temporary bug fix for {@link CIPTool#label(IAtomContainer)}
-	 * 
+	 *
      * @param container structure to label
      */
-    public static void label(IAtomContainer container) {
-    	//Experimental new labeller
-    	if(USE_NEW_CENTRES) {
-    		com.simolecule.centres.CdkLabeller.label(container);
-    		return;
-    	}else {
-	        for (IStereoElement stereoElement : container.stereoElements()) {
+    public static void label(IAtomContainer container, CdkChemicalImpl chemical) {
+
+        //Experimental new labeller
+        com.simolecule.centres.CdkLabeller.label(container);
+    	/*}else {
+            for (IStereoElement stereoElement : container.stereoElements()) {
 	            if (stereoElement instanceof ITetrahedralChirality) {
 	                ITetrahedralChirality tc = (ITetrahedralChirality) stereoElement;
 	                tc.getChiralAtom().setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, tc).toString());
@@ -136,7 +152,7 @@ public class CIPToolMod {
 	                        .setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, dbs).toString());
 	            }
 	        }
-    	}
+    	}*/
 
     }
     
@@ -251,7 +267,7 @@ public class CIPToolMod {
     private static int permParity(final ILigand[] ligands) {
     	
         // count the number of swaps made by insertion sort - if duplicates
-        // are fount the parity is 0
+        // are found the parity is 0
         int swaps = 0;
 
         for (int j = 1, hi = ligands.length; j < hi; j++) {
@@ -271,8 +287,46 @@ public class CIPToolMod {
         return (swaps & 0x1) == 0x1 ? -1 : +1;
     
     }
-    
 
-    
-   
+    public static int getSizeOfLargestRingSystem(CdkChemicalImpl chemical) {
+        CdkChemicalImpl copy = chemical.deepCopy();
+        int maxRings = 0;
+        List<Bond> bondsToRemove = new ArrayList<>();
+        for(int i = copy.getBondCount()-1; i >=0; i--) {
+            Bond bond = copy.getBond(i);
+            if(!bond.isInRing() ) {
+                //copy.removeBond(i);
+                bondsToRemove.add(bond);
+            }
+        }
+        bondsToRemove.forEach(b-> copy.removeBond(b));
+
+        if( copy.getBondCount() == 0) {
+            //we have removed all non-ring bonds. When we have no bonds, that means no rings
+            return 0;
+        }
+
+        List<Atom> atomsToRemove = new ArrayList<>();
+        for(int i = copy.getAtomCount()-1; i >=0; i--) {
+            Atom atom = copy.getAtom(i);
+            if(atom.getBondCount() == 0) {
+                //System.out.printf("atom %d of symbol %s has no bonds and will be deleted\n", i, atom.getSymbol());
+                //copy.removeAtom(i);
+                atomsToRemove.add(atom);
+            }
+        }
+        atomsToRemove.forEach(a->copy.removeAtom(a));
+
+        Iterator<CdkChemicalImpl> iterator = copy.connectedComponents();
+        int fragmentCount=0;
+        while(iterator.hasNext() ){
+            CdkChemicalImpl fragment = iterator.next();
+            int currentRingTotal= fragment.getBondCount() - fragment.getAtomCount() + 1;
+            fragmentCount++;
+            if( currentRingTotal >maxRings) {
+                maxRings = currentRingTotal;
+            }
+        }
+        return maxRings;
+    }
 }

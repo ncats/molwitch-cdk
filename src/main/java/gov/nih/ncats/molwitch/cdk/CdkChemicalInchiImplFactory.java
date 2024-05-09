@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2023.
+ * Copyright (c) 2024.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -87,7 +87,6 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 
 	@Override
 	public InChiResult asStdInchi(Chemical chemical, boolean trustCoordinates) throws IOException {
-		
 		try {
 			//need to pass list options (even empty) to get AuxInfo...
 //			System.out.println("computing inchi for " + (chemical.getSource().isPresent()? chemical.getSource().get().getData() : "NO SOURCE"));
@@ -137,7 +136,6 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		try {
 			InChIToStructure toStruc= factory.getInChIToStructure(inchi, DefaultChemObjectBuilder.getInstance());
 		
-//			System.out.println(toStruc.getReturnStatus() + "  " + toStruc.getMessage());
 			if(toStruc.getStatus() == InchiStatus.SUCCESS || toStruc.getStatus() == InchiStatus.WARNING) {
 				
 				return ChemicalBuilder._fromImpl(new CdkChemicalImpl( toStruc.getAtomContainer(), new StringSource(inchi, Type.INCHI)))

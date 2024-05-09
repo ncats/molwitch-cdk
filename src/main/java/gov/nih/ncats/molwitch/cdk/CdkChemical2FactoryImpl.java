@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2023.
+ * Copyright (c) 2024.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -29,7 +29,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
@@ -529,4 +531,18 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		return true;
 	}
 
+	@Override
+	public void applyParameters(Map<String, Object> params){
+		Logger.getLogger(this.getClass().getName()).fine("in CdkChemical2FactoryImpl.applyParameters");
+		if( params.get("complexityCutoff") != null) {
+			CdkChemicalImpl.setComplexityCutoff((Integer) params.get("complexityCutoff"));
+			Logger.getLogger(this.getClass().getName()).fine(
+					String.format("complexityCutoff: %s\n", params.get("complexityCutoff")));
+		}
+		if( params.get("maxUndefinedStereoCenters") != null ) {
+			CdkChemicalImpl.setMaxUndefinedStereoCenters((Integer)params.get("maxUndefinedStereoCenters"));
+			Logger.getLogger(this.getClass().getName()).fine(
+					String.format("maxUndefinedStereoCenters: %s\n", params.get("maxUndefinedStereoCenters")));
+		}
+	}
 }

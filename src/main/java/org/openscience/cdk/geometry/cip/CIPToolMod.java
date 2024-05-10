@@ -75,28 +75,28 @@ import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
  * the ligand ordering can go
  * <pre>
  * Possibility 1: both sub-ligands in right order
- *    3 vs 5 =>
- *    [2,3'] vs [6,5'] => 
- *    2 vs 6 => 2 is higher priority
+ *    3 vs 5 as follows
+ *    [2,3'] vs [6,5'] yields
+ *    2 vs 6 yields 2 is higher priority
  *    therefore 3 is higher priority (correct)
  * 
  * Possibility 2: 3 sub-ligands wrong order, 5 right order
- *    3 vs 5 =>
- *    [3',2] vs [6,5'] => 
- *    3' vs 6 => 6 is higher priority
+ *    3 vs 5 as follows
+ *    [3',2] vs [6,5'] results in
+ *    3' vs 6 yields 6 is higher priority
  *    therefore 5 is higher priority (incorrect)
  * 
  * Possibility 3: 3 sub-ligands RIGHT order, 5 wrong order
- *    3 vs 5 =>
- *    [2,3'] vs [5',6] => 
- *    2 vs 5' => 2 is higher priority
+ *    3 vs 5 as follows
+ *    [2,3'] vs [5',6] gives
+ *    2 vs 5' yields 2 is higher priority
  *    therefore 3 is higher priority (correct)
  * 
  * Possibility 4: both sub-ligands in WRONG order
- *    3 vs 5 =>
- *    [3',2] vs [5',6] => 
- *    3' vs 5' => TIE, go to next
- *    2 vs 6 => 2 is higher priority
+ *    3 vs 5 as follows:
+ *    [3',2] vs [5',6] yields
+ *    3' vs 5' gives a TIE, go to next
+ *    2 vs 6 results in 2 as higher priority
  *    therefore 3 is higher priority (correct)
  * </pre>
  * <p>
@@ -137,7 +137,7 @@ public class CIPToolMod {
 	 *
      * @param container structure to label
      */
-    public static void label(IAtomContainer container, CdkChemicalImpl chemical) {
+    public static void label(IAtomContainer container) {
 
         //Experimental new labeller
         com.simolecule.centres.CdkLabeller.label(container);
@@ -161,6 +161,8 @@ public class CIPToolMod {
 	 * GSRS-MODIFIED: Temporary bug fix for {@link CIPTool#getCIPChirality(IAtomContainer, ITetrahedralChirality)}
 	 * 
      * @param container structure to label
+     * @param stereoCenter one atom to identify
+     * @return type of chirality identified
      */
     public static CIP_CHIRALITY getCIPChirality(IAtomContainer container, ITetrahedralChirality stereoCenter) {
 
@@ -184,6 +186,8 @@ public class CIPToolMod {
   	 * GSRS-MODIFIED: Temporary bug fix for {@link CIPTool#getCIPChirality(IAtomContainer, IDoubleBondStereochemistry)}
   	 * 
      * @param container structure to label
+     * @param stereoCenter one atom to process
+     * @return which type chirality was identified
      */    
     public static CIP_CHIRALITY getCIPChirality(IAtomContainer container, IDoubleBondStereochemistry stereoCenter) {
 

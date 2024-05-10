@@ -253,7 +253,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					CIPTool.label(cimp.getContainer());
 				} else {
 					Logger.getLogger(this.getClass().getName()).fine("This molecule is considered NOT complex");
-					CIPToolMod.label(cimp.getContainer(), cimp);
+					CIPToolMod.label(cimp.getContainer());
 				}
 
                for (int i = 0; i < container.getAtomCount(); i++) {

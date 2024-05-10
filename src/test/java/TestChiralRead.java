@@ -1565,7 +1565,7 @@ public class TestChiralRead {
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
-		CIPToolMod.label(chem.getContainer(), chem);
+		CIPToolMod.label(chem.getContainer());
 		assertTrue(chem.getAtomCount()>0);
 		//List<TetrahedralChirality> chiralities= chem.getTetrahedrals();
 		/*List<Chirality> listChi=c1.atoms()
@@ -1795,7 +1795,7 @@ public class TestChiralRead {
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
 		long before = (new Date()).getTime();
-		CIPToolMod.label(chem.getContainer(), chem);
+		CIPToolMod.label(chem.getContainer());
 		long after =(new Date()).getTime();
 		System.out.printf("duration of 'label' call %d\n", (after-before));
 		assertTrue(chem.getAtomCount() >0);
@@ -1900,7 +1900,7 @@ public class TestChiralRead {
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
-		CIPToolMod.label(chem.getContainer(), chem);
+		CIPToolMod.label(chem.getContainer());
 		List<TetrahedralChirality> listChi= chem.getTetrahedrals();/*c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.map(ca->ca.getChirality())

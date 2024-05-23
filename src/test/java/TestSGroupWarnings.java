@@ -32,6 +32,7 @@ public class TestSGroupWarnings {
         List<String> warnings = impl.getSGroupWarnings();
         Assert.assertFalse(warnings.isEmpty());
     }
+
     @Test
     public void styreneWarnings2() throws IOException {
         String molfileText = IOUtils.toString(
@@ -43,5 +44,42 @@ public class TestSGroupWarnings {
         List<String> warnings = impl.getSGroupWarnings();
         Assert.assertFalse(warnings.isEmpty());
     }
+
+    @Test
+    public void styreneWarnings3() throws IOException {
+        String molfileText = IOUtils.toString(
+                this.getClass().getResourceAsStream("mols/another.mol"),
+                "UTF-8"
+        );
+        Chemical c1=Chemical.parse(molfileText);
+        CdkChemicalImpl impl = (CdkChemicalImpl)c1.getImpl();
+        List<String> warnings = impl.getSGroupWarnings();
+        Assert.assertFalse(warnings.isEmpty());
+    }
+
+    @Test
+    public void doublePolymerNoWarnings() throws IOException {
+        String molfileText = IOUtils.toString(
+                this.getClass().getResourceAsStream("mols/double_polymer1.mol"),
+                "UTF-8"
+        );
+        Chemical c1=Chemical.parse(molfileText);
+        CdkChemicalImpl impl = (CdkChemicalImpl)c1.getImpl();
+        List<String> warnings = impl.getSGroupWarnings();
+        Assert.assertTrue(warnings.isEmpty());
+    }
+
+    @Test
+    public void doublePolymerWarnings() throws IOException {
+        String molfileText = IOUtils.toString(
+                this.getClass().getResourceAsStream("mols/double_polymer2.mol"),
+                "UTF-8"
+        );
+        Chemical c1=Chemical.parse(molfileText);
+        CdkChemicalImpl impl = (CdkChemicalImpl)c1.getImpl();
+        List<String> warnings = impl.getSGroupWarnings();
+        Assert.assertFalse(warnings.isEmpty());
+    }
+
 }
 

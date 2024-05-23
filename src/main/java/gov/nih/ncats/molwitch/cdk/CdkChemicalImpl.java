@@ -2490,7 +2490,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		AtomicInteger counter = new AtomicInteger(0);
 		this.getSGroups().forEach(sg->{
 			Assert.assertEquals(2, sg.getBrackets().size());
-			Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
+			Logger.getLogger(CdkChemicalImpl.class.getName()).fine(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
 					counter.incrementAndGet(), sg.getAtoms().count(), sg.getBrackets().get(0).getPoint1().getX(), sg.getBrackets().get(0).getPoint1().getY(),
 					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));
 			double lowerX = sg.getBrackets().get(0).getPoint1().getX();
@@ -2501,7 +2501,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("	atom %d", i));
 				Atom atom = this.getAtom(i);
 				if( !sg.getAtoms().anyMatch( a-> a.equals(atom))){
-					Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("atom %s %d\n",
+					Logger.getLogger(CdkChemicalImpl.class.getName()).finest(String.format("atom %s %d\n",
 							atom.getSymbol(), i));
 					if((atom.getAtomCoordinates().getX() >= lowerX && atom.getAtomCoordinates().getX() <= upperX)
 						&& (atom.getAtomCoordinates().getY() >= lowerY && atom.getAtomCoordinates().getY() <= upperY)){

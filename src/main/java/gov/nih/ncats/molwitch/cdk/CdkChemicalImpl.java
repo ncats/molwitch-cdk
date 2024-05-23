@@ -37,6 +37,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -45,6 +46,7 @@ import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
+import org.junit.Assert;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -2482,4 +2484,35 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		};
 	}
 
+	@Override
+	public List<String> getSGroupWarnings() {
+		List<String> messages = new ArrayList<>();
+		AtomicInteger counter = new AtomicInteger(0);
+		this.getSGroups().forEach(sg->{
+			Assert.assertEquals(2, sg.getBrackets().size());
+			Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
+					counter.incrementAndGet(), sg.getAtoms().count(), sg.getBrackets().get(0).getPoint1().getX(), sg.getBrackets().get(0).getPoint1().getY(),
+					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));
+			double lowerX = sg.getBrackets().get(0).getPoint1().getX();
+			double upperX = sg.getBrackets().get(1).getPoint1().getX();
+			double lowerY = sg.getBrackets().get(0).getPoint1().getY();
+			double upperY = sg.getBrackets().get(1).getPoint1().getY();
+			for(int i = 0; i < this.getAtomCount(); i++) {
+				Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("	atom %d", i));
+				Atom atom = this.getAtom(i);
+				if( !sg.getAtoms().anyMatch( a-> a.equals(atom))){
+					Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("atom %s %d\n",
+							atom.getSymbol(), i));
+					if((atom.getAtomCoordinates().getX() >= lowerX && atom.getAtomCoordinates().getX() <= upperX)
+						&& (atom.getAtomCoordinates().getY() >= lowerY && atom.getAtomCoordinates().getY() <= upperY)){
+						String message = String.format("atom %s (%d) is within the bounds of an SGroup but not part of the SGroup",
+								atom.getSymbol(), i);
+						Logger.getLogger(CdkChemicalImpl.class.getName()).warning(message);
+						messages.add(message);
+					}
+				}
+			}
+		});
+		return messages;
+	}
 }

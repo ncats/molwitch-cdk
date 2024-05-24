@@ -81,5 +81,29 @@ public class TestSGroupWarnings {
         Assert.assertFalse(warnings.isEmpty());
     }
 
+    @Test
+    public void multipleGroupNoWarnings() throws IOException {
+        String molfileText = IOUtils.toString(
+                this.getClass().getResourceAsStream("mols/calcium benzoate monohydrate.mol"),
+                "UTF-8"
+        );
+        Chemical c1=Chemical.parse(molfileText);
+        CdkChemicalImpl impl = (CdkChemicalImpl)c1.getImpl();
+        List<String> warnings = impl.getSGroupWarnings();
+        Assert.assertTrue(warnings.isEmpty());
+    }
+
+    @Test
+    public void multipleGroupWarnings() throws IOException {
+        String molfileText = IOUtils.toString(
+                this.getClass().getResourceAsStream("mols/calcium benzoate monohydrate-18 confusing.mol"),
+                "UTF-8"
+        );
+        Chemical c1=Chemical.parse(molfileText);
+        CdkChemicalImpl impl = (CdkChemicalImpl)c1.getImpl();
+        List<String> warnings = impl.getSGroupWarnings();
+        Assert.assertFalse(warnings.isEmpty());
+    }
+
 }
 

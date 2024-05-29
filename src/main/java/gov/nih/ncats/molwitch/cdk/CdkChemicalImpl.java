@@ -2493,10 +2493,25 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			Logger.getLogger(CdkChemicalImpl.class.getName()).fine(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
 					counter.incrementAndGet(), sg.getAtoms().count(), sg.getBrackets().get(0).getPoint1().getX(), sg.getBrackets().get(0).getPoint1().getY(),
 					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));
-			double lowerX = sg.getBrackets().get(0).getPoint1().getX();
-			double upperX = sg.getBrackets().get(1).getPoint1().getX();
-			double lowerY = sg.getBrackets().get(0).getPoint1().getY();
-			double upperY = sg.getBrackets().get(1).getPoint1().getY();
+			List<Double> xValues = new ArrayList<>();
+			xValues.add(sg.getBrackets().get(0).getPoint1().getX());
+			xValues.add(sg.getBrackets().get(0).getPoint2().getX());
+			xValues.add(sg.getBrackets().get(1).getPoint1().getX());
+			xValues.add(sg.getBrackets().get(1).getPoint2().getX());
+
+			List<Double> yValues = new ArrayList<>();
+			yValues.add(sg.getBrackets().get(0).getPoint1().getY());
+			yValues.add(sg.getBrackets().get(0).getPoint2().getY());
+			yValues.add(sg.getBrackets().get(1).getPoint1().getY());
+			yValues.add(sg.getBrackets().get(1).getPoint2().getY());
+
+			double lowerX = xValues.stream().sorted().findFirst().get();
+			double upperX = xValues.stream().sorted(Comparator.reverseOrder()).findFirst().get();
+
+			double lowerY = yValues.stream().sorted().findFirst().get();
+			double upperY = yValues.stream().sorted(Comparator.reverseOrder()).findFirst().get();
+			Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("looking at SGroup bracket coords lowerX: %.2f; upperX: %.2f; lowerY: %.2f, upperY %.2f",
+					lowerX, upperX, lowerY, upperY));
 			for(int i = 0; i < this.getAtomCount(); i++) {
 				Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("	atom %d", i));
 				Atom atom = this.getAtom(i);

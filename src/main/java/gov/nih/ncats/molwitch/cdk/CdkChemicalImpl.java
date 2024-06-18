@@ -46,7 +46,6 @@ import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
-import org.junit.Assert;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -2489,7 +2488,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		List<String> messages = new ArrayList<>();
 		AtomicInteger counter = new AtomicInteger(0);
 		this.getSGroups().forEach(sg->{
-			Assert.assertEquals(2, sg.getBrackets().size());
+			if(sg.getBrackets().size() != 2 ){
+				Logger.getLogger(CdkChemicalImpl.class.getName()).warning("Expecting SGroups to have 2 brackets.  This one has " + sg.getBrackets().size());
+			}
 			Logger.getLogger(CdkChemicalImpl.class.getName()).fine(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
 					counter.incrementAndGet(), sg.getAtoms().count(), sg.getBrackets().get(0).getPoint1().getX(), sg.getBrackets().get(0).getPoint1().getY(),
 					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));

@@ -22,21 +22,17 @@
 package gov.nih.ncats.molwitch.cdk;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import gov.nih.ncats.molwitch.Atom;
-import io.github.dan2097.jnainchi.InchiFlag;
+import gov.nih.ncats.molwitch.Bond;
 import io.github.dan2097.jnainchi.InchiOptions;
 import io.github.dan2097.jnainchi.InchiStatus;
-import org.openscience.cdk.AtomRef;
-import org.openscience.cdk.DefaultChemObjectBuilder;
-import org.openscience.cdk.PseudoAtom;
+import org.openscience.cdk.*;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtom;
-import org.openscience.cdk.interfaces.IAtomContainer;
 
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.ChemicalBuilder;
@@ -45,6 +41,7 @@ import gov.nih.ncats.molwitch.inchi.InChiResult;
 import gov.nih.ncats.molwitch.inchi.InChiResult.Status;
 import gov.nih.ncats.molwitch.internal.source.StringSource;
 import gov.nih.ncats.molwitch.spi.InchiImplFactory;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 
@@ -61,9 +58,10 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		}
 		
 	}
-	private Chemical handleQueryAtoms(Chemical m) throws IOException {
+	private Chemical handleQueryAtomsAndBonds(Chemical m) throws IOException {
 
-		if(!m.atoms().filter(CdkChemicalInchiImplFactory::isAtomThatMessesUpInchi).findAny().isPresent()){
+		if(!m.atoms().filter(CdkChemicalInchiImplFactory::isAtomThatMessesUpInchi).findAny().isPresent()
+			&& !m.bonds().filter(CdkChemicalInchiImplFactory::isBondThatMessesUpInChi).findAny().isPresent()){
 			//no query atoms do nothing
 			return m;
 		}
@@ -73,6 +71,11 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 				// this is what marvinjs specifies for atom *
 				a.setAtomicNumber(2); // force this to be helium
 
+			}
+		}
+		for(gov.nih.ncats.molwitch.Bond bond : copy.getBonds() ) {
+			if(isBondThatMessesUpInChi(bond)) {
+				bond.setBondType(Bond.BondType.SINGLE);
 			}
 		}
 
@@ -85,6 +88,11 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 		return ret;
 	}
 
+	private static boolean isBondThatMessesUpInChi(gov.nih.ncats.molwitch.Bond bond) {
+		IBond b= BondRef.deref( CdkBond.getIBondFor(bond));
+		return ( b.getOrder() == null || b.getOrder() == IBond.Order.UNSET);
+	}
+
 	@Override
 	public InChiResult asStdInchi(Chemical chemical, boolean trustCoordinates) throws IOException {
 		try {
@@ -92,7 +100,7 @@ public class CdkChemicalInchiImplFactory implements InchiImplFactory{
 //			System.out.println("computing inchi for " + (chemical.getSource().isPresent()? chemical.getSource().get().getData() : "NO SOURCE"));
 //			chemical.aromatize();
 			
-			Chemical ichem=handleQueryAtoms(chemical);
+			Chemical ichem= handleQueryAtomsAndBonds(chemical);
 			ichem.kekulize();
 			
 			InChIGenerator gen = factory.getInChIGenerator(CdkUtil.toAtomContainer(ichem), MOLWITCH_INCHI_OPTIONS);

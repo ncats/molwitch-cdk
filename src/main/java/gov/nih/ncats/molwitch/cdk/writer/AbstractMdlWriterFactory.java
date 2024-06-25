@@ -21,35 +21,19 @@
 
 package gov.nih.ncats.molwitch.cdk.writer;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Properties;
-import java.util.function.Function;
-
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
-
-import gov.nih.ncats.molwitch.cdk.CdkUtil;
-import org.apache.xpath.operations.Bool;
-import org.openscience.cdk.aromaticity.Aromaticity;
-import org.openscience.cdk.aromaticity.ElectronDonation;
-import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.graph.Cycles;
-import org.openscience.cdk.interfaces.IAtom;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IBond;
-import org.openscience.cdk.io.IChemObjectWriter;
-import org.openscience.cdk.io.listener.PropertiesListener;
-
-import gov.nih.ncats.molwitch.io.ChemFormat.AromaticAwareChemFormatWriterSpecification;
 import gov.nih.ncats.molwitch.io.ChemFormat.ChemFormatWriterSpecification;
-import gov.nih.ncats.molwitch.io.ChemFormat.KekulizationEncoding;
 import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification;
 import gov.nih.ncats.molwitch.io.ChemFormat.MolFormatSpecification.Version;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImplFactory;
-import org.openscience.cdk.io.setting.IOSetting;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.io.IChemObjectWriter;
+import org.openscience.cdk.io.listener.PropertiesListener;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Properties;
+import java.util.function.Function;
 
 public abstract class AbstractMdlWriterFactory implements ChemicalWriterImplFactory{
 

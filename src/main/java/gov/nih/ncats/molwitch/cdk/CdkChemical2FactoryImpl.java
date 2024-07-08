@@ -241,6 +241,9 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 //			//only 1 line assume smarts or smiles query?
 //
 
+			if( unknownFormattedInput.contains(("#"))) {
+				return createFromSmarts(unknownFormattedInput);
+			}
 			//replacing logic that looked at the contents of the input for characters that defined
 			// SMARTS to instead try parsing SMILES first and if that fails, parse as SMARTS
 			try {

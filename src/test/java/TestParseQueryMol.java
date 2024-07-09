@@ -703,8 +703,9 @@ public class TestParseQueryMol {
 	   		Chemical c2= Chemical.parse(c.toMol());
 	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
 	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);
+			System.out.printf("output molfile: %s\n", c.toMol());
 	       	assertTrue("Simple SMARTS keeps atom list", c.toMol().contains("0.0000 L   0"));
-	   		
+
 
 	
 	   	}

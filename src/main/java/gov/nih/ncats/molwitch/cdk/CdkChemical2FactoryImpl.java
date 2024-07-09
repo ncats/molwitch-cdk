@@ -240,12 +240,18 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		if(new BufferedReader(new StringReader(unknownFormattedInput.trim())).lines().count() == 1){
 //			//only 1 line assume smarts or smiles query?
 //
-			if(unknownFormattedInput.indexOf('~') > -1 || unknownFormattedInput.indexOf('*') > -1
-				|| unknownFormattedInput.contains("[#") || unknownFormattedInput.indexOf('!') > -1){
-				//has wildcards
+
+			if( unknownFormattedInput.contains(("#"))) {
 				return createFromSmarts(unknownFormattedInput);
 			}
-			return createFromSmiles(unknownFormattedInput);
+			//replacing logic that looked at the contents of the input for characters that defined
+			// SMARTS to instead try parsing SMILES first and if that fails, parse as SMARTS
+			try {
+				return createFromSmiles(unknownFormattedInput);
+			} catch (Exception ex) {
+				Logger.getLogger(this.getClass().getName()).info("in create, parsing as SMILES failed; going to parse as SMARTS");
+				return createFromSmarts(unknownFormattedInput);
+			}
 		}
 		try(ChemicalImplReader reader = createFrom(new BufferedReader(new StringReader(unknownFormattedInput)), null)){
 			return reader.read();

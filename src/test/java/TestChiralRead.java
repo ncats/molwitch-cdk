@@ -34,6 +34,7 @@ import com.simolecule.centres.CdkMol;
 import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -1890,6 +1891,65 @@ public class TestChiralRead {
 	}
 
 	@Test
+	public void testLargeMolsRings() {
+		List<TestMol> mols = Arrays.asList(
+				new TestMol("large_polymer1", "large_polymer1.mol", 21),
+				new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 15),
+				new TestMol("c2dd8ca2-9ff7-4144-bcc7-77684294e24b", "c2dd8ca2-9ff7-4144-bcc7-77684294e24b.mol", 0),
+				new TestMol("c09aefcd-e985-4b8e-aa94-23a8f616228a", "c09aefcd-e985-4b8e-aa94-23a8f616228a.mol", 0),
+				new TestMol("921c6da6-152f-4da9-b684-579442ff6ad5", "921c6da6-152f-4da9-b684-579442ff6ad5.mol", 0),
+				new TestMol("452b31d5-7993-4cdf-b11c-243e433d4e34", "452b31d5-7993-4cdf-b11c-243e433d4e34.mol", 0),
+				new TestMol("9V35WW05U3", "9V35WW05U3.mol", 6),
+				new TestMol("79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6", "79d19ec1-d053-44c3-a6c3-a6f0d0cdeea6.mol", 2),
+				new TestMol("46091f88-fd25-4ca9-8e37-fced5329be5a", "46091f88-fd25-4ca9-8e37-fced5329be5a.mol", 6),
+				new TestMol("benzoic acid", "benzoic.acid.mol", 0),
+				new TestMol("R 1-Phenylethanol", "1-Phenylethanol-R.mol", 1),
+				new TestMol("S 1-Phenylethanol", "1-Phenylethanol-S.mol", 1),
+				new TestMol("racemic 1-Phenylethanol", "1-Phenylethanol-racemic.mol", 1),
+				new TestMol("anthracene", "anthracene.mol", 0),
+				new TestMol("perylene", "perylene.mol", 0),
+				new TestMol("coronene", "coronene.mol", 0),
+				new TestMol("dioxocoronene", "dioxocoronene.mol", 0),
+				new TestMol("tetraoxocoronene", "tetraoxocoronene.mol", 0),
+				new TestMol("octaoxocoronene", "octaoxocoronene.mol", 0),
+				new TestMol("ovalene", "ovalene.mol", 0),
+				new TestMol("double-ovalene", "double-ovalene.mol", 0),
+				new TestMol("biggish1", "biggish1.mol", 0),
+				new TestMol("biggish2", "biggish2.mol", 0),
+				new TestMol("biggish3", "biggish3.mol", 4),
+				new TestMol("biggish4", "biggish4.mol", 12),
+				new TestMol("biggish5", "biggish5.mol", 12),
+				new TestMol("biggish6", "biggish6.mol", 12),
+				new TestMol("biggish7", "biggish7.mol", 0),
+				new TestMol("biggish8", "biggish8.mol", 0),
+				new TestMol("biggish9", "biggish9.mol", 4),
+				new TestMol("biggish10", "biggish10.mol", 4),
+				new TestMol("small_symmetric","small_symmetric.mol", 4),
+				new TestMol("SANORG-123781", "SANORG-123781.mol", 12)
+		);
+		mols.forEach(m->{
+			try{
+				System.out.printf("about to test %s\n", m.molName);
+				int totalRings = testOneMolLargestFrag(m);
+				System.out.printf(" total: %d\n" ,totalRings);
+				assertTrue(totalRings >=0);
+			}catch (IOException ex){
+				System.err.printf("Error processing mol %s - %s\n",m.molName, ex.getMessage());
+				fail("test fails!");
+			}});
+	}
+
+	private int testOneMolLargestFrag(TestMol testMol) throws IOException {
+		String molfileText = IOUtils.toString(
+				this.getClass().getResourceAsStream("mols/" + testMol.molfileName),
+				"UTF-8"
+		);
+		Chemical c1=Chemical.parse(molfileText );
+		int size= CIPToolMod.getSizeOfLargestRingSystem( (CdkChemicalImpl) c1.getImpl());
+		return size;
+	}
+
+	@Test
 	public void testSlowChiralitySmall() throws Exception {
 		String molfileText = IOUtils.toString(
 				this.getClass().getResourceAsStream("mols/pared_down.mol"),
@@ -1946,5 +2006,14 @@ public class TestChiralRead {
 		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
 
 		assertEquals(5, ringSystemCount);
+	}
+
+	@Test
+	public void testHypro1() throws Exception {
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/hypromellose_deriv.mol"));
+		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+		CIPToolMod cipToolMod = new CIPToolMod();
+		CIPToolMod.label(c1.getContainer());
+		assertNotNull(c1);
 	}
 }

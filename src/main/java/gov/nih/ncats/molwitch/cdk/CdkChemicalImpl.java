@@ -54,6 +54,7 @@ import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.aromaticity.Kekulization;
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.NoSuchAtomException;
 import org.openscience.cdk.geometry.cip.CIPTool;
 import org.openscience.cdk.geometry.cip.CIPToolMod;
 import org.openscience.cdk.graph.ConnectivityChecker;
@@ -254,7 +255,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					CIPTool.label(cimp.getContainer());
 				} else {
 					Logger.getLogger(this.getClass().getName()).fine("This molecule is considered NOT complex");
-					CIPToolMod.label(cimp.getContainer());
+					try {
+						//The call to label generates an Exception down in the bowels of CDK for *some* structures.
+						// trapping it in a try/catch allows the process to continue
+						CIPToolMod.label(cimp.getContainer());
+					} catch (NoSuchAtomException ex) {
+						Logger.getLogger(this.getClass().getName()).warning("Error in call to CIPToolMod.label. Processing will continue");
+					}
 				}
 
                for (int i = 0; i < container.getAtomCount(); i++) {

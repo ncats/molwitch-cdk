@@ -220,7 +220,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	CachedSupplier<Boolean> complexitySupplier =CachedSupplier.of(()->{
 		int sizeOfLargestRingSystem = getSizeOfLargestRingSystem(this);
-		Logger.getLogger(this.getClass().getName()).info("getSizeOfLargestRingSystem(this): " + sizeOfLargestRingSystem);
+		//Logger.getLogger(this.getClass().getName()).info("getSizeOfLargestRingSystem(this): " + sizeOfLargestRingSystem);
 		return sizeOfLargestRingSystem > complexityCutoff;
 	});
 
@@ -2498,9 +2498,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			if(sg.getBrackets().size() != 2 ){
 				Logger.getLogger(CdkChemicalImpl.class.getName()).warning("Expecting SGroups to have 2 brackets.  This one has " + sg.getBrackets().size());
 			}
-			Logger.getLogger(CdkChemicalImpl.class.getName()).fine(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
+			/*Logger.getLogger(CdkChemicalImpl.class.getName()).fine(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
 					counter.incrementAndGet(), sg.getAtoms().count(), sg.getBrackets().get(0).getPoint1().getX(), sg.getBrackets().get(0).getPoint1().getY(),
-					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));
+					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));*/
 			List<Double> xValues = new ArrayList<>();
 			xValues.add(sg.getBrackets().get(0).getPoint1().getX());
 			xValues.add(sg.getBrackets().get(0).getPoint2().getX());
@@ -2518,14 +2518,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 			double lowerY = yValues.stream().sorted().findFirst().get();
 			double upperY = yValues.stream().sorted(Comparator.reverseOrder()).findFirst().get();
-			Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("looking at SGroup bracket coords lowerX: %.2f; upperX: %.2f; lowerY: %.2f, upperY %.2f",
-					lowerX, upperX, lowerY, upperY));
+			/*Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("looking at SGroup bracket coords lowerX: %.2f; upperX: %.2f; lowerY: %.2f, upperY %.2f",
+					lowerX, upperX, lowerY, upperY));*/
 			for(int i = 0; i < this.getAtomCount(); i++) {
-				Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("	atom %d", i));
 				Atom atom = this.getAtom(i);
 				if( !sg.getAtoms().anyMatch( a-> a.equals(atom))){
-					Logger.getLogger(CdkChemicalImpl.class.getName()).finest(String.format("atom %s %d\n",
-							atom.getSymbol(), i));
 					if((atom.getAtomCoordinates().getX() >= lowerX && atom.getAtomCoordinates().getX() <= upperX)
 						&& (atom.getAtomCoordinates().getY() >= lowerY && atom.getAtomCoordinates().getY() <= upperY)){
 						String message = String.format("atom %s (%d) is within the bounds of an SGroup but not part of the SGroup",

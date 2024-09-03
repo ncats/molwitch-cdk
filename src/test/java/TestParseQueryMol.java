@@ -163,7 +163,7 @@ public class TestParseQueryMol {
         		" 26 27  4  0  0  0  0\n" + 
         		" 27 24  4  0  0  0  0\n" + 
         		"M  END";
-        System.out.println(mm);
+        //System.out.println(mm);
         Chemical c2 = Chemical.parseMol(mm);
 
         Fingerprint fp2=fingerPrinterSub.computeFingerprint(c2);
@@ -703,7 +703,7 @@ public class TestParseQueryMol {
 	   		Chemical c2= Chemical.parse(c.toMol());
 	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
 	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);
-			System.out.printf("output molfile: %s\n", c.toMol());
+			//System.out.printf("output molfile: %s\n", c.toMol());
 	       	assertTrue("Simple SMARTS keeps atom list", c.toMol().contains("0.0000 L   0"));
 
 

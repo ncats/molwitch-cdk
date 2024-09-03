@@ -318,7 +318,7 @@ public class TestChiralRead {
 					+ " 15 19  2  0      \n"
 					+ " 17 19  1  0      \n"
 					+ "M  END");
-			System.out.println(c1.toMol());
+			//System.out.println(c1.toMol());
 			Optional<Chirality> opChi=c1.atoms()
 			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 			  .map(ca->ca.getChirality())
@@ -372,7 +372,7 @@ public class TestChiralRead {
 					+ " 15 19  2  0      \n"
 					+ " 17 19  1  0      \n"
 					+ "M  END");
-			System.out.println(c1.toMol());
+			//System.out.println(c1.toMol());
 			Optional<Chirality> opChi=c1.atoms()
 			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 			  .map(ca->ca.getChirality())
@@ -401,7 +401,7 @@ public class TestChiralRead {
 					+ "  5  6  1  0  0  0  0\n"
 					+ "  6  3  2  0  0  0  0\n"
 					+ "M  END");
-			System.out.println(c1.toMol());
+			//System.out.println(c1.toMol());
 			Optional<Chirality> opChi=c1.atoms()
 			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 			  .map(ca->ca.getChirality())
@@ -626,7 +626,7 @@ public class TestChiralRead {
 					+ " 41 42  2  0  0  0  0\n"
 					+ " 31 30  2  0  0  0  0\n"
 					+ "M  END");
-			System.out.println(c1.toMol());
+			//System.out.println(c1.toMol());
 			String sdfChiral = c1.atoms()
 					 .map(ca->ca.getChirality())
 					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
@@ -1341,7 +1341,7 @@ public class TestChiralRead {
 				"  2  4  1  0  0  0  0\n" +
 				"  4  5  1  0  0  0  0\n" +
 				"M  END\n");
-		System.out.println(c1.toMol());
+		//System.out.println(c1.toMol());
 		Optional<Chirality> opChi=c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.map(ca->ca.getChirality())

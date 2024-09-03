@@ -68,7 +68,7 @@ public class TestAromatizeWeirdStructures {
         chem.aromatize();
         chem=chem.copy();
         String molb = chem.toMol();
-        System.out.println(molb);
+        //System.out.println(molb);
         assertTrue("Aromatized 5 membered ring should have aromatic bonds",
                 molb.contains("  3  4  4  0  0  0  0\n"
                         + "  4  5  4  0  0  0  0\n"
@@ -174,7 +174,7 @@ public class TestAromatizeWeirdStructures {
                 "M  END";
 
         String key = Chemical.parseMol(mol).toInchi().getKey();
-        System.out.println(key);
+        //System.out.println(key);
         assertNotNull(key);
     }
 }

@@ -2538,4 +2538,20 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		});
 		return messages;
 	}
+
+	public static Chemical flipStereocenters(Chemical c) {
+		Chemical flipped = c.copy();
+		for(Bond b : flipped.getBonds()) {
+			if( b.getStereo() == Bond.Stereo.UP) {
+				b.setStereo(Bond.Stereo.DOWN);
+			} else if( b.getStereo() == Bond.Stereo.UP_INVERTED) {
+				b.setStereo(Bond.Stereo.DOWN_INVERTED);
+			} else if( b.getStereo() == Bond.Stereo.DOWN) {
+				b.setStereo(Bond.Stereo.UP);
+			} else if( b.getStereo() == Bond.Stereo.DOWN_INVERTED) {
+				b.setStereo(Bond.Stereo.UP_INVERTED);
+			}
+		}
+		return flipped;
+	}
 }

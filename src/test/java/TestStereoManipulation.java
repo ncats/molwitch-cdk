@@ -69,8 +69,7 @@ public class TestStereoManipulation {
                     this.getClass().getResourceAsStream("mols/" + m.molfileName + ".mol"),
                     "UTF-8"
                 );
-                Chemical before= null;
-                before = Chemical.parse(molfileText);
+                Chemical before= Chemical.parse(molfileText);
                 Chemical flipped = CdkChemicalImpl.flipStereocenters(before);
                 Assert.assertEquals(m.expectedDown, flipped.bonds().filter(b->b.getStereo() == Bond.Stereo.DOWN ).count());
                 Assert.assertEquals(m.expectedUp, flipped.bonds().filter(b->b.getStereo() == Bond.Stereo.UP).count());
@@ -79,6 +78,42 @@ public class TestStereoManipulation {
                 Assert.fail("Error processing molfile " + m.molfileName);
             }
         });
-
     }
+
+    @Test
+    public void testSet2() throws IOException {
+        List<TestMol> testMols = Arrays.asList(
+                new TestMol("1-Phenylethanol-R", 1, 0),
+                new TestMol("1-Phenylethanol-S", 0, 1),
+                new TestMol("1-Phenylethanol-racemic", 0, 0),
+                new TestMol("33W7SJ9TBX", 0, 2),
+                new TestMol("VG7S7JRA56", 6, 3),
+                new TestMol("DRR5D9W4K6", 2, 4),
+                new TestMol("N6WK7SF4JA", 5, 3),
+                new TestMol("G783UGT4GL", 1, 1),
+                new TestMol("L6N99T5XF6", 0, 0)
+        );
+        testMols.forEach(m->{
+            try {
+                System.out.printf("testing mol %s\n", m.molfileName);
+                String molfileText = IOUtils.toString(
+                        this.getClass().getResourceAsStream("mols/" + m.molfileName + ".mol"),
+                        "UTF-8"
+                );
+                Chemical chemical = Chemical.parse(molfileText);
+                chemical.getImpl().flipAllStereocenters();
+                if(m.expectedDown != chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.DOWN ).count()
+                    || m.expectedUp != chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.UP).count()){
+                    File fileOutputFile = new File(m.molfileName + "_mod.mol");
+                    Files.writeString(fileOutputFile.toPath(), chemical.toMol());
+                }
+                Assert.assertEquals(m.expectedDown, chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.DOWN ).count());
+                Assert.assertEquals(m.expectedUp, chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.UP).count());
+            } catch (IOException e) {
+                System.err.println("Error processing molfile "+ e.getMessage());
+                Assert.fail("Error processing molfile " + m.molfileName);
+            }
+        });
+    }
+
 }

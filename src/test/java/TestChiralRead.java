@@ -20,35 +20,25 @@
  */
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import com.simolecule.centres.CdkMol;
-import gov.nih.ncats.molwitch.TetrahedralChirality;
+import gov.nih.ncats.molwitch.*;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
+import gov.nih.ncats.molwitch.cdk.writer.*;
+import gov.nih.ncats.molwitch.io.ChemFormat;
+import gov.nih.ncats.molwitch.spi.ChemicalWriterImplFactory;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import gov.nih.ncats.molwitch.Chemical;
-import gov.nih.ncats.molwitch.Chirality;
-import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
-import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.geometry.cip.CIPToolMod;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IRingSet;
-import org.openscience.cdk.io.MDLV2000Reader;
-import org.openscience.cdk.io.Mol2Reader;
-import org.openscience.cdk.ringsearch.AllRingsFinder;
 
 import static org.junit.Assert.*;
 
@@ -2015,5 +2005,58 @@ public class TestChiralRead {
 		CIPToolMod cipToolMod = new CIPToolMod();
 		CIPToolMod.label(c1.getContainer());
 		assertNotNull(c1);
+	}
+
+	@Test
+	public void testFlip() throws Exception {
+		List<String> n6WK7SF4JA = Arrays.asList("N6WK7SF4JA", //  "614e808b-234a-476b-ac60-98ea42d6c6c5",
+				"1-Phenylethanol-R", "SANORG-123781");
+		List<String> moleculeNames = n6WK7SF4JA;
+		for(String mol : moleculeNames){
+			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+			int rCountBefore = getRCount(before);
+			int sCountBefore =getSCount(before);
+
+			CdkChemicalImpl after = (CdkChemicalImpl) before.flipAllChiralCenters();
+			Chemical afterChemical = Chemical.parse(after.getSource().getData());
+			Logger.getLogger(this.getClass().getName()).info("afterChemical " + afterChemical.toMol());
+			int rCountAfter = getRCount(after);
+			int sCountAfter =getSCount(after);
+
+			Logger.getLogger(this.getClass().getName()).info(String.format(
+					"Total R centers before %d; S centers before %d R centers after %d; S centers after %d",
+					rCountBefore, sCountBefore, rCountAfter, sCountAfter));
+			assertEquals(sCountAfter, rCountBefore);
+			assertEquals(rCountAfter, sCountBefore);
+		}
+		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+	}
+
+	private int getRCount(CdkChemicalImpl chemicalImpl) {
+		int rCount =0;
+		for(int at = 0; at < chemicalImpl.getAtomCount(); at++) {
+			Atom atom = chemicalImpl.getAtom(at);
+			if( atom.getChirality().isRForm() )  rCount++;
+		}
+		return rCount;
+	}
+
+	private int getSCount(CdkChemicalImpl chemicalImpl) {
+		int sCount =0;
+		for(int at = 0; at < chemicalImpl.getAtomCount(); at++) {
+			Atom atom = chemicalImpl.getAtom(at);
+			if( atom.getChirality().isSForm() )  sCount++;
+		}
+		return sCount;
+	}
+
+	private void writeMol(String fileName, CdkChemicalImpl chemical) {
+		Mdl2000WriterFactory factory = new Mdl2000WriterFactory();
+		File file = new File(fileName);
+		ChemicalWriterImplFactory factory1 = new Mdl3000WriterFactory();
+		factory1.newInstance(file, ChemFormat.MolFormatSpecification.);
+		factory.newInstance(file, ChemFormat.MolFormatSpecification);
 	}
 }

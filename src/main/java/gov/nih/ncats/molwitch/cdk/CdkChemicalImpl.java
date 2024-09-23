@@ -575,6 +575,38 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 	}
 
+	public void flipChirality(Stereocenter s, List<Bond> flippedBonds) {
+		for(Atom a : s.getPeripheralAtoms()) {
+			if(a==null)continue;
+			a=getAtom(a.getAtomIndexInParent());
+//		    System.out.println("A:"+a);
+			for(Bond b : a.getBonds()) {
+				gov.nih.ncats.molwitch.Bond.Stereo oldStereo = b.getStereo();
+				gov.nih.ncats.molwitch.Bond.Stereo newStereo = oldStereo.flip();
+
+				if(oldStereo !=newStereo) {
+					if( !flippedBonds.contains(b)) {
+//					IAtom center = CdkAtom.getIAtomFor(s.getCenterAtom());
+						b.setStereo(newStereo);
+						flippedBonds.add(b);
+					} else {
+						Logger.getLogger(this.getClass().getName()).info("skipping bond because we have flipped it already");
+					}
+				}
+			}
+		}
+	}
+
+	//@Override
+	public ChemicalImpl flipAllChiralCenters(){
+		CdkChemicalImpl flipped = this.deepCopy();
+		List<Bond> bondsAlreadyFlipped = new ArrayList<>();
+		for( TetrahedralChirality chirality : flipped.getTetrahedrals()){
+			flipped.flipChirality(chirality, bondsAlreadyFlipped);
+		}
+		return flipped;
+	}
+
 	public void setDeepChirality(boolean chir) {
 		this.deepChirality=chir;
 	}
@@ -1852,7 +1884,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			// TODO Auto-generated method stub
 			return null;
 		}
-
 
 
 		private List<Atom> toCdkAtomArray(IAtom[] as) {

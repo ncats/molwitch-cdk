@@ -6,7 +6,7 @@
 
     <groupId>gov.nih.ncats</groupId>
     <artifactId>molwitch-cdk</artifactId>
-    <version>1.0.22</version>
+    <version>1.0.22-SNAPSHOT</version>
     <name>molwitch-cdk</name>
 
     <url>https://github.com/ncats/molwitch-cdk/</url>
@@ -17,7 +17,7 @@
     </organization>
 
     <properties>
-        <cdk.version>2.10-SNAPSHOT</cdk.version>
+        <cdk.version>2.9</cdk.version>
         <centres.version>1.2.1</centres.version>
     </properties>
     <repositories>
@@ -84,7 +84,7 @@
         <dependency>
             <groupId>gov.nih.ncats</groupId>
             <artifactId>molwitch</artifactId>
-            <version>0.6.10</version>
+            <version>0.6.11-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.apache.logging.log4j</groupId>

@@ -19,7 +19,6 @@
  *  Boston, MA 02111-1307 USA
  */
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
@@ -30,9 +29,6 @@ import java.util.stream.Collectors;
 
 import gov.nih.ncats.molwitch.*;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
-import gov.nih.ncats.molwitch.cdk.writer.*;
-import gov.nih.ncats.molwitch.io.ChemFormat;
-import gov.nih.ncats.molwitch.spi.ChemicalWriterImplFactory;
 import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -2009,9 +2005,8 @@ public class TestChiralRead {
 
 	@Test
 	public void testFlip() throws Exception {
-		List<String> n6WK7SF4JA = Arrays.asList("N6WK7SF4JA", //  "614e808b-234a-476b-ac60-98ea42d6c6c5",
+		List<String> moleculeNames = Arrays.asList("N6WK7SF4JA", //  "614e808b-234a-476b-ac60-98ea42d6c6c5",
 				"1-Phenylethanol-R", "SANORG-123781");
-		List<String> moleculeNames = n6WK7SF4JA;
 		for(String mol : moleculeNames){
 			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
@@ -2034,11 +2029,55 @@ public class TestChiralRead {
 		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
 	}
 
+	@Test
+	public void testFlipUnspec() throws Exception {
+		List<String> moleculeNames = Arrays.asList("VG7S7JRA56_mod");
+		for(String mol : moleculeNames){
+			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+			int rCountBefore = getRCount(before);
+			int sCountBefore =getSCount(before);
+
+			CdkChemicalImpl after = (CdkChemicalImpl) before.flipEpimericChiralCenters();
+			Chemical afterChemical = new Chemical(after);
+			Logger.getLogger(this.getClass().getName()).info("afterChemical " + afterChemical.toMol());
+			int rCountAfter = getRCount(after);
+			int sCountAfter =getSCount(after);
+
+			Logger.getLogger(this.getClass().getName()).info(String.format(
+					"Total R centers before %d; S centers before %d R centers after %d; S centers after %d",
+					rCountBefore, sCountBefore, rCountAfter, sCountAfter));
+			assertEquals(sCountAfter, rCountBefore);
+			assertEquals(rCountAfter, sCountBefore);
+		}
+		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+	}
+
+	@Test
+	public void testPermuteChir() throws Exception {
+		List<String> moleculeNames = Arrays.asList("(4~{R})-4-chloropentan-2-amine");//"VG7S7JRA56_mod"
+		for(String mol : moleculeNames){
+			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+			List<Chemical> afters = before.permuteEpimers();
+			Logger.getLogger(this.getClass().getName()).info("total: " + afters.size());
+			assertEquals(2, afters.size());
+			for(Chemical chemical : afters) {
+				Logger.getLogger(this.getClass().getName()).info(chemical.toMol());
+				Logger.getLogger(this.getClass().getName()).info(chemical.toInchi().getInchiKey().get().toString());
+			}
+
+		}
+		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+	}
+
 	private int getRCount(CdkChemicalImpl chemicalImpl) {
 		int rCount =0;
 		for(int at = 0; at < chemicalImpl.getAtomCount(); at++) {
 			Atom atom = chemicalImpl.getAtom(at);
-			if( atom.getChirality().isRForm() )  rCount++;
+			if( atom.getChirality().isRForm() ) rCount++;
 		}
 		return rCount;
 	}
@@ -2052,11 +2091,4 @@ public class TestChiralRead {
 		return sCount;
 	}
 
-	private void writeMol(String fileName, CdkChemicalImpl chemical) {
-		Mdl2000WriterFactory factory = new Mdl2000WriterFactory();
-		File file = new File(fileName);
-		ChemicalWriterImplFactory factory1 = new Mdl3000WriterFactory();
-		factory1.newInstance(file, ChemFormat.MolFormatSpecification.);
-		factory.newInstance(file, ChemFormat.MolFormatSpecification);
-	}
 }

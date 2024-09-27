@@ -66,6 +66,7 @@ import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
+import org.apache.logging.log4j.LogManager;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -162,6 +163,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	// The default value is 7, a guess and a setter allows a calling routine to change this cutoff
 	private static int complexityCutoff = 7;
 
+	private static final org.apache.logging.log4j.Logger logger = LogManager.getLogger(CdkChemicalImpl.class);
 	public static int getComplexityCutoff() {
 		return CdkChemicalImpl.complexityCutoff;
 	}
@@ -240,7 +242,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	CachedSupplier<Boolean> complexitySupplier =CachedSupplier.of(()->{
 		int sizeOfLargestRingSystem = getSizeOfLargestRingSystem(this);
-		Logger.getLogger(this.getClass().getName()).info("getSizeOfLargestRingSystem(this): " + sizeOfLargestRingSystem);
 		return sizeOfLargestRingSystem > complexityCutoff;
 	});
 
@@ -597,11 +598,72 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		}
 	}
 
-	//@Override
+	@Override
 	public ChemicalImpl flipAllChiralCenters(){
 		CdkChemicalImpl flipped = this.deepCopy();
 		List<Bond> bondsAlreadyFlipped = new ArrayList<>();
 		for( TetrahedralChirality chirality : flipped.getTetrahedrals()){
+			flipped.flipChirality(chirality, bondsAlreadyFlipped);
+		}
+		return flipped;
+	}
+
+	@Override
+	public List<Chemical> permuteEpimers() {
+		List<Chemical> results = new ArrayList<>();
+		for( TetrahedralChirality potentialChiralCenter : this.getTetrahedrals()){
+			if( potentialChiralCenter.getChirality() ==Chirality.Parity_Either) {
+				Optional<CdkChemicalImpl> clone1 = createChiralClone(potentialChiralCenter, Bond.Stereo.UP);
+				if( clone1.isPresent()) results.add(new Chemical(clone1.get()));
+				Optional<CdkChemicalImpl> clone2 = createChiralClone(potentialChiralCenter, Bond.Stereo.DOWN);
+				if( clone2.isPresent()) results.add(new Chemical(clone2.get()));
+			}
+
+			Logger.getLogger(this.getClass().getName()).info(String.format("chirality for atom at x %f.2 y %f.2, %s %s",
+			potentialChiralCenter.getCenterAtom().getAtomCoordinates().getX(),
+					potentialChiralCenter.getCenterAtom().getAtomCoordinates().getY(),
+					potentialChiralCenter.getCenterAtom().getSymbol(),
+			potentialChiralCenter.getChirality()));
+		}
+		return results;
+	}
+
+	private Optional<CdkChemicalImpl> createChiralClone(TetrahedralChirality center, Bond.Stereo stereo) {
+		CdkChemicalImpl epimer = this.deepCopy();
+		Atom centralAtom = epimer	.getAtom(center.getCenterAtom().getAtomIndexInParent());
+		Optional<? extends Bond> flippableBond = centralAtom.getBonds().stream()
+				.filter(b->b.getBondType().equals(BondType.SINGLE))
+				.filter(b->b.getStereo().equals(Bond.Stereo.NONE))
+				.findFirst();
+		if( flippableBond.isEmpty() ) {
+			logger.warn("unable to find a single unmarked bond to flip for center ");
+			return Optional.empty();
+		}
+		if(flippableBond.get().getAtom1().getAtomIndexInParent()==centralAtom.getAtomIndexInParent()){
+			if( stereo == Bond.Stereo.UP){
+				flippableBond.get().setStereo(Bond.Stereo.UP);
+			} else {
+				flippableBond.get().setStereo(Bond.Stereo.DOWN);
+			}
+		}else {
+			if( stereo == Bond.Stereo.UP){
+				flippableBond.get().setStereo(Bond.Stereo.UP_INVERTED);
+			} else {
+				flippableBond.get().setStereo(Bond.Stereo.DOWN_INVERTED);
+			}
+		}
+		epimer.cahnIngoldPrelogSupplier.resetCache();
+		return Optional.of(epimer);
+	}
+
+	@Override
+	public ChemicalImpl flipEpimericChiralCenters() {
+		CdkChemicalImpl flipped = this.deepCopy();
+		List<Bond> bondsAlreadyFlipped = new ArrayList<>();
+		for( TetrahedralChirality chirality : flipped.getTetrahedrals()){
+			if( !chirality.getChirality().isRForm() && !chirality.getChirality().isSForm()) {
+				flipped.flipChirality(chirality, bondsAlreadyFlipped);
+			}
 			flipped.flipChirality(chirality, bondsAlreadyFlipped);
 		}
 		return flipped;
@@ -2590,13 +2652,14 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		return messages;
 	}
 
-	@Override
-	public void flipAllStereocenters() {
+	public ChemicalImpl flipAllStereocenters() {
 		System.out.println("in flipAllStereocenters");
+		ChemicalImpl flipped = this.deepCopy();
 		for(ExtendedTetrahedralChirality chiralityCenter :getExtendedTetrahedrals()) {
 			System.out.printf("looking at chiral center with atom %s\n", chiralityCenter.getCenterAtom().getSymbol());
-			flipChirality(chiralityCenter);
+			flipped.flipChirality(chiralityCenter);
 		}
+		return flipped;
 	}
 
 	public static Chemical flipStereocenters(Chemical c) {

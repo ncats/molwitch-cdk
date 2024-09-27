@@ -1,6 +1,7 @@
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
+import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -101,19 +102,27 @@ public class TestStereoManipulation {
                         "UTF-8"
                 );
                 Chemical chemical = Chemical.parse(molfileText);
-                chemical.getImpl().flipAllStereocenters();
-                if(m.expectedDown != chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.DOWN ).count()
-                    || m.expectedUp != chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.UP).count()){
+                ChemicalImpl flippedChemical= chemical.getImpl().flipAllChiralCenters();
+                if(m.expectedDown !=  getStereoBondCount(flippedChemical, Bond.Stereo.DOWN)
+                    || m.expectedUp != getStereoBondCount(flippedChemical, Bond.Stereo.UP)){
                     File fileOutputFile = new File(m.molfileName + "_mod.mol");
                     Files.writeString(fileOutputFile.toPath(), chemical.toMol());
                 }
-                Assert.assertEquals(m.expectedDown, chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.DOWN ).count());
-                Assert.assertEquals(m.expectedUp, chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.UP).count());
+                Assert.assertEquals(m.expectedDown, getStereoBondCount(flippedChemical, Bond.Stereo.DOWN)); //chemical.bonds().filter(b->b.getStereo() == Bond.Stereo.DOWN ).count()
+                Assert.assertEquals(m.expectedUp, getStereoBondCount( flippedChemical, Bond.Stereo.UP));
             } catch (IOException e) {
                 System.err.println("Error processing molfile "+ e.getMessage());
                 Assert.fail("Error processing molfile " + m.molfileName);
             }
         });
+    }
+
+    private int getStereoBondCount(ChemicalImpl chemical, Bond.Stereo requiredStereo){
+        int count = 0;
+        for(int iBond = 0;iBond<chemical.getBondCount(); iBond++) {
+            if(chemical.getBond(iBond).getStereo() == requiredStereo) count++;
+        }
+        return count;
     }
 
 }

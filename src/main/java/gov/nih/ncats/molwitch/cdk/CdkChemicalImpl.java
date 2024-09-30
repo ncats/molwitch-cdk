@@ -630,7 +630,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	private Optional<CdkChemicalImpl> createChiralClone(TetrahedralChirality center, Bond.Stereo stereo) {
 		CdkChemicalImpl epimer = this.deepCopy();
-		Atom centralAtom = epimer	.getAtom(center.getCenterAtom().getAtomIndexInParent());
+		Atom centralAtom = epimer.getAtom(center.getCenterAtom().getAtomIndexInParent());
 		Optional<? extends Bond> flippableBond = centralAtom.getBonds().stream()
 				.filter(b->b.getBondType().equals(BondType.SINGLE))
 				.filter(b->b.getStereo().equals(Bond.Stereo.NONE))

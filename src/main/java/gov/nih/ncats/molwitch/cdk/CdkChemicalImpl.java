@@ -1,27 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2024.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
-/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2024.
+ * Copyright (c) 2025.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -272,16 +252,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                //CIPTool.label(cimp.getContainer());
                //We currently have to use a modified form for now
 				if( isComplex) {
-					Logger.getLogger(this.getClass().getName()).fine("This molecule is considered complex");
+					logger.trace("This molecule is considered complex");
 					CIPTool.label(cimp.getContainer());
 				} else {
-					Logger.getLogger(this.getClass().getName()).fine("This molecule is considered NOT complex");
+					logger.trace("This molecule is considered NOT complex");
 					try {
 						//The call to label generates an Exception down in the bowels of CDK for *some* structures.
 						// trapping it in a try/catch allows the process to continue
 						CIPToolMod.label(cimp.getContainer());
 					} catch (NoSuchAtomException ex) {
-						Logger.getLogger(this.getClass().getName()).warning("Error in call to CIPToolMod.label. Processing will continue");
+						logger.warn("Error in call to CIPToolMod.label. Processing will continue");
 					}
 				}
 
@@ -407,8 +387,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    		}
 	    	}
 
-				Logger.getLogger(this.getClass().getName()).fine(String.format("number of potential centers: %d; number of undefined center: %d\n",
-						potentialSet.size(), undefinedSet.size()));
+				/*logger.trace(String.format("number of potential centers: %d; number of undefined center: %d\n",
+						potentialSet.size(), undefinedSet.size()));*/
 	    	//TODO fix for potential cases
 //	    	container.getAtom(i);
 	    	
@@ -482,8 +462,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					}
 					return 1;
 				} catch (CDKException | IllegalArgumentException e) {
-					Logger.getLogger(this.getClass().getName()).fine(String.format("Error processing rings in molecule with formula %s (%s; ring size limit %d)",
-							this.getFormula(), e.getMessage(), Math.min(container.getAtomCount(),12)));
+					/*logger.trace(String.format("Error processing rigs in molecule with formula %s (%s; ring size limit %d)",
+							this.getFormula(), e.getMessage(), Math.min(container.getAtomCount(),12)));*/
 					return 0;
 				}
 		    	
@@ -591,7 +571,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 						b.setStereo(newStereo);
 						flippedBonds.add(b);
 					} else {
-						Logger.getLogger(this.getClass().getName()).info("skipping bond because we have flipped it already");
+						logger.info("skipping bond because we have flipped it already");
 					}
 				}
 			}
@@ -619,7 +599,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				if( clone2.isPresent()) results.add(new Chemical(clone2.get()));
 			}
 
-			Logger.getLogger(this.getClass().getName()).info(String.format("chirality for atom at x %f.2 y %f.2, %s %s",
+			logger.info(String.format("chirality for atom at x %f.2 y %f.2, %s %s",
 			potentialChiralCenter.getCenterAtom().getAtomCoordinates().getX(),
 					potentialChiralCenter.getCenterAtom().getAtomCoordinates().getY(),
 					potentialChiralCenter.getCenterAtom().getSymbol(),
@@ -2609,9 +2589,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		AtomicInteger counter = new AtomicInteger(0);
 		this.getSGroups().forEach(sg->{
 			if(sg.getBrackets().size() != 2 ){
-				Logger.getLogger(CdkChemicalImpl.class.getName()).warning("Expecting SGroups to have 2 brackets.  This one has " + sg.getBrackets().size());
+				logger.warn("Expecting SGroups to have 2 brackets.  This one has " + sg.getBrackets().size());
 			}
-			Logger.getLogger(CdkChemicalImpl.class.getName()).fine(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
+			logger.trace(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
 					counter.incrementAndGet(), sg.getAtoms().count(), sg.getBrackets().get(0).getPoint1().getX(), sg.getBrackets().get(0).getPoint1().getY(),
 					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));
 			List<Double> xValues = new ArrayList<>();
@@ -2631,35 +2611,25 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 			double lowerY = yValues.stream().sorted().findFirst().get();
 			double upperY = yValues.stream().sorted(Comparator.reverseOrder()).findFirst().get();
-			Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("looking at SGroup bracket coords lowerX: %.2f; upperX: %.2f; lowerY: %.2f, upperY %.2f",
+			logger.info(String.format("looking at SGroup bracket coords lowerX: %.2f; upperX: %.2f; lowerY: %.2f, upperY %.2f",
 					lowerX, upperX, lowerY, upperY));
 			for(int i = 0; i < this.getAtomCount(); i++) {
-				Logger.getLogger(CdkChemicalImpl.class.getName()).info(String.format("	atom %d", i));
+				logger.info(String.format("	atom %d", i));
 				Atom atom = this.getAtom(i);
 				if( !sg.getAtoms().anyMatch( a-> a.equals(atom))){
-					Logger.getLogger(CdkChemicalImpl.class.getName()).finest(String.format("atom %s %d\n",
+					logger.trace(String.format("atom %s %d\n",
 							atom.getSymbol(), i));
 					if((atom.getAtomCoordinates().getX() >= lowerX && atom.getAtomCoordinates().getX() <= upperX)
 						&& (atom.getAtomCoordinates().getY() >= lowerY && atom.getAtomCoordinates().getY() <= upperY)){
 						String message = String.format("atom %s (%d) is within the bounds of an SGroup but not part of the SGroup",
 								atom.getSymbol(), i);
-						Logger.getLogger(CdkChemicalImpl.class.getName()).warning(message);
+						logger.warn(message);
 						messages.add(message);
 					}
 				}
 			}
 		});
 		return messages;
-	}
-
-	public ChemicalImpl flipAllStereocenters() {
-		System.out.println("in flipAllStereocenters");
-		ChemicalImpl flipped = this.deepCopy();
-		for(ExtendedTetrahedralChirality chiralityCenter :getExtendedTetrahedrals()) {
-			System.out.printf("looking at chiral center with atom %s\n", chiralityCenter.getCenterAtom().getSymbol());
-			flipped.flipChirality(chiralityCenter);
-		}
-		return flipped;
 	}
 
 	public static Chemical flipStereocenters(Chemical c) {

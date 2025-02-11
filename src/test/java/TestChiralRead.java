@@ -2056,7 +2056,7 @@ public class TestChiralRead {
 
 	@Test
 	public void testPermuteChir() throws Exception {
-		List<String> moleculeNames = Arrays.asList("(4~{R})-4-chloropentan-2-amine");//"VG7S7JRA56_mod"
+		List<String> moleculeNames = Arrays.asList("(4~{R})-4-chloropentan-2-amine");
 		for(String mol : moleculeNames){
 			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));

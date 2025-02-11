@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2024.
+ * Copyright (c) 2025.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -393,8 +393,10 @@ public class CdkAtom implements Atom{
             	.filter(b->b.getBondType().equals(BondType.SINGLE))
             	.filter(b->b.getStereo().equals(Stereo.NONE))
             	.findFirst();
-	    	logger.info(String.format("located sBond between atoms %s and %s",
-					sBond.get().getAtom1(), sBond.get().getAtom2() ));
+			if( sBond.isPresent() ) {
+				logger.info(String.format("located sBond between atoms %s and %s",
+						sBond.get().getAtom1(), sBond.get().getAtom2() ));
+			}
             sBond.ifPresent(b->{
             	if(b.getAtom1().getAtomIndexInParent()==this.getAtomIndexInParent()){
 					logger.info("set bond up");

@@ -599,11 +599,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				if( clone2.isPresent()) results.add(new Chemical(clone2.get()));
 			}
 
-			logger.info(String.format("chirality for atom at x %f.2 y %f.2, %s %s",
+			/*logger.info(String.format("chirality for atom at x %f.2 y %f.2, %s %s",
 			potentialChiralCenter.getCenterAtom().getAtomCoordinates().getX(),
 					potentialChiralCenter.getCenterAtom().getAtomCoordinates().getY(),
 					potentialChiralCenter.getCenterAtom().getSymbol(),
-			potentialChiralCenter.getChirality()));
+			potentialChiralCenter.getChirality()));*/
 		}
 		return results;
 	}

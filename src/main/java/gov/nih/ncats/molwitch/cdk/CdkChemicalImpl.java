@@ -21,6 +21,7 @@
 
 package gov.nih.ncats.molwitch.cdk;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -40,12 +41,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.vecmath.Tuple2d;
 
+import gov.nih.ncats.molwitch.inchi.InChiResult;
+import gov.nih.ncats.molwitch.inchi.Inchi;
 import org.apache.logging.log4j.LogManager;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
@@ -2646,5 +2648,28 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			}
 		}
 		return flipped;
+	}
+
+	public static List<Chemical> generateStereoExpansion(Chemical c) {
+		List<Chemical> epimers= c.getImpl().permuteEpimers();
+		if( epimers.size() > 0) {
+			return epimers;
+		}
+		ChemicalImpl enantiomer = c.getImpl().flipAllChiralCenters();
+		if( !enantiomer.equals(c.getImpl())) {
+			return Arrays.asList(c, new Chemical(enantiomer));
+		}
+		return Collections.singletonList(c);
+	}
+
+	public boolean equivalentTo(Chemical test) throws IOException, MolwitchException {
+		Chemical thisAsChemical =  new Chemical( this);
+		thisAsChemical.generateCoordinates();
+		InChiResult thisResult= Inchi.asStdInchi(thisAsChemical, true);
+		InChiResult testResult = Inchi.asStdInchi(test, true);
+		if( thisResult != null && testResult != null && thisResult.getInchiKey().equals(testResult.getInchiKey()) ) {
+			return true;
+		}
+		return false;
 	}
 }

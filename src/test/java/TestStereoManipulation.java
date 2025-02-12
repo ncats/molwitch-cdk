@@ -1,5 +1,6 @@
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Chemical;
+import gov.nih.ncats.molwitch.MolwitchException;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import org.apache.commons.io.IOUtils;
@@ -51,19 +52,46 @@ public class TestStereoManipulation {
         private int expectedDown;
     }
 
+    private class MolEquivalenceTestData {
+        public MolEquivalenceTestData(Chemical chemical1, Chemical chemical2, boolean expectedToBeEquivalent) {
+            this.chemical1 = chemical1;
+            this.chemical2 = chemical2;
+            this.expectedToBeEquivalent = expectedToBeEquivalent;
+        }
+
+        public Chemical getChemical1() {
+            return chemical1;
+        }
+
+        public void setChemical1(Chemical chemical1) {
+            this.chemical1 = chemical1;
+        }
+
+        public Chemical getChemical2() {
+            return chemical2;
+        }
+
+        public void setChemical2(Chemical chemical2) {
+            this.chemical2 = chemical2;
+        }
+
+        public boolean isExpectedToBeEquivalent() {
+            return expectedToBeEquivalent;
+        }
+
+        public void setExpectedToBeEquivalent(boolean expectedToBeEquivalent) {
+            this.expectedToBeEquivalent = expectedToBeEquivalent;
+        }
+
+        private Chemical chemical1;
+        private Chemical chemical2;
+        private boolean expectedToBeEquivalent;
+
+    }
+
     @Test
     public void testSet() throws IOException {
-        List<TestMol> testMols = Arrays.asList(
-                new TestMol("1-Phenylethanol-R", 1, 0),
-                new TestMol("1-Phenylethanol-S", 0, 1),
-                new TestMol("1-Phenylethanol-racemic", 0, 0),
-                new TestMol("33W7SJ9TBX", 0, 2),
-                new TestMol("VG7S7JRA56", 6, 3),
-                new TestMol("DRR5D9W4K6", 2, 4),
-                new TestMol("N6WK7SF4JA", 5, 3),
-                new TestMol("G783UGT4GL", 1, 1),
-                new TestMol("L6N99T5XF6", 0, 0)
-        );
+        List<TestMol> testMols = generateTestMolSet();
         testMols.forEach(m->{
             try {
                 String molfileText = IOUtils.toString(
@@ -82,18 +110,28 @@ public class TestStereoManipulation {
     }
 
     @Test
+    public void testpermuteEpimers() throws IOException {
+        List<TestMol> testMols = generateTestMolSet();
+        testMols.forEach(m-> {
+            try {
+                String molfileText = IOUtils.toString(
+                        this.getClass().getResourceAsStream("mols/" + m.molfileName + ".mol"),
+                        "UTF-8"
+                );
+                Chemical before = Chemical.parse(molfileText);
+                CdkChemicalImpl b= (CdkChemicalImpl) before.getImpl();
+                List<Chemical> epimers= b.permuteEpimers();
+                Assert.assertTrue(epimers.size()>0);
+            } catch (IOException e) {
+                System.err.println("Error processing molfile " + e.getMessage());
+                Assert.fail("Error processing molfile " + m.molfileName);
+            }
+        });
+    }
+
+    @Test
     public void testSet2() throws IOException {
-        List<TestMol> testMols = Arrays.asList(
-                new TestMol("1-Phenylethanol-R", 1, 0),
-                new TestMol("1-Phenylethanol-S", 0, 1),
-                new TestMol("1-Phenylethanol-racemic", 0, 0),
-                new TestMol("33W7SJ9TBX", 0, 2),
-                new TestMol("VG7S7JRA56", 6, 3),
-                new TestMol("DRR5D9W4K6", 2, 4),
-                new TestMol("N6WK7SF4JA", 5, 3),
-                new TestMol("G783UGT4GL", 1, 1),
-                new TestMol("L6N99T5XF6", 0, 0)
-        );
+        List<TestMol> testMols = generateTestMolSet();
         testMols.forEach(m->{
             try {
                 System.out.printf("testing mol %s\n", m.molfileName);
@@ -117,6 +155,20 @@ public class TestStereoManipulation {
         });
     }
 
+    @Test
+    public void testEquivalentTo() throws IOException {
+        generateEquivalenceTestData().forEach(m->{
+            CdkChemicalImpl impl = (CdkChemicalImpl)m.chemical1.getImpl();
+            try {
+                impl.generateCoordinates();
+                boolean actual = impl.equivalentTo(m.chemical2);
+                Assert.assertEquals(m.expectedToBeEquivalent, actual);
+            } catch (IOException | MolwitchException e) {
+                System.err.println("Error processing structure "+ e.getMessage());
+                Assert.fail();
+            }
+        });
+    }
     private int getStereoBondCount(ChemicalImpl chemical, Bond.Stereo requiredStereo){
         int count = 0;
         for(int iBond = 0;iBond<chemical.getBondCount(); iBond++) {
@@ -125,4 +177,27 @@ public class TestStereoManipulation {
         return count;
     }
 
+    private List<TestMol> generateTestMolSet(){
+        return Arrays.asList(
+                new TestMol("1-Phenylethanol-R", 1, 0),
+                new TestMol("1-Phenylethanol-S", 0, 1),
+                new TestMol("1-Phenylethanol-racemic", 0, 0),
+                new TestMol("33W7SJ9TBX", 0, 2),
+                new TestMol("VG7S7JRA56", 6, 3),
+                new TestMol("DRR5D9W4K6", 2, 4),
+                new TestMol("N6WK7SF4JA", 5, 3),
+                new TestMol("G783UGT4GL", 1, 1),
+                new TestMol("L6N99T5XF6", 0, 0)
+        );
+    }
+
+    private List<MolEquivalenceTestData> generateEquivalenceTestData() throws IOException {
+        return Arrays.asList(
+                new MolEquivalenceTestData(Chemical.parseMol("CCCCCNC"), Chemical.parseMol("CCCCCNC"), true),
+                new MolEquivalenceTestData(Chemical.parseMol("CCCCCNC"), Chemical.parseMol("CCCCCNCC"), false),
+                new MolEquivalenceTestData(Chemical.parseMol("CC(O)CCCNC"), Chemical.parseMol("CC(O)CCCNC"), true),
+                new MolEquivalenceTestData(Chemical.parseMol("C[C@H](O)CCCNC"), Chemical.parseMol("C[C@@H](O)CCCNC"), false),
+                new MolEquivalenceTestData(Chemical.parseMol("C[C@@H](O)CCCNC"), Chemical.parseMol("C[C@H](O)CCCNC"), false)
+        );
+    }
 }

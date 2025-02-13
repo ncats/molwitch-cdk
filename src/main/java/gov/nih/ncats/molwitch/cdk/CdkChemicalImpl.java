@@ -2664,7 +2664,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	public boolean equivalentTo(Chemical test) throws IOException, MolwitchException {
 		Chemical thisAsChemical =  new Chemical( this);
-		thisAsChemical.generateCoordinates();
 		InChiResult thisResult= Inchi.asStdInchi(thisAsChemical, true);
 		InChiResult testResult = Inchi.asStdInchi(test, true);
 		if( thisResult != null && testResult != null && thisResult.getInchiKey().equals(testResult.getInchiKey()) ) {

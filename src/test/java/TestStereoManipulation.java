@@ -161,7 +161,11 @@ public class TestStereoManipulation {
             CdkChemicalImpl impl = (CdkChemicalImpl)m.chemical1.getImpl();
             try {
                 impl.generateCoordinates();
+                m.chemical2.getImpl().generateCoordinates();
                 boolean actual = impl.equivalentTo(m.chemical2);
+                if( actual != m.expectedToBeEquivalent) {
+                    System.out.printf("equivalence error on %s and %s \n", m.chemical1.toMol(), m.chemical2.toMol());
+                }
                 Assert.assertEquals(m.expectedToBeEquivalent, actual);
             } catch (IOException | MolwitchException e) {
                 System.err.println("Error processing structure "+ e.getMessage());
@@ -193,11 +197,13 @@ public class TestStereoManipulation {
 
     private List<MolEquivalenceTestData> generateEquivalenceTestData() throws IOException {
         return Arrays.asList(
-                new MolEquivalenceTestData(Chemical.parseMol("CCCCCNC"), Chemical.parseMol("CCCCCNC"), true),
+                new MolEquivalenceTestData(Chemical.parseMol("CCCCCNC"),
+                        Chemical.parseMol("CCCCCNC"), true),
                 new MolEquivalenceTestData(Chemical.parseMol("CCCCCNC"), Chemical.parseMol("CCCCCNCC"), false),
                 new MolEquivalenceTestData(Chemical.parseMol("CC(O)CCCNC"), Chemical.parseMol("CC(O)CCCNC"), true),
                 new MolEquivalenceTestData(Chemical.parseMol("C[C@H](O)CCCNC"), Chemical.parseMol("C[C@@H](O)CCCNC"), false),
-                new MolEquivalenceTestData(Chemical.parseMol("C[C@@H](O)CCCNC"), Chemical.parseMol("C[C@H](O)CCCNC"), false)
+                new MolEquivalenceTestData(Chemical.parseMol("C[C@@H](O)CCCNC"), Chemical.parseMol("C[C@H](O)CCCNC"), false),
+                new MolEquivalenceTestData(Chemical.parseMol("C[C@@H](O)CCOCNC"), Chemical.parseMol("C[C@@H](O)CCOCNC"), true)
         );
     }
 }

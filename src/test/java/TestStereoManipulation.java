@@ -144,7 +144,7 @@ public class TestStereoManipulation {
                         "UTF-8"
                 );
                 Chemical chemical = Chemical.parse(molfileText);
-                ChemicalImpl flippedChemical= chemical.getImpl().flipAllChiralCenters();
+                Chemical flippedChemical= chemical.getImpl().flipAllChiralCenters();
                 if(m.expectedDown !=  getStereoBondCount(flippedChemical, Bond.Stereo.DOWN)
                     || m.expectedUp != getStereoBondCount(flippedChemical, Bond.Stereo.UP)){
                     File fileOutputFile = new File(m.molfileName + "_mod.mol");
@@ -177,7 +177,7 @@ public class TestStereoManipulation {
             }
         });
     }
-    private int getStereoBondCount(ChemicalImpl chemical, Bond.Stereo requiredStereo){
+    private int getStereoBondCount(Chemical chemical, Bond.Stereo requiredStereo){
         int count = 0;
         for(int iBond = 0;iBond<chemical.getBondCount(); iBond++) {
             if(chemical.getBond(iBond).getStereo() == requiredStereo) count++;

@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2024.
+ * Copyright (c) 2025.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -20,10 +20,7 @@
  */
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -40,7 +37,7 @@ import static org.junit.Assert.*;
 
 public class TestChiralRead {
 
-	private class TestMol {
+	private static class TestMol {
 
 		public TestMol(String name, String fileName, int chiralAtomCount) {
 			this.molName = name;
@@ -2010,15 +2007,14 @@ public class TestChiralRead {
 		for(String mol : moleculeNames){
 			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
-			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+			Chemical before =  Chemical.parse(molfileText);
 			int rCountBefore = getRCount(before);
 			int sCountBefore =getSCount(before);
 
-			CdkChemicalImpl after = (CdkChemicalImpl) before.flipAllChiralCenters();
-			Chemical afterChemical = Chemical.parse(after.getSource().getData());
+			Chemical afterChemical = ((CdkChemicalImpl)before.getImpl()).flipAllChiralCenters();
 			Logger.getLogger(this.getClass().getName()).info("afterChemical " + afterChemical.toMol());
-			int rCountAfter = getRCount(after);
-			int sCountAfter =getSCount(after);
+			int rCountAfter = getRCount(afterChemical);
+			int sCountAfter =getSCount(afterChemical);
 
 			Logger.getLogger(this.getClass().getName()).info(String.format(
 					"Total R centers before %d; S centers before %d R centers after %d; S centers after %d",
@@ -2035,13 +2031,12 @@ public class TestChiralRead {
 		for(String mol : moleculeNames){
 			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
-			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+			Chemical before = Chemical.parse(molfileText);
 			int rCountBefore = getRCount(before);
 			int sCountBefore =getSCount(before);
 
-			CdkChemicalImpl after = (CdkChemicalImpl) before.flipEpimericChiralCenters();
-			Chemical afterChemical = new Chemical(after);
-			Logger.getLogger(this.getClass().getName()).info("afterChemical " + afterChemical.toMol());
+			Chemical after = before.getImpl().flipEpimericChiralCenters();
+			Logger.getLogger(this.getClass().getName()).info("after " + after.toMol());
 			int rCountAfter = getRCount(after);
 			int sCountAfter =getSCount(after);
 
@@ -2056,7 +2051,7 @@ public class TestChiralRead {
 
 	@Test
 	public void testPermuteChir() throws Exception {
-		List<String> moleculeNames = Arrays.asList("(4~{R})-4-chloropentan-2-amine");
+		List<String> moleculeNames = Collections.singletonList("(4~{R})-4-chloropentan-2-amine");
 		for(String mol : moleculeNames){
 			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
@@ -2073,7 +2068,7 @@ public class TestChiralRead {
 		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
 	}
 
-	private int getRCount(CdkChemicalImpl chemicalImpl) {
+	private int getRCount(Chemical chemicalImpl) {
 		int rCount =0;
 		for(int at = 0; at < chemicalImpl.getAtomCount(); at++) {
 			Atom atom = chemicalImpl.getAtom(at);
@@ -2082,7 +2077,7 @@ public class TestChiralRead {
 		return rCount;
 	}
 
-	private int getSCount(CdkChemicalImpl chemicalImpl) {
+	private int getSCount(Chemical chemicalImpl) {
 		int sCount =0;
 		for(int at = 0; at < chemicalImpl.getAtomCount(); at++) {
 			Atom atom = chemicalImpl.getAtom(at);

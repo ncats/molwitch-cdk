@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -516,30 +517,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		cachedSupplierGroup.add(cahnIngoldPrelogSupplier);
 		cachedSupplierGroup.add(perceiveAtomTypesOfNonQueryAtoms);
 		cachedSupplierGroup.add(complexitySupplier);
-
-		   /*for (IAtom atom : container.atoms()) {
-			   //query atoms don't have everything set
-			   //so ignore them for now
-			   if(atom instanceof IQueryAtom) {
-				   continue;
-			   }
-		     IAtomType type;
-			try {
-				type = matcher.findMatchingAtomType(container, atom);
-			} catch (CDKException e) {
-				throw new IllegalStateException("error matching type", e);
-			}
-
-		     AtomTypeManipulator.configure(atom, type);
-		   }*/
-		   
 	}
 	
 
-//	public void findRingAtoms(){
-//		Atom
-//	}
-	
+
 	@Override
 	public void flipChirality(Stereocenter s) {
 		for(Atom a : s.getPeripheralAtoms()) {
@@ -551,7 +532,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				gov.nih.ncats.molwitch.Bond.Stereo newStereo = oldStereo.flip();
 				
 				if(oldStereo !=newStereo) {
-//					IAtom center = CdkAtom.getIAtomFor(s.getCenterAtom());
 					b.setStereo(newStereo);
 				}
 			}
@@ -569,7 +549,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 				if(oldStereo !=newStereo) {
 					if( !flippedBonds.contains(b)) {
-//					IAtom center = CdkAtom.getIAtomFor(s.getCenterAtom());
 						b.setStereo(newStereo);
 						flippedBonds.add(b);
 					} else {
@@ -581,13 +560,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 
 	@Override
-	public ChemicalImpl flipAllChiralCenters(){
+	public Chemical flipAllChiralCenters(){
 		CdkChemicalImpl flipped = this.deepCopy();
 		List<Bond> bondsAlreadyFlipped = new ArrayList<>();
 		for( TetrahedralChirality chirality : flipped.getTetrahedrals()){
 			flipped.flipChirality(chirality, bondsAlreadyFlipped);
 		}
-		return flipped;
+		return new Chemical(flipped);
 	}
 
 	@Override
@@ -608,6 +587,24 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			potentialChiralCenter.getChirality()));*/
 		}
 		return results;
+	}
+
+	@Override
+	public List<Chemical> permuteEpimersAndEnantiomers() {
+		List<Chemical> epimers = permuteEpimers();
+		if( epimers.size()>0) {
+			return epimers;
+		}
+
+		Chemical enantiomer = flipAllChiralCenters();
+        try {
+            if( !equivalentTo(enantiomer)) {
+				return Arrays.asList(new Chemical(this), enantiomer);
+			}
+        } catch (IOException | MolwitchException e) {
+			Logger.getLogger(this.getClass().getName()).warning("Error checking chemical equivalence");
+		}
+		return Collections.singletonList(new Chemical(this));
 	}
 
 	private Optional<CdkChemicalImpl> createChiralClone(TetrahedralChirality center, Bond.Stereo stereo) {
@@ -639,7 +636,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 
 	@Override
-	public ChemicalImpl flipEpimericChiralCenters() {
+	public Chemical flipEpimericChiralCenters() {
 		CdkChemicalImpl flipped = this.deepCopy();
 		List<Bond> bondsAlreadyFlipped = new ArrayList<>();
 		for( TetrahedralChirality chirality : flipped.getTetrahedrals()){
@@ -648,7 +645,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			}
 			flipped.flipChirality(chirality, bondsAlreadyFlipped);
 		}
-		return flipped;
+		return new Chemical(flipped);
 	}
 
 	public void setDeepChirality(boolean chir) {
@@ -2648,18 +2645,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			}
 		}
 		return flipped;
-	}
-
-	public static List<Chemical> generateStereoExpansion(Chemical c) {
-		List<Chemical> epimers= c.getImpl().permuteEpimers();
-		if( epimers.size() > 0) {
-			return epimers;
-		}
-		ChemicalImpl enantiomer = c.getImpl().flipAllChiralCenters();
-		if( !enantiomer.equals(c.getImpl())) {
-			return Arrays.asList(c, new Chemical(enantiomer));
-		}
-		return Collections.singletonList(c);
 	}
 
 	public boolean equivalentTo(Chemical test) throws IOException, MolwitchException {

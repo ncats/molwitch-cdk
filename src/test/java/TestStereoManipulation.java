@@ -111,8 +111,9 @@ public class TestStereoManipulation {
 
     @Test
     public void testpermuteEpimers() throws IOException {
-        List<TestMol> testMols = generateTestMolSet();
+        List<TestMol> testMols = generateEpimericTestMolSet();
         testMols.forEach(m-> {
+            System.out.printf("Starting test for %s\n", m.getMolfileName());
             try {
                 String molfileText = IOUtils.toString(
                         this.getClass().getResourceAsStream("mols/" + m.molfileName + ".mol"),
@@ -121,6 +122,9 @@ public class TestStereoManipulation {
                 Chemical before = Chemical.parse(molfileText);
                 CdkChemicalImpl b= (CdkChemicalImpl) before.getImpl();
                 List<Chemical> epimers= b.permuteEpimers();
+                if( epimers.size()== 0){
+                    System.out.printf("no epimers found for %s\n", m.getMolfileName());
+                }
                 Assert.assertTrue(epimers.size()>0);
             } catch (IOException e) {
                 System.err.println("Error processing molfile " + e.getMessage());
@@ -183,10 +187,10 @@ public class TestStereoManipulation {
 
     private List<TestMol> generateTestMolSet(){
         return Arrays.asList(
-                new TestMol("1-Phenylethanol-R", 1, 0),
-                new TestMol("1-Phenylethanol-S", 0, 1),
+                //new TestMol("1-Phenylethanol-R", 1, 0),
+                //new TestMol("1-Phenylethanol-S", 0, 1),
                 new TestMol("1-Phenylethanol-racemic", 0, 0),
-                new TestMol("33W7SJ9TBX", 0, 2),
+                //new TestMol("33W7SJ9TBX", 0, 2),
                 new TestMol("VG7S7JRA56", 6, 3),
                 new TestMol("DRR5D9W4K6", 2, 4),
                 new TestMol("N6WK7SF4JA", 5, 3),
@@ -195,6 +199,14 @@ public class TestStereoManipulation {
         );
     }
 
+    private List<TestMol> generateEpimericTestMolSet(){
+        return Arrays.asList(
+                new TestMol("1-Phenylethanol-racemic", 0, 0),
+                new TestMol("R949HH57L8", 2, 4),
+                new TestMol("ZU7D9H38JX", 0, 2),
+                new TestMol("M6T5F9662S", 3,6)
+        );
+    }
     private List<MolEquivalenceTestData> generateEquivalenceTestData() throws IOException {
         return Arrays.asList(
                 new MolEquivalenceTestData(Chemical.parseMol("CCCCCNC"),

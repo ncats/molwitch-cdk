@@ -1,4 +1,4 @@
-/*
+package gov.nih.ncats.molwitch.cdk;/*
  * NCATS-MOLWITCH-CDK
  *
  * Copyright (c) 2025.

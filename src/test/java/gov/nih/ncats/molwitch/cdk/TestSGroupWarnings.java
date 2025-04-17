@@ -1,5 +1,6 @@
+package gov.nih.ncats.molwitch.cdk;
+
 import gov.nih.ncats.molwitch.Chemical;
-import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -12,7 +13,7 @@ public class TestSGroupWarnings {
     @Test
     public void cleanStyreneNoWarnings() throws IOException {
         String molfileText = IOUtils.toString(
-                this.getClass().getResourceAsStream("mols/polystyrene_clean.mol"),
+                this.getClass().getResourceAsStream("/mols/polystyrene_clean.mol"),
                 "UTF-8"
         );
         Chemical c1=Chemical.parse(molfileText);
@@ -24,7 +25,7 @@ public class TestSGroupWarnings {
     @Test
     public void styreneWarnings() throws IOException {
         String molfileText = IOUtils.toString(
-                this.getClass().getResourceAsStream("mols/polyethylstyrene_really_messy.mol"),
+                this.getClass().getResourceAsStream("/mols/polyethylstyrene_really_messy.mol"),
                 "UTF-8"
         );
         Chemical c1=Chemical.parse(molfileText);
@@ -36,7 +37,7 @@ public class TestSGroupWarnings {
     @Test
     public void styreneWarnings2() throws IOException {
         String molfileText = IOUtils.toString(
-                this.getClass().getResourceAsStream("mols/polyethylstyrene_messy.mol"),
+                this.getClass().getResourceAsStream("/mols/polyethylstyrene_messy.mol"),
                 "UTF-8"
         );
         Chemical c1=Chemical.parse(molfileText);
@@ -48,7 +49,7 @@ public class TestSGroupWarnings {
     @Test
     public void styreneWarnings3() throws IOException {
         String molfileText = IOUtils.toString(
-                this.getClass().getResourceAsStream("mols/another.mol"),
+                this.getClass().getResourceAsStream("/mols/another.mol"),
                 "UTF-8"
         );
         Chemical c1=Chemical.parse(molfileText);
@@ -60,7 +61,7 @@ public class TestSGroupWarnings {
     @Test
     public void doublePolymerNoWarnings() throws IOException {
         String molfileText = IOUtils.toString(
-                this.getClass().getResourceAsStream("mols/double_polymer1.mol"),
+                this.getClass().getResourceAsStream("/mols/double_polymer1.mol"),
                 "UTF-8"
         );
         Chemical c1=Chemical.parse(molfileText);
@@ -72,7 +73,7 @@ public class TestSGroupWarnings {
     @Test
     public void doublePolymerWarnings() throws IOException {
         String molfileText = IOUtils.toString(
-                this.getClass().getResourceAsStream("mols/double_polymer2.mol"),
+                this.getClass().getResourceAsStream("/mols/double_polymer2.mol"),
                 "UTF-8"
         );
         Chemical c1=Chemical.parse(molfileText);
@@ -84,7 +85,7 @@ public class TestSGroupWarnings {
     @Test
     public void multipleGroupNoWarnings() throws IOException {
         String molfileText = IOUtils.toString(
-                this.getClass().getResourceAsStream("mols/calcium benzoate monohydrate.mol"),
+                this.getClass().getResourceAsStream("/mols/calcium benzoate monohydrate.mol"),
                 "UTF-8"
         );
         Chemical c1=Chemical.parse(molfileText);
@@ -96,7 +97,7 @@ public class TestSGroupWarnings {
     @Test
     public void multipleGroupWarnings() throws IOException {
         String molfileText = IOUtils.toString(
-                this.getClass().getResourceAsStream("mols/calcium benzoate monohydrate-18 confusing.mol"),
+                this.getClass().getResourceAsStream("/mols/calcium benzoate monohydrate-18 confusing.mol"),
                 "UTF-8"
         );
         Chemical c1=Chemical.parse(molfileText);
@@ -106,4 +107,3 @@ public class TestSGroupWarnings {
     }
 
 }
-

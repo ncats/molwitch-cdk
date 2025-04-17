@@ -1,4 +1,4 @@
-/*
+package gov.nih.ncats.molwitch.cdk;/*
  * NCATS-MOLWITCH-CDK
  *
  * Copyright (c) 2025.
@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import gov.nih.ncats.molwitch.*;
-import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1847,7 +1846,7 @@ public class TestChiralRead {
 
 	private boolean testOneMol(TestMol testMol) throws IOException {
 		String molfileText = IOUtils.toString(
-				this.getClass().getResourceAsStream("mols/" + testMol.molfileName),
+				this.getClass().getResourceAsStream("/mols/" + testMol.molfileName),
 				"UTF-8"
 		);
 		Chemical c1=Chemical.parse(molfileText );
@@ -1924,7 +1923,7 @@ public class TestChiralRead {
 
 	private int testOneMolLargestFrag(TestMol testMol) throws IOException {
 		String molfileText = IOUtils.toString(
-				this.getClass().getResourceAsStream("mols/" + testMol.molfileName),
+				this.getClass().getResourceAsStream("/mols/" + testMol.molfileName),
 				"UTF-8"
 		);
 		Chemical c1=Chemical.parse(molfileText );
@@ -1935,7 +1934,7 @@ public class TestChiralRead {
 	@Test
 	public void testSlowChiralitySmall() throws Exception {
 		String molfileText = IOUtils.toString(
-				this.getClass().getResourceAsStream("mols/pared_down.mol"),
+				this.getClass().getResourceAsStream("/mols/pared_down.mol"),
 				"UTF-8"
 		);
 		Chemical c1=Chemical.parse(molfileText);
@@ -1959,7 +1958,7 @@ public class TestChiralRead {
 
 	@Test
 	public void testRingSystem() throws Exception {
-		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/pared_down.mol"));
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/pared_down.mol"));
 		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 		CIPToolMod cipToolMod = new CIPToolMod();
 		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
@@ -1970,7 +1969,7 @@ public class TestChiralRead {
 
 	@Test
 	public void testRingSystem2() throws Exception {
-		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/large.symmetric.mol"));
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/large.symmetric.mol"));
 		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 
 		CIPToolMod cipToolMod = new CIPToolMod();
@@ -1982,7 +1981,7 @@ public class TestChiralRead {
 
 	@Test
 	public void testRingSystem3() throws Exception {
-		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/large.rings.pieces.mol"));
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/large.rings.pieces.mol"));
 		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 		CIPToolMod cipToolMod = new CIPToolMod();
 		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
@@ -1993,7 +1992,7 @@ public class TestChiralRead {
 
 	@Test
 	public void testHypro1() throws Exception {
-		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/hypromellose_deriv.mol"));
+		String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/hypromellose_deriv.mol"));
 		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 		CIPToolMod cipToolMod = new CIPToolMod();
 		CIPToolMod.label(c1.getContainer());
@@ -2006,7 +2005,7 @@ public class TestChiralRead {
 				"1-Phenylethanol-R", "SANORG-123781");
 		for(String mol : moleculeNames){
 			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
-			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			Chemical before =  Chemical.parse(molfileText);
 			int rCountBefore = getRCount(before);
 			int sCountBefore =getSCount(before);
@@ -2030,7 +2029,7 @@ public class TestChiralRead {
 		List<String> moleculeNames = Arrays.asList("VG7S7JRA56_mod");
 		for(String mol : moleculeNames){
 			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
-			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			Chemical before = Chemical.parse(molfileText);
 			int rCountBefore = getRCount(before);
 			int sCountBefore =getSCount(before);
@@ -2054,7 +2053,7 @@ public class TestChiralRead {
 		List<String> moleculeNames = Collections.singletonList("(4~{R})-4-chloropentan-2-amine");
 		for(String mol : moleculeNames){
 			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
-			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 			List<Chemical> afters = before.permuteEpimers();
 			Logger.getLogger(this.getClass().getName()).info("total: " + afters.size());

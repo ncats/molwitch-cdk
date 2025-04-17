@@ -1,8 +1,8 @@
+package gov.nih.ncats.molwitch.cdk;
+
 import gov.nih.ncats.molwitch.Bond;
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.MolwitchException;
-import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
-import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -95,7 +95,7 @@ public class TestStereoManipulation {
         testMols.forEach(m->{
             try {
                 String molfileText = IOUtils.toString(
-                    this.getClass().getResourceAsStream("mols/" + m.molfileName + ".mol"),
+                    this.getClass().getResourceAsStream("/mols/" + m.molfileName + ".mol"),
                     "UTF-8"
                 );
                 Chemical before= Chemical.parse(molfileText);
@@ -116,7 +116,7 @@ public class TestStereoManipulation {
             System.out.printf("Starting test for %s\n", m.getMolfileName());
             try {
                 String molfileText = IOUtils.toString(
-                        this.getClass().getResourceAsStream("mols/" + m.molfileName + ".mol"),
+                        this.getClass().getResourceAsStream("/mols/" + m.molfileName + ".mol"),
                         "UTF-8"
                 );
                 Chemical before = Chemical.parse(molfileText);
@@ -140,7 +140,7 @@ public class TestStereoManipulation {
             try {
                 System.out.printf("testing mol %s\n", m.molfileName);
                 String molfileText = IOUtils.toString(
-                        this.getClass().getResourceAsStream("mols/" + m.molfileName + ".mol"),
+                        this.getClass().getResourceAsStream("/mols/" + m.molfileName + ".mol"),
                         "UTF-8"
                 );
                 Chemical chemical = Chemical.parse(molfileText);

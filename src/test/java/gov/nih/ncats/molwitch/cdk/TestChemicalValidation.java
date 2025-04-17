@@ -1,4 +1,4 @@
-/*
+package gov.nih.ncats.molwitch.cdk;/*
  * NCATS-MOLWITCH-CDK
  *
  * Copyright (c) 2025.
@@ -21,15 +21,11 @@
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.stream.Collectors;
-
 import org.junit.Test;
 
 import gov.nih.ncats.molwitch.Chemical;
-import gov.nih.ncats.molwitch.Chirality;
 import gov.nih.ncats.molwitch.Bond.BondType;
 import gov.nih.ncats.molwitch.inchi.InChiResult;
-import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
 
 public class TestChemicalValidation {
 

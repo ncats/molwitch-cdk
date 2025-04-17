@@ -1,4 +1,4 @@
-/*
+package gov.nih.ncats.molwitch.cdk;/*
  * NCATS-MOLWITCH-CDK
  *
  * Copyright (c) 2025.
@@ -20,11 +20,9 @@
  */
 
 import gov.nih.ncats.molwitch.Chemical;
-import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import org.junit.Test;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.sgroup.SgroupKey;
 
 import java.util.Collection;
 import static org.junit.Assert.*;

@@ -32,6 +32,7 @@ import java.io.StringReader;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.openscience.cdk.atomtype.CDKAtomTypeMatcher;
@@ -241,7 +242,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 //			//only 1 line assume smarts or smiles query?
 //
 
-			if( unknownFormattedInput.contains(("#"))) {
+			if( looksLikeSmarts(unknownFormattedInput)) {
 				return createFromSmarts(unknownFormattedInput);
 			}
 			//replacing logic that looked at the contents of the input for characters that defined
@@ -550,5 +551,11 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			Logger.getLogger(this.getClass().getName()).fine(
 					String.format("maxUndefinedStereoCenters: %s\n", params.get("maxUndefinedStereoCenters")));
 		}
+	}
+
+	public static boolean looksLikeSmarts(String possibleSmartsOrSmiles) {
+		if( possibleSmartsOrSmiles == null || possibleSmartsOrSmiles.length()==0) return false;
+		Pattern smartsPattern = Pattern.compile("\\[.*\\#.*\\]|\\[CX\\d\\]");
+		return smartsPattern.matcher(possibleSmartsOrSmiles).find();
 	}
 }

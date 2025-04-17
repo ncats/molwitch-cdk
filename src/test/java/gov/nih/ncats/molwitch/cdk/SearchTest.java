@@ -1,4 +1,4 @@
-/*
+package gov.nih.ncats.molwitch.cdk;/*
  * NCATS-MOLWITCH-CDK
  *
  * Copyright (c) 2025.
@@ -23,11 +23,9 @@ import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.search.MolSearcher;
 import gov.nih.ncats.molwitch.search.MolSearcherFactory;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Optional;
 import static org.junit.Assert.*;
 public class SearchTest {

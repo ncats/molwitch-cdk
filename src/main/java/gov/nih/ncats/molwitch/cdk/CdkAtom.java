@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2024.
+ * Copyright (c) 2025.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -22,7 +22,6 @@
 package gov.nih.ncats.molwitch.cdk;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,6 +35,8 @@ import java.util.regex.Pattern;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.SingleElectron;
@@ -44,7 +45,7 @@ import org.openscience.cdk.config.Isotopes;
 import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
-import org.openscience.cdk.isomorphism.matchers.RGroupQuery;
+import org.openscience.cdk.stereo.Stereocenters;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import gov.nih.ncats.molwitch.Atom;
@@ -61,7 +62,9 @@ public class CdkAtom implements Atom{
 	 
 
 	private static IsotopeFactory isotopeFactory;
-	
+
+	private static final Logger logger = LogManager.getLogger(CdkAtom.class);
+
 	static {
 		try {
 		isotopeFactory = Isotopes.getInstance();
@@ -340,13 +343,16 @@ public class CdkAtom implements Atom{
 
 	@Override
 	public void setChirality(Chirality chirality) {
+		logger.info(String.format("setChirality called on atom %s, changing chirality to %s",
+				this, chirality));
 	    Chirality chir=getChirality();
 	    if(chir==chirality)return;
-	    
+		logger.info("changing chirality");
 	    //simple inversion
 	    if(((chirality==Chirality.R || chirality==Chirality.r)  && (chir==Chirality.S||chir==Chirality.s)) ||
 	       ((chirality==Chirality.S || chirality==Chirality.s)  && (chir==Chirality.R||chir==Chirality.r)) 
 	            ) {
+			logger.info("handling R/S change");
 	        this.getBonds().stream()
 	        .filter(b->b.getBondType().equals(BondType.SINGLE))
 	        .filter(b->!b.getStereo().equals(Stereo.NONE))
@@ -356,15 +362,18 @@ public class CdkAtom implements Atom{
 	                    (bb.getAtom2().equals(this) && (bbs.equals(Stereo.UP_INVERTED) || bbs.equals(Stereo.DOWN_INVERTED)))
 	                    ) {
 	                bb.setStereo(bbs.flip());
+					logger.info("flipped bond " + bb);
 	            }
 	        });
 
 	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,chirality.toString());
+			logger.info("set property");
 //	        atom.setStereoParity((atom.getStereoParity()+1)%2);
 //	        parent.getContainer().setStereoElements(new ArrayList<>());
 	        
 	    //simple removal
 	    }else if(chirality.equals(Chirality.Parity_Either)) {
+			logger.info("changing to 'either'");
 	        this.getBonds().stream()
             .filter(b->b.getBondType().equals(BondType.SINGLE))
             .filter(b->!b.getStereo().equals(Stereo.NONE))
@@ -379,34 +388,41 @@ public class CdkAtom implements Atom{
 
 	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,"EITHER");
 	    }else if(chirality.isDefined() && (chir.isEither() || chir == Chirality.Non_Chiral)) {
-	    
+			logger.info("atom starts out non chiral");
 	    	Optional<? extends Bond> sBond = this.getBonds().stream()
-            .filter(b->b.getBondType().equals(BondType.SINGLE))
-            .filter(b->b.getStereo().equals(Stereo.NONE))
-            .findFirst();
-	    	
-	    	
+            	.filter(b->b.getBondType().equals(BondType.SINGLE))
+            	.filter(b->b.getStereo().equals(Stereo.NONE))
+            	.findFirst();
+			if( sBond.isPresent() ) {
+				logger.info(String.format("located sBond between atoms %s and %s",
+						sBond.get().getAtom1(), sBond.get().getAtom2() ));
+			}
             sBond.ifPresent(b->{
             	if(b.getAtom1().getAtomIndexInParent()==this.getAtomIndexInParent()){
+					logger.info("set bond up");
             		b.setStereo(Stereo.UP);
             	}else {
+					logger.info("set bond up inverted");
             		b.setStereo(Stereo.UP_INVERTED);
             	}
+				logger.info(getStereoConfig());
             });
-            
-            
+
+			logger.info("reset cache");
 	    	parent.cahnIngoldPrelogSupplier.resetCache();
 	    	Chirality co=this.getChirality();
 	    	if((co.isRForm() && chirality.isRForm()) || 
 	    			(co.isSForm() && chirality.isSForm())
 	    			) {
-	    		//do nothing	
+	    		//do nothing
+				logger.info("do nothing");
 	    	}else if((co.isSForm() && chirality.isRForm()) || 
 	    			(co.isRForm() && chirality.isSForm())
 	    			) {
 	    		setChirality(chirality);
 	    	}else {
 	    		//could not set
+				logger.info("no secondary thing to set");
 	    	}
 	        
 	    }
@@ -662,4 +678,12 @@ public class CdkAtom implements Atom{
 
 	
 
+	public String getStereoConfig() {
+		Stereocenters stereocenters =Stereocenters.of(this.parent.getContainer());
+		if(stereocenters.isStereocenter(this.getAtomIndexInParent())){
+			Stereocenters.Stereocenter center= stereocenters.stereocenterType(this.getAtomIndexInParent());
+			return "center.name: " + center.name();
+		}
+		return "not stereo";
+	}
 }

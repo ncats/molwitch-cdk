@@ -1,7 +1,7 @@
 /*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2024.
+ * Copyright (c) 2025.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,42 +19,25 @@
  *  Boston, MA 02111-1307 USA
  */
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import com.simolecule.centres.CdkMol;
-import gov.nih.ncats.molwitch.TetrahedralChirality;
+import gov.nih.ncats.molwitch.*;
 import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import gov.nih.ncats.molwitch.Chemical;
-import gov.nih.ncats.molwitch.Chirality;
-import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.io.ChemicalReaderFactory;
-import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.geometry.cip.CIPToolMod;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IRingSet;
-import org.openscience.cdk.io.MDLV2000Reader;
-import org.openscience.cdk.io.Mol2Reader;
-import org.openscience.cdk.ringsearch.AllRingsFinder;
 
 import static org.junit.Assert.*;
 
 public class TestChiralRead {
 
-	private class TestMol {
+	private static class TestMol {
 
 		public TestMol(String name, String fileName, int chiralAtomCount) {
 			this.molName = name;
@@ -2016,4 +1999,91 @@ public class TestChiralRead {
 		CIPToolMod.label(c1.getContainer());
 		assertNotNull(c1);
 	}
+
+	@Test
+	public void testFlip() throws Exception {
+		List<String> moleculeNames = Arrays.asList("N6WK7SF4JA", //  "614e808b-234a-476b-ac60-98ea42d6c6c5",
+				"1-Phenylethanol-R", "SANORG-123781");
+		for(String mol : moleculeNames){
+			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			Chemical before =  Chemical.parse(molfileText);
+			int rCountBefore = getRCount(before);
+			int sCountBefore =getSCount(before);
+
+			Chemical afterChemical = ((CdkChemicalImpl)before.getImpl()).flipAllChiralCenters();
+			Logger.getLogger(this.getClass().getName()).info("afterChemical " + afterChemical.toMol());
+			int rCountAfter = getRCount(afterChemical);
+			int sCountAfter =getSCount(afterChemical);
+
+			Logger.getLogger(this.getClass().getName()).info(String.format(
+					"Total R centers before %d; S centers before %d R centers after %d; S centers after %d",
+					rCountBefore, sCountBefore, rCountAfter, sCountAfter));
+			assertEquals(sCountAfter, rCountBefore);
+			assertEquals(rCountAfter, sCountBefore);
+		}
+		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+	}
+
+	@Test
+	public void testFlipUnspec() throws Exception {
+		List<String> moleculeNames = Arrays.asList("VG7S7JRA56_mod");
+		for(String mol : moleculeNames){
+			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			Chemical before = Chemical.parse(molfileText);
+			int rCountBefore = getRCount(before);
+			int sCountBefore =getSCount(before);
+
+			Chemical after = before.getImpl().flipEpimericChiralCenters();
+			Logger.getLogger(this.getClass().getName()).info("after " + after.toMol());
+			int rCountAfter = getRCount(after);
+			int sCountAfter =getSCount(after);
+
+			Logger.getLogger(this.getClass().getName()).info(String.format(
+					"Total R centers before %d; S centers before %d R centers after %d; S centers after %d",
+					rCountBefore, sCountBefore, rCountAfter, sCountAfter));
+			assertEquals(sCountAfter, rCountBefore);
+			assertEquals(rCountAfter, sCountBefore);
+		}
+		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+	}
+
+	@Test
+	public void testPermuteChir() throws Exception {
+		List<String> moleculeNames = Collections.singletonList("(4~{R})-4-chloropentan-2-amine");
+		for(String mol : moleculeNames){
+			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("mols/" + mol +".mol"));
+			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
+			List<Chemical> afters = before.permuteEpimers();
+			Logger.getLogger(this.getClass().getName()).info("total: " + afters.size());
+			assertEquals(2, afters.size());
+			for(Chemical chemical : afters) {
+				Logger.getLogger(this.getClass().getName()).info(chemical.toMol());
+				Logger.getLogger(this.getClass().getName()).info(chemical.toInchi().getInchiKey().get().toString());
+			}
+
+		}
+		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+	}
+
+	private int getRCount(Chemical chemicalImpl) {
+		int rCount =0;
+		for(int at = 0; at < chemicalImpl.getAtomCount(); at++) {
+			Atom atom = chemicalImpl.getAtom(at);
+			if( atom.getChirality().isRForm() ) rCount++;
+		}
+		return rCount;
+	}
+
+	private int getSCount(Chemical chemicalImpl) {
+		int sCount =0;
+		for(int at = 0; at < chemicalImpl.getAtomCount(); at++) {
+			Atom atom = chemicalImpl.getAtom(at);
+			if( atom.getChirality().isSForm() )  sCount++;
+		}
+		return sCount;
+	}
+
 }

@@ -262,7 +262,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					try {
 						//The call to label generates an Exception down in the bowels of CDK for *some* structures.
 						// trapping it in a try/catch allows the process to continue
-						CIPToolMod.label(cimp.getContainer());
+						CIPTool.label(cimp.getContainer());
 					} catch (NoSuchAtomException ex) {
 						logger.warn("Error in call to CIPToolMod.label. Processing will continue");
 					}

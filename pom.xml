@@ -6,7 +6,7 @@
 
     <groupId>gov.nih.ncats</groupId>
     <artifactId>molwitch-cdk</artifactId>
-    <version>1.0.24</version>
+    <version>1.0.25</version>
     <name>molwitch-cdk</name>
 
     <url>https://github.com/ncats/molwitch-cdk/</url>
@@ -17,7 +17,7 @@
     </organization>
 
     <properties>
-        <cdk.version>2.9</cdk.version>
+        <cdk.version>2.11</cdk.version>
         <centres.version>1.2.1</centres.version>
     </properties>
     <repositories>
@@ -50,6 +50,15 @@
             <email>daniel.katzel@nih.gov</email>
             <roles>
                 <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>America/New_York</timezone>
+        </developer>
+        <developer>
+            <id>chemmitch</id>
+            <name>Mitchell Miller</name>
+            <email>mitchell.miller2@nih.gov</email>
+            <roles>
                 <role>developer</role>
             </roles>
             <timezone>America/New_York</timezone>

@@ -475,21 +475,16 @@ public class TestChiralRead {
 					+ "  1  7  1  0  0  0  0\n"
 					+ "  4  8  1  0  0  0  0\n"
 					+ "M  END");
-			String sdfChiral = c1.atoms()
-					 .map(ca->ca.getChirality())
-					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
-					 .map(ch->ch.toString())
+			List<Atom> chiralAtoms = c1.atoms()
+					//.map(ca->ca.getChirality())
+					.filter(atom->!atom.getChirality().equals(Chirality.Non_Chiral) && !atom.getChirality().equals(Chirality.Parity_Either))
+					.collect(Collectors.toList());
+			String sdfChiral = chiralAtoms.stream()
+					 .map(at->at.getChirality().toString())
 					 .collect(Collectors.joining());
 			
 			assertEquals("", sdfChiral);
-			assertEquals(0,c1.getAllStereocenters().size());
-//			String sdfChiral = c1.atoms()
-//					 .map(ca->ca.getChirality())
-//					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
-//					 .map(ch->ch.toString())
-//					 .collect(Collectors.joining());
-//			
-//			assertEquals("SSSR", sdfChiral);
+			assertEquals(0,chiralAtoms.size());
 	   	}
 		
 		

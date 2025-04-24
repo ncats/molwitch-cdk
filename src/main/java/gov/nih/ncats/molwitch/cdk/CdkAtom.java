@@ -309,7 +309,7 @@ public class CdkAtom implements Atom{
 	public Chirality getChirality() {
 		if(!parent.cahnIngoldPrelogSupplier.hasRun()) {
 			//forces running CIP rules
-		
+			//parent.cahnIngoldPrelogSupplier.get();
 			parent.getTetrahedrals();
 		}
  		String value= Optional.ofNullable(atom.getProperty(CDKConstants.CIP_DESCRIPTOR))

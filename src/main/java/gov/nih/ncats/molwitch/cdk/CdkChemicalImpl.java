@@ -253,7 +253,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                
                //Due to a bug in CDK, this doesn't work as expected
                //CIPTool.label(cimp.getContainer());
-               //We currently have to use a modified form for now
+               //   We currently have to use a modified form for now
 				if( isComplex) {
 					logger.trace("This molecule is considered complex");
 					CIPTool.label(cimp.getContainer());

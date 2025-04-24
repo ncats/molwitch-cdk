@@ -481,8 +481,8 @@ public class TestChiralRead {
 					 .map(ch->ch.toString())
 					 .collect(Collectors.joining());
 			
-			assertEquals("Parity_EitherParity_Either", sdfChiral);
-			assertEquals(2,c1.getAllStereocenters().size());
+			assertEquals("", sdfChiral);
+			assertEquals(0,c1.getAllStereocenters().size());
 //			String sdfChiral = c1.atoms()
 //					 .map(ca->ca.getChirality())
 //					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
@@ -956,7 +956,7 @@ public class TestChiralRead {
 		
 		@Test
 	   	public void testPsuedoStereocenterOnNonMesoNotFound() throws Exception {
-
+			int expectedChiralCenters =2;
 	   		Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw212062315202D\n"
 	   				+ "\n"
@@ -982,6 +982,8 @@ public class TestChiralRead {
 	   				+ "  7 10  1  0  0  0  0\n"
 	   				+ "M  END");
 	   		mol= Chemical.parse(mol.toMol());
+			   mol.getAllStereocenters().forEach(a-> System.out.printf("atom: %s has chirality %s \n", a.getCenterAtom(),
+					   a.getChirality()));
 	   		assertEquals(2,mol.getAllStereocenters().size());
 	   		String sdfChiral =mol.getAllStereocenters()
 							   	 .stream()

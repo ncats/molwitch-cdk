@@ -555,7 +555,9 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
 	public static boolean looksLikeSmarts(String possibleSmartsOrSmiles) {
 		if( possibleSmartsOrSmiles == null || possibleSmartsOrSmiles.length()==0) return false;
-		Pattern smartsPattern = Pattern.compile("\\[.*\\#.*\\]|\\[CX\\d\\]");
-		return smartsPattern.matcher(possibleSmartsOrSmiles).find();
+		Pattern smartsPattern =  Pattern.compile("\\[#\\d+\\]|\\[CX\\d\\]|\\[.*?\\]\\[!#\\d+\\]");  //Pattern.compile("\\[.*\\#.*\\]|\\[CX\\d\\]");
+		boolean smartsLike = smartsPattern.matcher(possibleSmartsOrSmiles).find();
+		Logger.getLogger("CdkChemical2FactoryImpl").info("looksLikeSmarts going to return: " + smartsLike);
+		return smartsLike;
 	}
 }

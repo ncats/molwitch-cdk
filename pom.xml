@@ -130,27 +130,16 @@
             <artifactId>cdk-jniinchi-support</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-        
-        
-<dependency>
-    <groupId>com.simolecule.centres</groupId>
-    <artifactId>centres-core</artifactId>
-    <version>${centres.version}</version>
-</dependency>
-
-<dependency>
-    <groupId>com.simolecule.centres</groupId>
-    <artifactId>centres-cdk</artifactId>
-    <version>${centres.version}</version>
-</dependency>
-        
-        
-        
-<!--        <dependency>-->
-<!--            <groupId>org.openscience.cdk</groupId>-->
-<!--            <artifactId>cdk-valencycheck</artifactId>-->
-<!--            <version>${cdk.version}</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.simolecule.centres</groupId>
+            <artifactId>centres-core</artifactId>
+            <version>${centres.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.simolecule.centres</groupId>
+            <artifactId>centres-cdk</artifactId>
+            <version>${centres.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-data</artifactId>
@@ -181,28 +170,11 @@
             <artifactId>cdk-formula</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/net.sf.jni-inchi/jni-inchi -->
-<!--        <dependency>-->
-<!--            <groupId>net.sf.jni-inchi</groupId>-->
-<!--            <artifactId>jni-inchi</artifactId>-->
-<!--            <version>0.8</version>-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <groupId>org.openscience.cdk</groupId>-->
-<!--            <artifactId>cdk-libiocml</artifactId>-->
-<!--            <version>${cdk.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-smiles</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.openscience.cdk</groupId>-->
-<!--            <artifactId>cdk-extra</artifactId>-->
-<!--            <version>${cdk.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-smarts</artifactId>
@@ -213,32 +185,11 @@
             <artifactId>cdk-fingerprint</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.openscience.cdk</groupId>-->
-<!--            <artifactId>cdk-charges</artifactId>-->
-<!--            <version>${cdk.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.openscience.cdk</groupId>-->
-<!--            <artifactId>cdk-forcefield</artifactId>-->
-<!--            <version>${cdk.version}</version>-->
-<!--        </dependency>-->
-
-
-
-
         <dependency>
             <groupId>org.openscience.cdk</groupId>
             <artifactId>cdk-inchi</artifactId>
             <version>${cdk.version}</version>
         </dependency>
-
-
-<!--        <dependency>-->
-<!--            <groupId>org.openscience.cdk</groupId>-->
-<!--            <artifactId>cdk-smsd</artifactId>-->
-<!--            <version>${cdk.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>gov.nih.ncats</groupId>
             <artifactId>molwitch-apitests</artifactId>
@@ -266,6 +217,12 @@
             <groupId>gov.nih.ncats</groupId>
             <artifactId>smsd-exec</artifactId>
             <version>2.2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

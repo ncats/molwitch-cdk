@@ -1030,40 +1030,15 @@ public class TestChiralRead {
 		
 		@Test
 	   	public void testHavingExplicitHydrogenOnStereoCenterDoesNotInvalidatePhosphateCenter() throws Exception {
-	   		Chemical mol=Chemical.parse("\n"
-	   				+ "   JSDraw210312314162D\n"
-	   				+ "\n"
-	   				+ " 12 12  0  0  0  0            999 V2000\n"
-	   				+ "   23.1415   -8.0860    0.0000 P   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   24.4925   -8.8660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   23.1415   -6.5260    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   25.8435   -8.0860    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   23.1415   -9.6460    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   25.8435   -6.5260    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   27.1945   -5.7460    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   28.5455   -6.5260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   28.5455   -8.0860    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   27.1945   -8.8660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   21.7905   -8.8660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "   25.8435   -9.6460    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n"
-	   				+ "  1  2  1  0  0  0  0\n"
-	   				+ "  1  3  2  0  0  0  0\n"
-	   				+ "  2  4  1  0  0  0  0\n"
-	   				+ "  1  5  1  0  0  0  0\n"
-	   				+ "  4  6  1  0  0  0  0\n"
-	   				+ "  6  7  1  0  0  0  0\n"
-	   				+ "  7  8  1  0  0  0  0\n"
-	   				+ "  8  9  1  0  0  0  0\n"
-	   				+ "  9 10  1  0  0  0  0\n"
-	   				+ " 10  4  1  0  0  0  0\n"
-	   				+ "  1 11  1  0  0  0  0\n"
-	   				+ "  4 12  1  0  0  0  0\n"
-	   				+ "M  END");
+			String molfileText = IOUtils.toString(
+					this.getClass().getResourceAsStream("/mols/PhosphateWithH.mol"),
+					"UTF-8"
+			);
+	   		Chemical mol=Chemical.parse(molfileText);
 	   		mol= Chemical.parse(mol.toMol());
+			mol.getTetrahedrals();//calling mol.getTetrahedrals() more than once changes the result of this test
 	   		mol.removeNonDescriptHydrogens();
-			mol.getTetrahedrals().stream()
-							   .forEach(t-> System.out.printf(" atom %s chirality %s\n", t.getCenterAtom().getSymbol(), t.getChirality()));
-	   		assertEquals(2,mol.getTetrahedrals().size());
+			assertEquals(2, mol.getTetrahedrals().size());
 	   	}
 		
 		@Test

@@ -262,14 +262,15 @@ public class CdkUtil {
     		QueryBond ib=(QueryBond)qac.getBond(i);
     		
     		IBond ibo=ia.getBond(i);
-    		ibo = BondRef.deref(ibo);
-    		if(ibo instanceof QueryBond){
-    			ib.setExpression(((QueryBond)ibo).getExpression());
+   			ibo = BondRef.deref(ibo);
+    			if(ibo instanceof QueryBond){
+    				ib.setExpression(((QueryBond)ibo).getExpression());
 
-    			boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
-    			                      ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC;
-    			
-    			if(ibo.isAromatic() && !moreGoingon){
+    				boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
+    				                      ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC ||
+    				                      ib.getExpression().type().name().equals("ANY");
+    				
+    				if(ibo.isAromatic() && !moreGoingon){
     				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
     			}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
 					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
@@ -304,7 +305,19 @@ public class CdkUtil {
     					iat.getExpression().type().equals(Expr.Type.AROMATIC_ELEMENT)){
     				iat.setAtomicNumber(iat.getExpression().value());
     				iat.setSymbol(PeriodicTable.getSymbol(iat.getExpression().value()));
-    			}
+    			}else if(iat.getExpression().type().equals(Expr.Type.OR) || iat.getExpression().type().equals(Expr.Type.AND)){
+					List<Expr> leaves = new ArrayList<>();
+					getLeafNodes(iat.getExpression(), leaves);
+					if(!leaves.isEmpty()){
+						Expr first = leaves.get(0);
+						if(first.type().equals(Expr.Type.ALIPHATIC_ELEMENT) ||
+								first.type().equals(Expr.Type.ELEMENT)||
+								first.type().equals(Expr.Type.AROMATIC_ELEMENT)){
+							iat.setAtomicNumber(first.value());
+							iat.setSymbol(PeriodicTable.getSymbol(first.value()));
+						}
+					}
+				}
     			
     		}else{
     		    Integer an = iao.getAtomicNumber();

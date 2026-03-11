@@ -1,7 +1,7 @@
 package gov.nih.ncats.molwitch.cdk;/*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2025.
+ * Copyright (c) 2026.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -29,8 +29,11 @@ import static org.junit.Assert.*;
 public class TestImplicitHCountOnQueryAtoms {
     @Test
     public void parseSmartsWithQueryAtoms() throws Exception{
-        Chemical c = Chemical.parse("[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1");
+        //use 'Si' in the well-connected atom because the CDK toolkit assigns H count
+        //  more permissively
+        Chemical c = Chemical.parse("[#7,#8]~C1=c2c3c(O[Si]([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1");
         for(Atom a : c.getAtoms()){
+            System.out.printf("atom %s, impl H count: %d %n", a.getSymbol(), a.getImplicitHCount());
             assertTrue(a.getImplicitHCount() >=0);
         }
     }

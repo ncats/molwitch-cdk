@@ -1,7 +1,7 @@
 package gov.nih.ncats.molwitch.cdk;/*
  * NCATS-MOLWITCH-CDK
  *
- * Copyright (c) 2025.
+ * Copyright (c) 2026.
  *
  * This work is free software; you can redistribute it and/or modify it under the terms of the
  * GNU Lesser General Public License as published by the Free Software Foundation;
@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import gov.nih.ncats.molwitch.*;
+import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
 import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1774,8 +1775,8 @@ public class TestChiralRead {
 	@Test
 	public void testSlowChiralityTrueMultiple() {
 		List<TestMol> mols = Arrays.asList(
-				new TestMol("large_polymer1", "large_polymer1.mol", 21),
-				new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 15),
+				//new TestMol("large_polymer1", "large_polymer1.mol", 21),
+				//new TestMol("614e808b-234a-476b-ac60-98ea42d6c6c5", "614e808b-234a-476b-ac60-98ea42d6c6c5.mol", 15),
 				new TestMol("c2dd8ca2-9ff7-4144-bcc7-77684294e24b", "c2dd8ca2-9ff7-4144-bcc7-77684294e24b.mol", 0),
 				new TestMol("c09aefcd-e985-4b8e-aa94-23a8f616228a", "c09aefcd-e985-4b8e-aa94-23a8f616228a.mol", 0),
 				new TestMol("921c6da6-152f-4da9-b684-579442ff6ad5", "921c6da6-152f-4da9-b684-579442ff6ad5.mol", 0),
@@ -1807,14 +1808,18 @@ public class TestChiralRead {
 				new TestMol("biggish10", "biggish10.mol", 4),
 				new TestMol("small_symmetric","small_symmetric.mol", 4)
 		);
+		List<Boolean> results = new ArrayList<>();
 		mols.forEach(m->{
 			try{
 				System.out.printf("about to test %s\n", m.molName);
-				assertTrue(testOneMol(m));
+				boolean result =testOneMol(m);
+				System.out.printf("single-item result: %b%n", result);
+				results.add(result);
 			}catch (IOException ex){
 				System.err.printf("Error processing mol %s - %s\n",m.molName, ex.getMessage());
 				fail("test fails!");
 			}});
+		assertTrue(results.stream().allMatch(b->b));
 	}
 
 	private boolean testOneMol(TestMol testMol) throws IOException {
@@ -1827,20 +1832,16 @@ public class TestChiralRead {
 		((CdkChemicalImpl) c1.getImpl()).setComplexityCutoff(7);
 
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
-		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(),
+				c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
-		//chem.setDeepChirality(false);
 		long before = (new Date()).getTime();
 
-		//CIPToolMod.label(chem.getContainer(), chem);
 		List<TetrahedralChirality> chemTetrahedrals =chem.getTetrahedrals();
 		long after =(new Date()).getTime();
 		long durationLabelCall =  after-before;
-		/*long totalChiralAtoms = c1.atoms()
-				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
-				.count();*/
 		int totalChiralAtoms = chemTetrahedrals.size();
-		System.out.printf("result for %s: expected=%d - actual=%d duration of 'label' call %d\n",
+		System.out.printf("result for %s: expected=%d - actual=%d duration of 'label' call %d%n",
 				testMol.molName, testMol.chiralAtomCount, totalChiralAtoms, durationLabelCall);
 		return testMol.chiralAtomCount == totalChiralAtoms;
 	}

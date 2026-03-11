@@ -255,10 +255,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                //CIPTool.label(cimp.getContainer());
                //   We currently have to use a modified form for now
 				if( isComplex) {
-					logger.trace("This molecule is considered complex");
 					CIPTool.label(cimp.getContainer());
 				} else {
-					logger.trace("This molecule is considered NOT complex");
 					try {
 						//The call to label generates an Exception down in the bowels of CDK for *some* structures.
 						// trapping it in a try/catch allows the process to continue

@@ -135,20 +135,11 @@ public class CIPToolMod {
     public static void label(IAtomContainer container) {
 
         //Experimental new labeller
-        com.simolecule.centres.CdkLabeller.label(container);
-    	/*}else {
-            for (IStereoElement stereoElement : container.stereoElements()) {
-	            if (stereoElement instanceof ITetrahedralChirality) {
-	                ITetrahedralChirality tc = (ITetrahedralChirality) stereoElement;
-	                tc.getChiralAtom().setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, tc).toString());
-	            } else if (stereoElement instanceof IDoubleBondStereochemistry) {
-	                IDoubleBondStereochemistry dbs = (IDoubleBondStereochemistry) stereoElement;
-	                dbs.getStereoBond()
-	                        .setProperty(CDKConstants.CIP_DESCRIPTOR, getCIPChirality(container, dbs).toString());
-	            }
-	        }
-    	}*/
-
+        try {
+            com.simolecule.centres.CdkLabeller.label(container);
+        } catch(Exception ex){
+            System.err.printf("error during labelling: %s%n", ex.getMessage());
+        }
     }
     
 

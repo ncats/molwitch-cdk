@@ -22,6 +22,7 @@ package gov.nih.ncats.molwitch.cdk;/*
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import gov.nih.ncats.molwitch.Atom;
@@ -32,7 +33,6 @@ import gov.nih.ncats.molwitch.fingerprint.Fingerprinter;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinters;
 import gov.nih.ncats.molwitch.fingerprint.Fingerprinters.FingerprintSpecification;
 import gov.nih.ncats.molwitch.search.MolSearcherFactory;
-import org.junit.jupiter.api.Disabled;
 
 import static org.junit.Assert.*;
 
@@ -432,32 +432,13 @@ public class TestParseQueryMol {
     
        @Test
        public void ensureAnyBondAndAromatizationWorksForSubstructureSearch() throws IOException {
-           String mol= "\n" + 
-           		"   JSDraw209252000242D\n" + 
-           		"\n" + 
-           		"  8  8  0  0  0  0            999 V2000\n" + 
-           		"   28.1035   -4.9661    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   29.4545   -5.7461    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   30.8055   -4.9661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   32.1565   -5.7461    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   32.1565   -7.3060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   30.8055   -8.0860    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   29.4545   -7.3060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   33.5073   -8.0860    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"  1  2  8  0  0  0  0\n" + 
-           		"  2  3  1  0  0  0  0\n" + 
-           		"  3  4  2  0  0  0  0\n" + 
-           		"  4  5  1  0  0  0  0\n" + 
-           		"  5  6  2  0  0  0  0\n" + 
-           		"  6  7  1  0  0  0  0\n" + 
-           		"  2  7  2  0  0  0  0\n" + 
-           		"  5  8  1  0  0  0  0\n" + 
-           		"M  ALS   1  2 F N   O   \n" + 
-           		"M  END";
-           
+           String mol = IOUtils.toString(
+				   this.getClass().getResourceAsStream("/mols/para-substituted-phonol.mol"),
+				   "UTF-8"
+		   );
            
            Chemical c = Chemical.parse(mol);
-
+		   c.aromatize();
 
            try{
         	   c.generateCoordinates();
@@ -561,9 +542,8 @@ public class TestParseQueryMol {
        
        
        @Test
-	   @Disabled("any bond prevents match from working")
        public void ensureAnyBondAndAromatizationInSimpleExampleFromSmartsWorksForSubstructureSearch() throws IOException {
-           String mol= "[#7,#8]~C1=CC=CC=C1";
+           String mol= "[#7,#8]~c1ccccc1";
 
 	       Chemical c = Chemical.parse(mol);
 	       try{
@@ -775,34 +755,10 @@ public class TestParseQueryMol {
 
 	@Test
 	public void modernAtomListGetStereoCentersDoesNotErrorOut() throws Exception{
-		String mol = "\n" +
-				"  ACCLDraw10012012192D\n" +
-				"\n" +
-				" 10 10  3  0  0  0  0  0  0  0999 V2000\n" +
-				"   12.8286   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   12.0309   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   13.2300   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   11.5986   -6.6106    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   11.5909   -8.0335    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   12.8363   -8.7514    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   13.2300   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   14.0379   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   14.0714   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   14.4779   -7.3439    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"  2  1  1  0  0  0  0\n" +
-				"  3  1  2  0  0  0  0\n" +
-				"  4  2  2  0  0  0  0\n" +
-				"  5  2  1  0  0  0  0\n" +
-				"  6  3  1  0  0  0  0\n" +
-				"  7  1  1  0  0  0  0\n" +
-				"  8  3  1  0  0  0  0\n" +
-				"  9  7  2  0  0  0  0\n" +
-				" 10  9  1  0  0  0  0\n" +
-				" 10  8  2  0  0  0  0\n" +
-				"M  ALS   4  2 F O   N   \n" +
-				"M  ALS   5  2 F N   O   \n" +
-				"M  ALS   6  2 F N   O   \n" +
-				"M  END\n";
+		String mol = IOUtils.toString(
+				this.getClass().getResourceAsStream("/mols/benzoic_acid_derivative.mol"),
+				"UTF-8"
+		);
 
 		Chemical c = Chemical.parseMol(mol);
 		assertEquals(0, c.getAllStereocenters().size());

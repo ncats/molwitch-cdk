@@ -1,46 +1,26 @@
-package gov.nih.ncats.molwitch.cdk;/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2025.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
+package gov.nih.ncats.molwitch.cdk;
 
 import gov.nih.ncats.molwitch.Chemical;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 import org.openscience.cdk.interfaces.IBond;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
 import static org.junit.Assert.*;
 
 public class TestAromatizeWeirdStructures {
+    private static Logger logger = Logger.getLogger("TestAromatizeWeirdStructures");
 
-    @Ignore("the aromatize call results in an NPE as of February 2026")
     @Test()
     public void doesntErrorOut() throws Exception{
         Chemical c = Chemical.parse("O=C([C@H](Cc1c2ccccc2[n]c1)N)O");
         c.aromatize();
         List<IBond> unsetBonds = c.bonds().map(CdkBond::getIBondFor).filter(b-> b.getOrder() == IBond.Order.UNSET).collect(Collectors.toList());
-        System.out.printf("c.toSmiles(): %s\n", c.toSmiles());
+        logger.finest(String.format("c.toSmiles(): %s", c.toSmiles()));
         assertTrue(c.toSmiles().contains("[nH]"));
         assertTrue(unsetBonds.toString(), unsetBonds.isEmpty());
     }
@@ -116,7 +96,6 @@ public class TestAromatizeWeirdStructures {
         chem.aromatize();
         chem=chem.copy();
         String molb = chem.toMol();
-        System.out.println(molb);
         assertTrue("Aromatized 5 membered ring should have aromatic bonds",
                 molb.contains("  3  4  4  0  0  0  0\n"
                         + "  4  5  4  0  0  0  0\n"
@@ -222,7 +201,7 @@ public class TestAromatizeWeirdStructures {
                 "M  END";
 
         String key = Chemical.parseMol(mol).toInchi().getKey();
-        System.out.println(key);
+        logger.fine(key);
         assertNotNull(key);
     }
 }

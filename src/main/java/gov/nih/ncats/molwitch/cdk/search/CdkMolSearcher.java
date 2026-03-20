@@ -22,12 +22,10 @@
 package gov.nih.ncats.molwitch.cdk.search;
 
 import gov.nih.ncats.molwitch.Chemical;
-import gov.nih.ncats.molwitch.cdk.CdkAtom;
 import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.search.MolSearcher;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
-import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;

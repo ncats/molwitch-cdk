@@ -1,23 +1,4 @@
-package gov.nih.ncats.molwitch.cdk;/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2026.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
+package gov.nih.ncats.molwitch.cdk;
 
 import java.io.IOException;
 import java.util.*;
@@ -25,7 +6,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import gov.nih.ncats.molwitch.*;
-import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
 import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -38,6 +18,7 @@ import static org.junit.Assert.*;
 
 public class TestChiralRead {
 
+	private static Logger logger = Logger.getLogger("TestChiralRead");
 	private static class TestMol {
 
 		public TestMol(String name, String fileName, int chiralAtomCount) {
@@ -302,7 +283,6 @@ public class TestChiralRead {
 					+ " 15 19  2  0      \n"
 					+ " 17 19  1  0      \n"
 					+ "M  END");
-			System.out.println(c1.toMol());
 			Optional<Chirality> opChi=c1.atoms()
 			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 			  .map(ca->ca.getChirality())
@@ -356,7 +336,6 @@ public class TestChiralRead {
 					+ " 15 19  2  0      \n"
 					+ " 17 19  1  0      \n"
 					+ "M  END");
-			System.out.println(c1.toMol());
 			Optional<Chirality> opChi=c1.atoms()
 			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 			  .map(ca->ca.getChirality())
@@ -385,7 +364,6 @@ public class TestChiralRead {
 					+ "  5  6  1  0  0  0  0\n"
 					+ "  6  3  2  0  0  0  0\n"
 					+ "M  END");
-			System.out.println(c1.toMol());
 			Optional<Chirality> opChi=c1.atoms()
 			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 			  .map(ca->ca.getChirality())
@@ -605,7 +583,6 @@ public class TestChiralRead {
 					+ " 41 42  2  0  0  0  0\n"
 					+ " 31 30  2  0  0  0  0\n"
 					+ "M  END");
-			System.out.println(c1.toMol());
 			String sdfChiral = c1.atoms()
 					 .map(ca->ca.getChirality())
 					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
@@ -978,8 +955,6 @@ public class TestChiralRead {
 	   				+ "  7 10  1  0  0  0  0\n"
 	   				+ "M  END");
 	   		mol= Chemical.parse(mol.toMol());
-			   mol.getAllStereocenters().forEach(a-> System.out.printf("atom: %s has chirality %s \n", a.getCenterAtom(),
-					   a.getChirality()));
 	   		assertEquals(2,mol.getAllStereocenters().size());
 	   		String sdfChiral =mol.getAllStereocenters()
 							   	 .stream()
@@ -1297,7 +1272,6 @@ public class TestChiralRead {
 				"  2  4  1  0  0  0  0\n" +
 				"  4  5  1  0  0  0  0\n" +
 				"M  END\n");
-		System.out.println(c1.toMol());
 		Optional<Chirality> opChi=c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.map(ca->ca.getChirality())
@@ -1519,20 +1493,10 @@ public class TestChiralRead {
 				"M  CHG  8  87  -1  88  -1  89  -1  90  -1  91   1  92   1  93   1  94   1\n" +
 				"M  END\n");
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
-		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
 		CIPTool.label(chem.getContainer());
 		assertTrue(chem.getAtomCount()>0);
-		//List<TetrahedralChirality> chiralities= chem.getTetrahedrals();
-		/*List<Chirality> listChi=c1.atoms()
-				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
-				.map(ca->ca.getChirality())
-				.collect(Collectors.toList());*/
-		//assertTrue(chiralities.size() > 0);
-		/*for (TetrahedralChirality chirality : chiralities) {
-			System.out.printf("chirality: %s\n", chirality);
-		}*/
 	}
 
 	@Test
@@ -1748,28 +1712,20 @@ public class TestChiralRead {
 				"M  CHG  8  87  -1  88  -1  89  -1  90  -1  91   1  92   1  93   1  94   1\n" +
 				"M  END\n");
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
-		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		logger.fine(String.format("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount));
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
 		long before = (new Date()).getTime();
 		CIPTool.label(chem.getContainer());
 		long after =(new Date()).getTime();
-		System.out.printf("duration of 'label' call %d\n", (after-before));
+		logger.fine(String.format("duration of 'label' call %d", (after-before)));
 		assertTrue(chem.getAtomCount() >0);
 		long totalChiralAtoms = c1.atoms()
 				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
 				.count();
 		long after2 =(new Date()).getTime();
-		System.out.printf("duration of filter  %d\n", (after2-after));
+		logger.fine(String.format("duration of filter  %d", (after2-after)));
 		assertTrue(totalChiralAtoms >0);
-		/*List<Chirality> listChi=c1.atoms()
-				.filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
-				.map(ca->ca.getChirality())
-				.collect(Collectors.toList());
-		assertTrue(listChi.size() > 0);
-		for (Chirality chirality : listChi) {
-			System.out.printf("chirality: ");
-		}*/
 	}
 
 	@Test
@@ -1811,12 +1767,12 @@ public class TestChiralRead {
 		List<Boolean> results = new ArrayList<>();
 		mols.forEach(m->{
 			try{
-				System.out.printf("about to test %s\n", m.molName);
+				logger.finest(String.format("about to test %s\n", m.molName));
 				boolean result =testOneMol(m);
-				System.out.printf("single-item result: %b%n", result);
+				logger.finest(String.format("single-item result: %b", result));
 				results.add(result);
 			}catch (IOException ex){
-				System.err.printf("Error processing mol %s - %s\n",m.molName, ex.getMessage());
+				logger.severe(String.format("Error processing mol %s - %s",m.molName, ex.getMessage()));
 				fail("test fails!");
 			}});
 		assertTrue(results.stream().allMatch(b->b));
@@ -1832,8 +1788,8 @@ public class TestChiralRead {
 		((CdkChemicalImpl) c1.getImpl()).setComplexityCutoff(7);
 
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
-		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(),
-				c1.getBondCount(), ringCount);
+		logger.fine(String.format("total atoms: %d bonds: %d; rings: %d", c1.getAtomCount(),
+				c1.getBondCount(), ringCount));
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 		long before = (new Date()).getTime();
 
@@ -1841,8 +1797,8 @@ public class TestChiralRead {
 		long after =(new Date()).getTime();
 		long durationLabelCall =  after-before;
 		int totalChiralAtoms = chemTetrahedrals.size();
-		System.out.printf("result for %s: expected=%d - actual=%d duration of 'label' call %d%n",
-				testMol.molName, testMol.chiralAtomCount, totalChiralAtoms, durationLabelCall);
+		logger.fine(String.format("result for %s: expected=%d - actual=%d duration of 'label' call %d",
+				testMol.molName, testMol.chiralAtomCount, totalChiralAtoms, durationLabelCall));
 		return testMol.chiralAtomCount == totalChiralAtoms;
 	}
 
@@ -1885,12 +1841,12 @@ public class TestChiralRead {
 		);
 		mols.forEach(m->{
 			try{
-				System.out.printf("about to test %s\n", m.molName);
+				logger.finest(String.format("about to test %s", m.molName));
 				int totalRings = testOneMolLargestFrag(m);
-				System.out.printf(" total: %d\n" ,totalRings);
+				logger.finest(String.format(" total: %d" ,totalRings));
 				assertTrue(totalRings >=0);
 			}catch (IOException ex){
-				System.err.printf("Error processing mol %s - %s\n",m.molName, ex.getMessage());
+				logger.severe(String.format("Error processing mol %s - %s",m.molName, ex.getMessage()));
 				fail("test fails!");
 			}});
 	}
@@ -1913,7 +1869,7 @@ public class TestChiralRead {
 		);
 		Chemical c1=Chemical.parse(molfileText);
 		int ringCount = c1.getBondCount() - c1.getAtomCount() +1;
-		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringCount);
+		logger.finest(String.format("total atoms: %d bonds: %d; rings: %d", c1.getAtomCount(), c1.getBondCount(), ringCount));
 		CdkChemicalImpl chem = (CdkChemicalImpl)c1.getImpl();
 
 		CIPTool.label(chem.getContainer());
@@ -1925,7 +1881,7 @@ public class TestChiralRead {
 				.filter(c->c.getChirality() == Chirality.S || c.getChirality() == Chirality.r || c.getChirality() == Chirality.R || c.getChirality() == Chirality.s)
 				.count();
 		for (TetrahedralChirality chirality : listChi) {
-			System.out.printf("chirality: %s\n", chirality.getChirality());
+			logger.finest(String.format("chirality: %s", chirality.getChirality()));
 		}
 		assertEquals(0, totalChiral);
 	}
@@ -1936,7 +1892,7 @@ public class TestChiralRead {
 		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 		CIPToolMod cipToolMod = new CIPToolMod();
 		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
-		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
+		logger.fine(String.format("total atoms: %d bonds: %d; rings: %d", c1.getAtomCount(), c1.getBondCount(), ringSystemCount));
 
 		assertEquals(5, ringSystemCount);
 	}
@@ -1948,7 +1904,7 @@ public class TestChiralRead {
 
 		CIPToolMod cipToolMod = new CIPToolMod();
 		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
-		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
+		logger.fine(String.format("total atoms: %d bonds: %d; rings: %d", c1.getAtomCount(), c1.getBondCount(), ringSystemCount));
 
 		assertEquals(15, ringSystemCount);
 	}
@@ -1959,8 +1915,7 @@ public class TestChiralRead {
 		CdkChemicalImpl c1= (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 		CIPToolMod cipToolMod = new CIPToolMod();
 		int ringSystemCount = cipToolMod.getSizeOfLargestRingSystem( c1);
-		System.out.printf("total atoms: %d bonds: %d; rings: %d\n", c1.getAtomCount(), c1.getBondCount(), ringSystemCount);
-
+		logger.fine(String.format("total atoms: %d bonds: %d; rings: %d", c1.getAtomCount(), c1.getBondCount(), ringSystemCount));
 		assertEquals(5, ringSystemCount);
 	}
 
@@ -1978,67 +1933,67 @@ public class TestChiralRead {
 		List<String> moleculeNames = Arrays.asList("N6WK7SF4JA", //  "614e808b-234a-476b-ac60-98ea42d6c6c5",
 				"1-Phenylethanol-R", "SANORG-123781");
 		for(String mol : moleculeNames){
-			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			logger.info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			Chemical before =  Chemical.parse(molfileText);
 			int rCountBefore = getRCount(before);
 			int sCountBefore =getSCount(before);
 
 			Chemical afterChemical = ((CdkChemicalImpl)before.getImpl()).flipAllChiralCenters();
-			Logger.getLogger(this.getClass().getName()).info("afterChemical " + afterChemical.toMol());
+			logger.info("afterChemical " + afterChemical.toMol());
 			int rCountAfter = getRCount(afterChemical);
 			int sCountAfter =getSCount(afterChemical);
 
-			Logger.getLogger(this.getClass().getName()).info(String.format(
+			logger.info(String.format(
 					"Total R centers before %d; S centers before %d R centers after %d; S centers after %d",
 					rCountBefore, sCountBefore, rCountAfter, sCountAfter));
 			assertEquals(sCountAfter, rCountBefore);
 			assertEquals(rCountAfter, sCountBefore);
 		}
-		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+		logger.info("ran test successfully on " + moleculeNames.size() + " structures");
 	}
 
 	@Test
 	public void testFlipUnspec() throws Exception {
 		List<String> moleculeNames = Arrays.asList("VG7S7JRA56_mod");
 		for(String mol : moleculeNames){
-			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			logger.info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			Chemical before = Chemical.parse(molfileText);
 			int rCountBefore = getRCount(before);
 			int sCountBefore =getSCount(before);
 
 			Chemical after = before.getImpl().flipEpimericChiralCenters();
-			Logger.getLogger(this.getClass().getName()).info("after " + after.toMol());
+			logger.info("after " + after.toMol());
 			int rCountAfter = getRCount(after);
 			int sCountAfter =getSCount(after);
 
-			Logger.getLogger(this.getClass().getName()).info(String.format(
+			logger.info(String.format(
 					"Total R centers before %d; S centers before %d R centers after %d; S centers after %d",
 					rCountBefore, sCountBefore, rCountAfter, sCountAfter));
 			assertEquals(sCountAfter, rCountBefore);
 			assertEquals(rCountAfter, sCountBefore);
 		}
-		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+		logger.info("ran test successfully on " + moleculeNames.size() + " structures");
 	}
 
 	@Test
 	public void testPermuteChir() throws Exception {
 		List<String> moleculeNames = Collections.singletonList("(4~{R})-4-chloropentan-2-amine");
 		for(String mol : moleculeNames){
-			Logger.getLogger(this.getClass().getName()).info("going to test " + mol);
+			logger.info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 			List<Chemical> afters = before.permuteEpimers();
-			Logger.getLogger(this.getClass().getName()).info("total: " + afters.size());
+			logger.info("total: " + afters.size());
 			assertEquals(2, afters.size());
 			for(Chemical chemical : afters) {
-				Logger.getLogger(this.getClass().getName()).info(chemical.toMol());
-				Logger.getLogger(this.getClass().getName()).info(chemical.toInchi().getInchiKey().get().toString());
+				logger.info(chemical.toMol());
+				logger.info(chemical.toInchi().getInchiKey().get().toString());
 			}
 
 		}
-		Logger.getLogger(this.getClass().getName()).info("ran test successfully on " + moleculeNames.size() + " structures");
+		logger.info("ran test successfully on " + moleculeNames.size() + " structures");
 	}
 
 	private int getRCount(Chemical chemicalImpl) {

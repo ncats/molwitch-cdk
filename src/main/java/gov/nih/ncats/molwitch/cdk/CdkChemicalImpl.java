@@ -49,7 +49,6 @@ import javax.vecmath.Tuple2d;
 
 import gov.nih.ncats.molwitch.inchi.InChiResult;
 import gov.nih.ncats.molwitch.inchi.Inchi;
-import org.apache.logging.log4j.LogManager;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -130,7 +129,7 @@ import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import static org.openscience.cdk.geometry.cip.CIPToolMod.getSizeOfLargestRingSystem;
 
 public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
-
+	private static Logger logger = Logger.getLogger("CdkChemicalImpl");
 
 	private final ConcurrentHashMap<IAtom, CdkAtom> atoms = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<IBond, CdkBond> bonds = new ConcurrentHashMap<>();
@@ -146,7 +145,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	// The default value is 7, a guess and a setter allows a calling routine to change this cutoff
 	private static int complexityCutoff = 7;
 
-	private static final org.apache.logging.log4j.Logger logger = LogManager.getLogger(CdkChemicalImpl.class);
 	public static int getComplexityCutoff() {
 		return CdkChemicalImpl.complexityCutoff;
 	}
@@ -249,8 +247,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
         }
             withModifiedForm(c->{
                CdkChemicalImpl cimp = (CdkChemicalImpl) c.getImpl();
-//               cimp.
-               
                //Due to a bug in CDK, this doesn't work as expected
                //CIPTool.label(cimp.getContainer());
                //   We currently have to use a modified form for now
@@ -262,7 +258,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 						// trapping it in a try/catch allows the process to continue
 						CIPToolMod.label(cimp.getContainer());
 					} catch (NoSuchAtomException ex) {
-						logger.warn("Error in call to CIPToolMod.label. Processing will continue");
+						logger.warning("Error in call to CIPToolMod.label. Processing will continue");
 					}
 				}
 
@@ -295,9 +291,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                return 1;
                
             });
-//            CIPTool.label(container);
-//	    	container;
-	    	
+
 	    	this.doWithQueryFixes(()->{
 	    	Stereocenters  centers   = Stereocenters.of(container);
 	    	List<Integer> potentialSet = new ArrayList<>();
@@ -307,8 +301,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					case Non:
 						break;
 					case Para:
-//						System.out.println("H");
-//						break;
 					case Potential:
 						IAtom ai3=container.getAtom(i);
 						// This is a weird kind of case where it really depends
@@ -353,10 +345,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 							//we have to go through the container because some atom implementations
                             //throw unsupport operation exceptions if we ask them for their bonds
 							for(IBond ib:container.getConnectedBondsList(ai)){
-								if(!Order.SINGLE.equals(ib.getOrder()) 
-										
-//								&& !Order.DOUBLE.equals(ib.getOrder())
-										){
+								if(!Order.SINGLE.equals(ib.getOrder())){
 									bailout=true;
 									break;
 								}								
@@ -366,10 +355,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 								// axial cases are a little weird here
 								// in general CDK marks all SP2-hybrid entries in rings
 								// of < 9 as true stereocenters. I don't know why.
-								
-//								System.out.println("It's real but ...");
-//								System.out.println(centers.elementType(i) + ":" + centers.stereocenterType(i) + ":" + ai.getSymbol());
-								
+
 								continue;
 							}
 							if("N".equals(ai.getSymbol())){
@@ -388,14 +374,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    		}
 	    	}
 
-				/*logger.trace(String.format("number of potential centers: %d; number of undefined center: %d\n",
-						potentialSet.size(), undefinedSet.size()));*/
 	    	//TODO fix for potential cases
-//	    	container.getAtom(i);
-	    	
-//	    	BitSet.valueOf(null);
-	    	
-	    	
+
 	    	if(deepChirality && !potentialSet.isEmpty() && undefinedSet.size() <= maxUndefinedStereoCenters) {
 	    		CdkChemicalImpl cimp2=this.deepCopy();
 	    		cimp2.setDeepChirality(false);
@@ -406,7 +386,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    		cimp2.setDirty();
 					BitSet bs= BitSet.valueOf(new long[] {ii});
 		    		for(int ks=0;ks<undefinedSet.size();ks++) {
-	//	    			int rs = Integer.
 		    			if(bs.get(ks)) {
 		    				c22.getAtom(undefinedSet.get(ks))
 		    				.setChirality(Chirality.R);
@@ -417,12 +396,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    		}
 		    		for(int ks=0;ks<undefinedSet.size();ks++) {
 		    			Chirality c=c22.getAtom(undefinedSet.get(ks)).getChirality();
-//		    			System.out.print(c.toString());
+						//logger.fine(c.toString());
 		    			if(c.isDefined()) {
 		    				isDefinable.add(undefinedSet.get(ks));
 		    			}
 		    		}
-//		    		System.out.println();
 		    		if(isDefinable.size()==undefinedSet.size()) {
 		    			break;
 		    		}
@@ -463,13 +441,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					}
 					return 1;
 				} catch (CDKException | IllegalArgumentException e) {
-					/*logger.trace(String.format("Error processing rigs in molecule with formula %s (%s; ring size limit %d)",
-							this.getFormula(), e.getMessage(), Math.min(container.getAtomCount(),12)));*/
+					logger.warning(String.format("Error processing rigs in molecule with formula %s (%s; ring size limit %d)",
+							this.getFormula(), e.getMessage(), Math.min(container.getAtomCount(),12)));
 					return 0;
 				}
-		    	
 
-		
     });
 
 
@@ -524,7 +500,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		for(Atom a : s.getPeripheralAtoms()) {
 		    if(a==null)continue;
 		    a=getAtom(a.getAtomIndexInParent());
-//		    System.out.println("A:"+a);
 			for(Bond b : a.getBonds()) {
 				gov.nih.ncats.molwitch.Bond.Stereo oldStereo = b.getStereo();
 				gov.nih.ncats.molwitch.Bond.Stereo newStereo = oldStereo.flip();
@@ -540,7 +515,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		for(Atom a : s.getPeripheralAtoms()) {
 			if(a==null)continue;
 			a=getAtom(a.getAtomIndexInParent());
-//		    System.out.println("A:"+a);
 			for(Bond b : a.getBonds()) {
 				gov.nih.ncats.molwitch.Bond.Stereo oldStereo = b.getStereo();
 				gov.nih.ncats.molwitch.Bond.Stereo newStereo = oldStereo.flip();
@@ -577,12 +551,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				Optional<CdkChemicalImpl> clone2 = createChiralClone(potentialChiralCenter, Bond.Stereo.DOWN);
 				if( clone2.isPresent()) results.add(new Chemical(clone2.get()));
 			}
-
-			/*logger.info(String.format("chirality for atom at x %f.2 y %f.2, %s %s",
-			potentialChiralCenter.getCenterAtom().getAtomCoordinates().getX(),
-					potentialChiralCenter.getCenterAtom().getAtomCoordinates().getY(),
-					potentialChiralCenter.getCenterAtom().getSymbol(),
-			potentialChiralCenter.getChirality()));*/
 		}
 		return results;
 	}
@@ -613,7 +581,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				.filter(b->b.getStereo().equals(Bond.Stereo.NONE))
 				.findFirst();
 		if( flippableBond.isEmpty() ) {
-			logger.warn("unable to find a single unmarked bond to flip for center ");
+			logger.warning("unable to find a single unmarked bond to flip for center ");
 			return Optional.empty();
 		}
 		if(flippableBond.get().getAtom1().getAtomIndexInParent()==centralAtom.getAtomIndexInParent()){
@@ -1816,13 +1784,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		int[][] g = GraphUtil.toAdjList(container);
 		long[] inv =Canon.basicInvariants(container, g);
 		return new CdkGraphInvariant(inv);
-//		try {
-//			return new CdkGraphInvariant(InChINumbersTools.(container));
-//		} catch (CDKException e) {
-//			e.printStackTrace();
-//			//TODO should we throw an exception?
-//			return null;
-//		}
 	}
 
 
@@ -1975,7 +1936,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if("NONE".equals(value)) {
 			return Chirality.Non_Chiral;
 		}
-//		System.out.println("stereo is not S or R but it's '" + value +"'");
 		return Chirality.Unknown;
 	}
 	private static Chirality convertCdkStereoToChirality(Stereo stereoType) {
@@ -2586,9 +2546,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		AtomicInteger counter = new AtomicInteger(0);
 		this.getSGroups().forEach(sg->{
 			if(sg.getBrackets().size() != 2 ){
-				logger.warn("Expecting SGroups to have 2 brackets.  This one has " + sg.getBrackets().size());
+				logger.warning("Expecting SGroups to have 2 brackets.  This one has " + sg.getBrackets().size());
 			}
-			logger.trace(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
+			logger.fine(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
 					counter.incrementAndGet(), sg.getAtoms().count(), sg.getBrackets().get(0).getPoint1().getX(), sg.getBrackets().get(0).getPoint1().getY(),
 					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));
 			List<Double> xValues = new ArrayList<>();
@@ -2614,13 +2574,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				logger.info(String.format("	atom %d", i));
 				Atom atom = this.getAtom(i);
 				if( !sg.getAtoms().anyMatch( a-> a.equals(atom))){
-					logger.trace(String.format("atom %s %d\n",
+					logger.fine(String.format("atom %s %d\n",
 							atom.getSymbol(), i));
 					if((atom.getAtomCoordinates().getX() >= lowerX && atom.getAtomCoordinates().getX() <= upperX)
 						&& (atom.getAtomCoordinates().getY() >= lowerY && atom.getAtomCoordinates().getY() <= upperY)){
 						String message = String.format("atom %s (%d) is within the bounds of an SGroup but not part of the SGroup",
 								atom.getSymbol(), i);
-						logger.warn(message);
+						logger.warning(message);
 						messages.add(message);
 					}
 				}

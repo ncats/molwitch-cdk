@@ -263,15 +263,15 @@ public class CdkUtil {
     		
     		IBond ibo=ia.getBond(i);
    			ibo = BondRef.deref(ibo);
-    			if(ibo instanceof QueryBond){
-    				ib.setExpression(((QueryBond)ibo).getExpression());
+   			if(ibo instanceof QueryBond){
+   				ib.setExpression(((QueryBond)ibo).getExpression());
 
-    				boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
-    				                      ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC ||
-    				                      ib.getExpression().type().name().equals("ANY");
+   				boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
+   				                      ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC ||
+   				                      ib.getExpression().type().name().equals("ANY");
     				
-    				if(ibo.isAromatic() && !moreGoingon){
-    				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
+   				if(ibo.isAromatic() && !moreGoingon){
+	   				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
     			}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
 					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
     			}
@@ -285,7 +285,6 @@ public class CdkUtil {
     			}else{
     				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
     			}
-    			
     		}
     		if(ib.getExpression().type().equals(Expr.Type.STEREOCHEMISTRY)){
     			ib.setExpression(new Expr(Expr.Type.TRUE));

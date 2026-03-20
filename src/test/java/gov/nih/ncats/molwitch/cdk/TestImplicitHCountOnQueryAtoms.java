@@ -1,39 +1,22 @@
-package gov.nih.ncats.molwitch.cdk;/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2026.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
+package gov.nih.ncats.molwitch.cdk;
 
 import gov.nih.ncats.molwitch.Atom;
 import gov.nih.ncats.molwitch.Chemical;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 public class TestImplicitHCountOnQueryAtoms {
+    private static Logger logger = Logger.getLogger("TestImplicitHCountOnQueryAtoms");
     @Test
     public void parseSmartsWithQueryAtoms() throws Exception{
         //use 'Si' in the well-connected atom because the CDK toolkit assigns H count
         //  more permissively
         Chemical c = Chemical.parse("[#7,#8]~C1=c2c3c(O[Si]([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1");
         for(Atom a : c.getAtoms()){
-            System.out.printf("atom %s, impl H count: %d %n", a.getSymbol(), a.getImplicitHCount());
+            logger.fine(String.format("atom %s, impl H count: %d ", a.getSymbol(), a.getImplicitHCount()));
             assertTrue(a.getImplicitHCount() >=0);
         }
     }
@@ -91,7 +74,6 @@ public class TestImplicitHCountOnQueryAtoms {
                 "  7 21  4  0  0  0  0\n" +
                 "M  END";
 
-        ;
         assertEquals(300, (int) Chemical.parseMol(mol).getMass());
     }
 }

@@ -46,7 +46,6 @@ public class QueryAtomPerceptor {
 			IAtom deref = AtomRef.deref(atom);
 			if(deref instanceof QueryAtom ){
 				Expr expr= ((QueryAtom)deref).getExpression();
-//				System.out.println(expr.type());
 				if(expr.type() == Expr.Type.ELEMENT || expr.type() == Expr.Type.ALIPHATIC_ELEMENT || expr.type() == Expr.Type.AROMATIC_ELEMENT){
 					int atomicNumber = expr.value();
 					IElement element = Isotopes.getInstance().getElement(atomicNumber);

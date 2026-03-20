@@ -1,26 +1,8 @@
-package gov.nih.ncats.molwitch.cdk;/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2026
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
+package gov.nih.ncats.molwitch.cdk;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
@@ -37,6 +19,7 @@ import gov.nih.ncats.molwitch.search.MolSearcherFactory;
 import static org.junit.Assert.*;
 
 public class TestParseQueryMol {
+	private static Logger logger = Logger.getLogger("TestParseQueryMol");
 
     @Test
     public void atomListsAndQueryBondFingerprintsWork() throws IOException {
@@ -95,8 +78,6 @@ public class TestParseQueryMol {
         
         Chemical c = Chemical.parseMol(mol);
         c.aromatize();
-//        System.out.println(c.toMol());
-
         Fingerprinter fingerPrinterSub =  Fingerprinters.getFingerprinter(FingerprintSpecification.PATH_BASED.create().setLength(512));
         
         Fingerprint fp=fingerPrinterSub.computeFingerprint(c);
@@ -162,7 +143,6 @@ public class TestParseQueryMol {
         		" 26 27  4  0  0  0  0\n" + 
         		" 27 24  4  0  0  0  0\n" + 
         		"M  END";
-        System.out.println(mm);
         Chemical c2 = Chemical.parseMol(mm);
 
         Fingerprint fp2=fingerPrinterSub.computeFingerprint(c2);
@@ -443,9 +423,10 @@ public class TestParseQueryMol {
            try{
         	   c.generateCoordinates();
            }catch(Exception e){
-        	   e.printStackTrace();
+        	   logger.fine("recoverable error");
            }
-           c.aromatize();
+		   logger.info(String.format("about to aromatize c: %s", c.getImpl().toString()));
+		   c.aromatize();
 
            assertFalse(c.toMol().isEmpty());
            assertFalse(c.toSmarts().isEmpty());
@@ -457,7 +438,7 @@ public class TestParseQueryMol {
            try{
         	   c2.generateCoordinates();
            }catch(Exception e){
-        	   e.printStackTrace();
+			   logger.fine("recoverable exception occurred");
            }
 		   assertFalse(c2.toMol().isEmpty());
 		   assertFalse(c2.toSmiles().isEmpty());
@@ -519,7 +500,7 @@ public class TestParseQueryMol {
            try{
         	   c.generateCoordinates();
            }catch(Exception e){
-        	   e.printStackTrace();
+        	   logger.fine("recoverable error");
            }
            c.aromatize();
 		   assertFalse(c.toMol().isEmpty());
@@ -549,7 +530,7 @@ public class TestParseQueryMol {
 	       try{
 	    	   c.generateCoordinates();
 	       }catch(Exception e){
-	    	   e.printStackTrace();
+			   logger.fine("recoverable error");
 	       }
 	       c.aromatize();
 		   assertFalse(c.toMol().isEmpty());
@@ -561,7 +542,7 @@ public class TestParseQueryMol {
 	       try{
 	    	   c2.generateCoordinates();
 	       }catch(Exception e){
-	    	   e.printStackTrace();
+			   logger.fine("recoverable error");
 	       }
 		   assertFalse(c2.toMol().isEmpty());
 		   assertFalse(c2.toSmiles().isEmpty());
@@ -591,7 +572,7 @@ public class TestParseQueryMol {
 	       try{
 	    	   targetChemical.generateCoordinates();
 	       }catch(Exception e){
-	    	   e.printStackTrace();
+			   logger.fine("recoverable error");
 	       }
 		   assertFalse(targetChemical.toMol().isEmpty());
 		   assertFalse(targetChemical.toSmiles().isEmpty());
@@ -606,7 +587,7 @@ public class TestParseQueryMol {
            try {
                queryChemical.generateCoordinates();
            } catch (Exception e) {
-               e.printStackTrace();
+			   logger.fine("recoverable error");
            }
            queryChemical.aromatize();
            assertFalse(queryChemical.toMol().isEmpty());
@@ -618,7 +599,7 @@ public class TestParseQueryMol {
            try {
                targetChemical.generateCoordinates();
            } catch (Exception e) {
-               e.printStackTrace();
+			   logger.fine("recoverable error");
            }
            assertFalse(targetChemical.toMol().isEmpty());
            assertFalse(targetChemical.toSmiles().isEmpty());
@@ -636,14 +617,8 @@ public class TestParseQueryMol {
            bsTemp.and(fp2.toBitSet());
 
            assertEquals(fp.populationCount(), bsTemp.cardinality());
-           
-           //Depending on how this is interpretted, it might actually be pretty low
-           //similarity, and that's okay
-           
-//           System.out.println(sim);
-//           assertTrue(sim > .8D);
-
        }
+
        @Test
 	   public void removeAtomThenReAdd() throws Exception{
 			Chemical c=Chemical.createFromSmiles("CCCCC");
@@ -678,8 +653,6 @@ public class TestParseQueryMol {
 	   		Chemical c2= Chemical.parse(c.toMol());
 	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
 	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);
-			System.out.printf("output molfile: %s%n", c.toMol());
-	       	//assertTrue("Simple SMARTS keeps atom list", c.toMol().contains("0.0000 L   0"));
 			assertTrue("Simple SMARTS keeps atom list", c.toMol().contains("#6,#7"));
 	   	}
 

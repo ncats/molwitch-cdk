@@ -55,11 +55,11 @@ public class CdkMolSearcher implements MolSearcher {
     }
     public CdkMolSearcher(Chemical chemical){
         IAtomContainer container= CdkUtil.toAtomContainer(chemical);
-        if(hasQueryAtomsOrBonds(container)){
+        /*if(hasQueryAtomsOrBonds(container)){
             query  = CdkUtil.asQueryAtomContainer(container);
-        }else{
+        }else{*/
             query = container;
-        }
+//        }
 //        query = new QueryAtomContainer(container, container.getBuilder());
     }
     

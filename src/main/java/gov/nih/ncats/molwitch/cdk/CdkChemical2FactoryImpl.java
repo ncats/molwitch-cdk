@@ -144,11 +144,9 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			 */
 			try {
 				String fixed = smiles.replace("[n]", "[nH]");
-//				System.out.println("trying " + fixed);
 				return kekuleSmilesParser.parseSmiles(fixed);
 			} catch (InvalidSmilesException e2) {
 				logger.warning("error parsing input as SMILES; will try preserveAromaticSmilesParser");
-				e2.printStackTrace();
 				try {
 					return preserveAromaticSmilesParser.parseSmiles(smiles);
 				}catch(Exception e3){

@@ -480,9 +480,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                     }
                 }
             }
-	        if(isQuery){
+	        /*if(isQuery){
 	            container = new QueryAtomContainer(container, CHEM_OBJECT_BUILDER);
-            }
+            }*/
         }
 		this.container = container;
 		this.source = source;

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.aromaticity.Aromaticity;
@@ -256,10 +257,11 @@ public class CdkUtil {
 		return deref instanceof IPseudoAtom;
 	}
     public static QueryAtomContainer asQueryAtomContainer(IAtomContainer ia){
-    	QueryAtomContainer qac=QueryAtomContainer.create(ia);
+		//AtomContainer ac = new AtomContainer(ia);
+    	QueryAtomContainer ac=QueryAtomContainer.create(ia);
     	
-    	for(int i=0;i<qac.getBondCount();i++){
-    		QueryBond ib=(QueryBond)qac.getBond(i);
+    	for(int i=0;i<ac.getBondCount();i++){
+    		QueryBond ib=(QueryBond)ac.getBond(i);
     		
     		IBond ibo=ia.getBond(i);
    			ibo = BondRef.deref(ibo);
@@ -290,8 +292,8 @@ public class CdkUtil {
     			ib.setExpression(new Expr(Expr.Type.TRUE));
     		}
     	}        	
-    	for(int i=0;i<qac.getAtomCount();i++){
-    		QueryAtom iat=(QueryAtom)qac.getAtom(i);
+    	for(int i=0;i<ac.getAtomCount();i++){
+    		QueryAtom iat=(QueryAtom)ac.getAtom(i);
     		
     		IAtom iao=ia.getAtom(i);
     		iao = AtomRef.deref(iao);
@@ -336,17 +338,17 @@ public class CdkUtil {
 
 			iat.setPoint2d(iao.getPoint2d());
     	}
-    	IAtom[] iatoms = new IAtom[qac.getAtomCount()];
+    	IAtom[] iatoms = new IAtom[ac.getAtomCount()];
     	for(int i=0;i<iatoms.length;i++) {
-    	    iatoms[i]=qac.getAtom(i);
+    	    iatoms[i]=ac.getAtom(i);
     	}
-    	IBond[] ibonds = new IBond[qac.getBondCount()];
+    	IBond[] ibonds = new IBond[ac.getBondCount()];
         for(int i=0;i<ibonds.length;i++) {
-            ibonds[i]=qac.getBond(i);
+            ibonds[i]=ac.getBond(i);
         }
-    	qac.setAtoms(iatoms);
-    	qac.setBonds(ibonds);
-    	return qac;
+    	ac.setAtoms(iatoms);
+    	ac.setBonds(ibonds);
+    	return ac;
     }
     
     public static boolean isSubtleQueryBond(IBond b) {

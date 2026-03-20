@@ -1933,18 +1933,16 @@ public class TestChiralRead {
 		List<String> moleculeNames = Arrays.asList("N6WK7SF4JA", //  "614e808b-234a-476b-ac60-98ea42d6c6c5",
 				"1-Phenylethanol-R", "SANORG-123781");
 		for(String mol : moleculeNames){
-			logger.info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			Chemical before =  Chemical.parse(molfileText);
 			int rCountBefore = getRCount(before);
 			int sCountBefore =getSCount(before);
 
 			Chemical afterChemical = ((CdkChemicalImpl)before.getImpl()).flipAllChiralCenters();
-			logger.info("afterChemical " + afterChemical.toMol());
 			int rCountAfter = getRCount(afterChemical);
 			int sCountAfter =getSCount(afterChemical);
 
-			logger.info(String.format(
+			logger.fine(String.format(
 					"Total R centers before %d; S centers before %d R centers after %d; S centers after %d",
 					rCountBefore, sCountBefore, rCountAfter, sCountAfter));
 			assertEquals(sCountAfter, rCountBefore);
@@ -1957,14 +1955,12 @@ public class TestChiralRead {
 	public void testFlipUnspec() throws Exception {
 		List<String> moleculeNames = Arrays.asList("VG7S7JRA56_mod");
 		for(String mol : moleculeNames){
-			logger.info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			Chemical before = Chemical.parse(molfileText);
 			int rCountBefore = getRCount(before);
 			int sCountBefore =getSCount(before);
 
 			Chemical after = before.getImpl().flipEpimericChiralCenters();
-			logger.info("after " + after.toMol());
 			int rCountAfter = getRCount(after);
 			int sCountAfter =getSCount(after);
 
@@ -1981,17 +1977,13 @@ public class TestChiralRead {
 	public void testPermuteChir() throws Exception {
 		List<String> moleculeNames = Collections.singletonList("(4~{R})-4-chloropentan-2-amine");
 		for(String mol : moleculeNames){
-			logger.info("going to test " + mol);
 			String molfileText = IOUtils.toString(this.getClass().getResourceAsStream("/mols/" + mol +".mol"));
 			CdkChemicalImpl before = (CdkChemicalImpl) Chemical.parse(molfileText).getImpl();
 			List<Chemical> afters = before.permuteEpimers();
-			logger.info("total: " + afters.size());
 			assertEquals(2, afters.size());
 			for(Chemical chemical : afters) {
-				logger.info(chemical.toMol());
 				logger.info(chemical.toInchi().getInchiKey().get().toString());
 			}
-
 		}
 		logger.info("ran test successfully on " + moleculeNames.size() + " structures");
 	}

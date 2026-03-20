@@ -256,100 +256,87 @@ public class CdkUtil {
 		IAtom deref = AtomRef.deref(atom);
 		return deref instanceof IPseudoAtom;
 	}
-    public static QueryAtomContainer asQueryAtomContainer(IAtomContainer ia){
-		//AtomContainer ac = new AtomContainer(ia);
-    	QueryAtomContainer ac=QueryAtomContainer.create(ia);
-    	
-    	for(int i=0;i<ac.getBondCount();i++){
-    		QueryBond ib=(QueryBond)ac.getBond(i);
-    		
-    		IBond ibo=ia.getBond(i);
-   			ibo = BondRef.deref(ibo);
-   			if(ibo instanceof QueryBond){
-   				ib.setExpression(((QueryBond)ibo).getExpression());
+	public static QueryAtomContainer asQueryAtomContainer(IAtomContainer ia){
+		QueryAtomContainer qac=QueryAtomContainer.create(ia);
 
-   				boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
-   				                      ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC ||
-   				                      ib.getExpression().type().name().equals("ANY");
-    				
-   				if(ibo.isAromatic() && !moreGoingon){
-	   				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
-    			}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
+		for(int i=0;i<qac.getBondCount();i++){
+			QueryBond ib=(QueryBond)qac.getBond(i);
+
+			IBond ibo=ia.getBond(i);
+			ibo = BondRef.deref(ibo);
+			if(ibo instanceof QueryBond){
+				ib.setExpression(((QueryBond)ibo).getExpression());
+
+				boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
+						ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC;
+
+				if(ibo.isAromatic() && !moreGoingon){
+					ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
+				}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
 					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
-    			}
-    		}else{
-    			if(!ibo.isAromatic()){
-    				if(ibo.getOrder()==null || ibo.getOrder().equals(Order.UNSET)){
-    					ib.setExpression(new Expr(Expr.Type.TRUE));
-    				}else{
-    					ib.setExpression(new Expr(Expr.Type.ALIPHATIC_ORDER,ibo.getOrder().numeric()));
-    				}
-    			}else{
-    				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
-    			}
-    		}
-    		if(ib.getExpression().type().equals(Expr.Type.STEREOCHEMISTRY)){
-    			ib.setExpression(new Expr(Expr.Type.TRUE));
-    		}
-    	}        	
-    	for(int i=0;i<ac.getAtomCount();i++){
-    		QueryAtom iat=(QueryAtom)ac.getAtom(i);
-    		
-    		IAtom iao=ia.getAtom(i);
-    		iao = AtomRef.deref(iao);
-    		if(iao instanceof QueryAtom){
-    			
-    			iat.setExpression(((QueryAtom)iao).getExpression());
-    			iat.setSymbol(getSymbolForAtomExpression(iat.getExpression()));
-    			if(iat.getExpression().type().equals(Expr.Type.ALIPHATIC_ELEMENT) ||
-    					iat.getExpression().type().equals(Expr.Type.ELEMENT)||
-    					iat.getExpression().type().equals(Expr.Type.AROMATIC_ELEMENT)){
-    				iat.setAtomicNumber(iat.getExpression().value());
-    				iat.setSymbol(PeriodicTable.getSymbol(iat.getExpression().value()));
-    			}else if(iat.getExpression().type().equals(Expr.Type.OR) || iat.getExpression().type().equals(Expr.Type.AND)){
-					List<Expr> leaves = new ArrayList<>();
-					getLeafNodes(iat.getExpression(), leaves);
-					if(!leaves.isEmpty()){
-						Expr first = leaves.get(0);
-						if(first.type().equals(Expr.Type.ALIPHATIC_ELEMENT) ||
-								first.type().equals(Expr.Type.ELEMENT)||
-								first.type().equals(Expr.Type.AROMATIC_ELEMENT)){
-							iat.setAtomicNumber(first.value());
-							iat.setSymbol(PeriodicTable.getSymbol(first.value()));
-						}
-					}
 				}
-    			
-    		}else{
-    		    Integer an = iao.getAtomicNumber();
-    			if(an==null || an ==0){
-    				iat.setSymbol("A");
-    			}else{
-    				iat.setExpression(new Expr(Expr.Type.ELEMENT,iao.getAtomicNumber()));
-    				iat.setSymbol(iao.getSymbol());
-    			}
-    		}
-    		if(iao.getCharge()!=null){
-    			iat.setCharge(iao.getCharge());
-    		}
-    		if(iao.getMassNumber()!=null){
-    			iat.setMassNumber(iat.getMassNumber());
-    		}
+			}else{
+				if(!ibo.isAromatic()){
+					if(ibo.getOrder()==null || ibo.getOrder().equals(Order.UNSET)){
+						ib.setExpression(new Expr(Expr.Type.TRUE));
+					}else{
+						ib.setExpression(new Expr(Expr.Type.ALIPHATIC_ORDER,ibo.getOrder().numeric()));
+					}
+				}else{
+					ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
+				}
+
+			}
+			if(ib.getExpression().type().equals(Expr.Type.STEREOCHEMISTRY)){
+				ib.setExpression(new Expr(Expr.Type.TRUE));
+			}
+		}
+		for(int i=0;i<qac.getAtomCount();i++){
+			QueryAtom iat=(QueryAtom)qac.getAtom(i);
+
+			IAtom iao=ia.getAtom(i);
+			iao = AtomRef.deref(iao);
+			if(iao instanceof QueryAtom){
+
+				iat.setExpression(((QueryAtom)iao).getExpression());
+				iat.setSymbol(getSymbolForAtomExpression(iat.getExpression()));
+				if(iat.getExpression().type().equals(Expr.Type.ALIPHATIC_ELEMENT) ||
+						iat.getExpression().type().equals(Expr.Type.ELEMENT)||
+						iat.getExpression().type().equals(Expr.Type.AROMATIC_ELEMENT)){
+					iat.setAtomicNumber(iat.getExpression().value());
+					iat.setSymbol(PeriodicTable.getSymbol(iat.getExpression().value()));
+				}
+
+			}else{
+				Integer an = iao.getAtomicNumber();
+				if(an==null || an ==0){
+					iat.setSymbol("A");
+				}else{
+					iat.setExpression(new Expr(Expr.Type.ELEMENT,iao.getAtomicNumber()));
+					iat.setSymbol(iao.getSymbol());
+				}
+			}
+			if(iao.getCharge()!=null){
+				iat.setCharge(iao.getCharge());
+			}
+			if(iao.getMassNumber()!=null){
+				iat.setMassNumber(iat.getMassNumber());
+			}
 
 			iat.setPoint2d(iao.getPoint2d());
-    	}
-    	IAtom[] iatoms = new IAtom[ac.getAtomCount()];
-    	for(int i=0;i<iatoms.length;i++) {
-    	    iatoms[i]=ac.getAtom(i);
-    	}
-    	IBond[] ibonds = new IBond[ac.getBondCount()];
-        for(int i=0;i<ibonds.length;i++) {
-            ibonds[i]=ac.getBond(i);
-        }
-    	ac.setAtoms(iatoms);
-    	ac.setBonds(ibonds);
-    	return ac;
-    }
+		}
+		IAtom[] iatoms = new IAtom[qac.getAtomCount()];
+		for(int i=0;i<iatoms.length;i++) {
+			iatoms[i]=qac.getAtom(i);
+		}
+		IBond[] ibonds = new IBond[qac.getBondCount()];
+		for(int i=0;i<ibonds.length;i++) {
+			ibonds[i]=qac.getBond(i);
+		}
+		qac.setAtoms(iatoms);
+		qac.setBonds(ibonds);
+		return qac;
+	}
     
     public static boolean isSubtleQueryBond(IBond b) {
         if(b instanceof QueryBond) {

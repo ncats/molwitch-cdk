@@ -33,7 +33,6 @@ import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtomContainer;
 import org.openscience.cdk.isomorphism.matchers.IQueryBond;
-import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.smsd.AtomAtomMapping;
 import org.openscience.smsd.Isomorphism;
 import org.openscience.smsd.Substructure;
@@ -102,7 +101,7 @@ public class CdkMolSearcher implements MolSearcher {
                 //of single atom but it does set isSubgraph if they match
 
                 SingleMappingHandler mcs;
-                if (!(query instanceof IQueryAtomContainer) && !(target instanceof IQueryAtomContainer)) {
+                if (!(smsd.getQuery() instanceof IQueryAtomContainer) && !(smsd.getTarget() instanceof IQueryAtomContainer)) {
                     mcs = new SingleMappingHandler(smsd.getQuery(), smsd.getTarget(), false);
                 } else {
                     mcs = new SingleMappingHandler((IQueryAtomContainer) smsd.getQuery(), smsd.getTarget());

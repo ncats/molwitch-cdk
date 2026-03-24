@@ -30,36 +30,33 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IPseudoAtom;
+import org.openscience.cdk.isomorphism.Pattern;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
-import org.openscience.cdk.isomorphism.matchers.IQueryAtomContainer;
 import org.openscience.cdk.isomorphism.matchers.IQueryBond;
-import org.openscience.smsd.AtomAtomMapping;
-import org.openscience.smsd.Isomorphism;
-import org.openscience.smsd.Substructure;
-import org.openscience.smsd.algorithm.single.SingleMappingHandler;
-import org.openscience.smsd.interfaces.Algorithm;
+import org.openscience.cdk.smarts.SmartsPattern;
 
-import java.io.IOException;
-import java.util.Map;
 import java.util.Optional;
 
 public class CdkMolSearcher implements MolSearcher {
-    IAtomContainer query;
+    private final Pattern pattern;
+
     public CdkMolSearcher(String smartsQuery){
         try {
-            query = CdkUtil.parseSmarts(smartsQuery);
+            CdkUtil.parseSmarts(smartsQuery);
+            pattern = SmartsPattern.create(smartsQuery, CdkUtil.getChemObjectBuilder());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
     public CdkMolSearcher(Chemical chemical){
         IAtomContainer container= CdkUtil.toAtomContainer(chemical);
-        /*if(hasQueryAtomsOrBonds(container)){
+        IAtomContainer query;
+        if(hasQueryAtomsOrBonds(container)){
             query  = CdkUtil.asQueryAtomContainer(container);
-        }else{*/
+        }else{
             query = container;
-//        }
-//        query = new QueryAtomContainer(container, container.getBuilder());
+        }
+        pattern = Pattern.findSubstructure(query);
     }
     
     private static boolean hasQueryAtomsOrBonds(IAtomContainer container){
@@ -81,62 +78,16 @@ public class CdkMolSearcher implements MolSearcher {
     }
     @Override
     public Optional<int[]> search(Chemical targetChemical) {
-        //{ 0: Default Isomorphism Algorithm, 1: MCSPlus Algorithm, 2: VFLibMCS Algorithm, 3: CDKMCS Algorithm}
-  //Algorithm is VF2MCS
-  //Bond Sensitive is set True
-  //Ring Match is set True
         IAtomContainer target = CdkUtil.toAtomContainer(targetChemical);
         try {
-            Substructure smsd;
-
-                      
-            smsd = new Substructure(query, target, true, false, true, false, false);
-
-            if(!smsd.isSubgraph()){
+            int[] mapping = pattern.match(target);
+            if(mapping.length == 0){
                 return Optional.empty();
             }
-            AtomAtomMapping atomMapping;
-            if(smsd.getQuery().getAtomCount() ==1 || smsd.getTarget().getAtomCount()==1){
-                //for some reason SDSM doesn't report mapping
-                //of single atom but it does set isSubgraph if they match
-
-                SingleMappingHandler mcs;
-                if (!(smsd.getQuery() instanceof IQueryAtomContainer) && !(smsd.getTarget() instanceof IQueryAtomContainer)) {
-                    mcs = new SingleMappingHandler(smsd.getQuery(), smsd.getTarget(), false);
-                } else {
-                    mcs = new SingleMappingHandler((IQueryAtomContainer) smsd.getQuery(), smsd.getTarget());
-                }
-                atomMapping = mcs.getFirstAtomMapping();
-//                    return mcs.getAllAtomMapping() != null && !mcs.getAllAtomMapping().isEmpty();
-
-            }else {
-                atomMapping = smsd.getFirstAtomMapping();
-            }
-            if(atomMapping.isEmpty()){
-                return Optional.empty();
-            }
-            boolean flipped = query==smsd.getTarget();
-            int[] map = new int[query.getAtomCount()];
-
-            for (Map.Entry<IAtom, IAtom> mapping : atomMapping.getMappingsByAtoms().entrySet()) {
-                IAtom sourceAtom = mapping.getKey();
-                IAtom targetAtom = mapping.getValue();
-                int queryMappingNumber = atomMapping.getQueryIndex(sourceAtom);
-                //Get the mapped atom number in Target AtomContainer
-                int targetMappingNumber = atomMapping.getTargetIndex(targetAtom);
-                if(flipped){
-                    map[targetMappingNumber]= queryMappingNumber;
-                }else {
-                    map[queryMappingNumber] = targetMappingNumber;
-                }
-            }
-            return Optional.ofNullable(map);
+            return Optional.of(mapping);
         } catch (Throwable e) {
             e.printStackTrace();
             return Optional.empty();
         }
-//        Isomorphism comparison = new Isomorphism(query, target, Algorithm.VFLibMCS, true, true, true);
-
-
     }
 }

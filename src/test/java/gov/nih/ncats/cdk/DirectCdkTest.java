@@ -1,6 +1,5 @@
 package gov.nih.ncats.cdk;
 
-import org.freehep.graphicsbase.util.Assert;
 import org.junit.Test;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
@@ -13,6 +12,7 @@ import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.Map;
+import static org.junit.Assert.*;
 
 public class DirectCdkTest {
 
@@ -37,7 +37,7 @@ public class DirectCdkTest {
                 }
             }
             System.out.println(smigen.create(mol));
-            Assert.assertEquals(expectedAtomTotal, mol.getAtomCount());
+            assertEquals(expectedAtomTotal, mol.getAtomCount());
         } catch (InvalidSmilesException ex) {
             System.err.println("BAD SMILES: " + testSmiles);
         } catch (CDKException e) {

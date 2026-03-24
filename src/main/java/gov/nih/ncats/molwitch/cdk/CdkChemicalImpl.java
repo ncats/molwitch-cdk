@@ -73,6 +73,7 @@ import org.openscience.cdk.interfaces.IBond.Order;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IDoubleBondStereochemistry;
 import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.interfaces.IRing;
 import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.interfaces.IStereoElement;
@@ -118,6 +119,7 @@ import gov.nih.ncats.molwitch.MolwitchException;
 import gov.nih.ncats.molwitch.SGroup;
 import gov.nih.ncats.molwitch.SGroup.SGroupBracket;
 import gov.nih.ncats.molwitch.SGroup.SGroupType;
+import uk.ac.ebi.beam.Element;
 import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.isotopes.Isotope;
@@ -676,8 +678,17 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	@Override
 	public Atom addAtom(String symbol) {
-		IAtom atom = CHEM_OBJECT_BUILDER.newAtom();
-		atom.setSymbol(symbol);
+		IAtom atom;
+		if(Element.ofSymbol(symbol) != null) {
+			atom = CHEM_OBJECT_BUILDER.newAtom();
+			atom.setSymbol(symbol);
+		}else {
+			IPseudoAtom pseudoAtom = CHEM_OBJECT_BUILDER.newInstance(IPseudoAtom.class);
+			pseudoAtom.setAtomicNumber(0);
+			pseudoAtom.setLabel(symbol);
+			pseudoAtom.setSymbol(symbol);
+			atom = pseudoAtom;
+		}
 		return addAtom(atom);
 	}
 

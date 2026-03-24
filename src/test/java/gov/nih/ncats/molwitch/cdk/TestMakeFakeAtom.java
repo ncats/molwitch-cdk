@@ -7,7 +7,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-@Ignore
+
 public class TestMakeFakeAtom {
     @Test
     public void makeAtomWithASymbol(){

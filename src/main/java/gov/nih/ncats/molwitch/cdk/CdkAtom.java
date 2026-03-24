@@ -146,6 +146,12 @@ public class CdkAtom implements Atom{
 
 	@Override
 	public String getSymbol() {
+		if(isPseudoAtom()) {
+			Optional<String> alias = getAlias();
+			if(alias.isPresent() && !alias.get().isEmpty()) {
+				return alias.get();
+			}
+		}
 		return atom.getSymbol();
 	}
 	

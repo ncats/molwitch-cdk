@@ -343,34 +343,7 @@ public class TestChiralRead {
 			assertTrue(opChi.isPresent());
 			assertEquals(Chirality.S, opChi.get());
 	   	}
-		
-		@Ignore
-		@Test
-	   	public void testAxialStereoUndefinedMarkedAsCenter() throws Exception {
-			Chemical c1=Chemical.parse("\n"
-					+ "   JSDraw212072312182D\n"
-					+ "\n"
-					+ "  6  6  0  0  0  0            999 V2000\n"
-					+ "   17.4720   -8.8400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-					+ "   16.1210   -8.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-					+ "   16.1210   -6.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-					+ "   18.8230   -8.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-					+ "   18.8230   -6.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-					+ "   17.4720   -5.7200    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n"
-					+ "  1  2  2  0  0  0  0\n"
-					+ "  2  3  1  0  0  0  0\n"
-					+ "  1  4  1  0  0  0  0\n"
-					+ "  4  5  2  0  0  0  0\n"
-					+ "  5  6  1  0  0  0  0\n"
-					+ "  6  3  2  0  0  0  0\n"
-					+ "M  END");
-			Optional<Chirality> opChi=c1.atoms()
-			  .filter(ca->ca.getChirality()!=Chirality.Non_Chiral)
-			  .map(ca->ca.getChirality())
-			  .findFirst();
-			assertTrue(opChi.isPresent());
-			assertEquals(Chirality.Parity_Either, opChi.get());
-	   	}
+
 		@Test
 	   	public void testSimpleTetrahedralStereoMarked() throws Exception {
 			Chemical c1=Chemical.parse("\n" + 
@@ -649,7 +622,7 @@ public class TestChiralRead {
 					+ "  4  5  1  0  0  0  0\n"
 					+ "  2  6  1  0  0  0  0\n"
 					+ "M  END");
-//			c1.generateCoordinates();
+			c1.generateCoordinates();
 			String sdfChiral = c1.atoms()
 					 .map(ca->ca.getChirality())
 					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
@@ -996,11 +969,6 @@ public class TestChiralRead {
 	   				+ "  7 10  1  0  0  0  0\n"
 	   				+ "M  END");
 	   		mol= Chemical.parse(mol.toMol());
-//	   		String sdfChiral = mol.atoms()
-//					 .map(ca->ca.getChirality())
-//					 .filter(ch->!ch.equals(Chirality.Non_Chiral))
-//					 .map(ch->ch.toString())
-//					 .collect(Collectors.joining());
 	   		assertEquals(3,mol.getAllStereocenters().size());
 	   	}
 		

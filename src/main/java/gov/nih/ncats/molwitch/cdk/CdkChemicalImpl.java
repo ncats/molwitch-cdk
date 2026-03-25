@@ -1242,23 +1242,57 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 
 	private void makeStereoElms() {
+	    Map<IAtom, Integer> nullImplicitHydrogenAtoms = new HashMap<>();
+	    List<String> nullImplicitHydrogenAtomDescriptions = new ArrayList<>();
 	    boolean has3dCoords = true;
         for(IAtom atom : container.atoms()){
+            if(atom.getImplicitHydrogenCount() == null){
+                nullImplicitHydrogenAtoms.put(atom, null);
+                CdkAtom cdkAtom = getCdkAtomFor(atom);
+                nullImplicitHydrogenAtomDescriptions.add(String.format(
+                        "idx=%d,sym=%s,charge=%d,bonds=%d,query=%s,pseudo=%s,rgroup=%s",
+                        indexOf(cdkAtom),
+                        cdkAtom.getSymbol(),
+                        cdkAtom.getCharge(),
+                        cdkAtom.getBondCount(),
+                        cdkAtom.isQueryAtom(),
+                        cdkAtom.isPseudoAtom(),
+                        cdkAtom.isRGroupAtom()
+                ));
+                atom.setImplicitHydrogenCount(0);
+            }
             if(atom.getPoint3d() ==null){
                 has3dCoords=false;
-                break;
             }
         }
-        StereoElementFactory stereoElementFactory;
-        if(has3dCoords){
-            stereoElementFactory = StereoElementFactory.using3DCoordinates(container);
-        }else{
-            stereoElementFactory = StereoElementFactory.using2DCoordinates(container);
+        if(!nullImplicitHydrogenAtomDescriptions.isEmpty()){
+            String moleculeName = container.getTitle();
+            if(moleculeName == null || moleculeName.trim().isEmpty()){
+                moleculeName = "<unnamed>";
+            }
+            logger.warning(String.format(
+                    "makeStereoElms found %d atoms with null implicit H count in molecule '%s': %s",
+                    nullImplicitHydrogenAtomDescriptions.size(),
+                    moleculeName,
+                    String.join("; ", nullImplicitHydrogenAtomDescriptions)
+            ));
         }
+        try {
+            StereoElementFactory stereoElementFactory;
+            if(has3dCoords){
+                stereoElementFactory = StereoElementFactory.using3DCoordinates(container);
+            }else{
+                stereoElementFactory = StereoElementFactory.using2DCoordinates(container);
+            }
 
-        List<IStereoElement> stereo = stereoElementFactory.createAll();
+            List<IStereoElement> stereo = stereoElementFactory.createAll();
 
-        container.setStereoElements(stereo);
+            container.setStereoElements(stereo);
+        } finally {
+            for(IAtom atom : nullImplicitHydrogenAtoms.keySet()){
+                atom.setImplicitHydrogenCount(null);
+            }
+        }
 	}
 
 	static int aromStatus(IAtomContainer mol) {

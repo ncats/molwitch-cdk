@@ -77,12 +77,10 @@ public class TestParseQueryMol {
           
         
         Chemical c = Chemical.parseMol(mol);
-        c.aromatize();
         Fingerprinter fingerPrinterSub =  Fingerprinters.getFingerprinter(FingerprintSpecification.PATH_BASED.create().setLength(512));
         
         Fingerprint fp=fingerPrinterSub.computeFingerprint(c);
-        
-        
+
         String mm="\n" + 
         		"   JSDraw209242017082D\n" + 
         		"\n" + 
@@ -411,26 +409,16 @@ public class TestParseQueryMol {
     }
     
        @Test
-       public void ensureAnyBondAndAromatizationWorksForSubstructureSearch() throws IOException {
+       public void ensureAromaticAndAnyBondWorksForSubstructureSearch() throws IOException {
            String mol = IOUtils.toString(
-				   this.getClass().getResourceAsStream("/mols/para-substituted-phonol.mol"),
+				   this.getClass().getResourceAsStream("/mols/para-substituted-phenol.mol"),
 				   "UTF-8"
 		   );
            
-           Chemical c = Chemical.parse(mol);
-		   c.aromatize();
+           Chemical queryMol = Chemical.parse(mol);
 
-           try{
-        	   c.generateCoordinates();
-           }catch(Exception e){
-        	   logger.fine("recoverable error");
-           }
-		   logger.info(String.format("about to aromatize c: %s", c.getImpl().toString()));
-		   c.aromatize();
-
-           assertFalse(c.toMol().isEmpty());
-           assertFalse(c.toSmarts().isEmpty());
-           
+           assertFalse(queryMol.toMol().isEmpty());
+           assertFalse(queryMol.toSmarts().isEmpty());
            
            String mol2="NC1=CC(O)=C(O)C=C1";
            Chemical c2 = Chemical.parse(mol2);
@@ -442,13 +430,13 @@ public class TestParseQueryMol {
            }
 		   assertFalse(c2.toMol().isEmpty());
 		   assertFalse(c2.toSmiles().isEmpty());
-           Optional<int[]> hit = MolSearcherFactory.create(c).get().search(c2);
+           Optional<int[]> hit = MolSearcherFactory.create(queryMol).get().search(c2);
            assertTrue(hit.isPresent());
        }
        
        
        @Test
-       public void ensureAnyBondAndAromatizationInComplexExampleWorksForSubstructureSearch() throws IOException {
+       public void ensureComplexQueryWithListsAndAnyBondsWorksForSubstructureSearch() throws IOException {
            String mol= "\n" + 
            		"  CDK     09252009303D\n" + 
            		"\n" + 
@@ -496,28 +484,16 @@ public class TestParseQueryMol {
       		    "M  ALS   1  2 F O   N   \n" + 
            		"M  END";
                     
-           Chemical c = Chemical.parse(mol);
-           try{
-        	   c.generateCoordinates();
-           }catch(Exception e){
-        	   logger.fine("recoverable error");
-           }
-           c.aromatize();
-		   assertFalse(c.toMol().isEmpty());
-		   assertFalse(c.toSmarts().isEmpty());
-           
-           
+           Chemical queryMol = Chemical.parse(mol);
+		   assertFalse(queryMol.toMol().isEmpty());
+		   assertFalse(queryMol.toSmarts().isEmpty());
+
            String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
-           Chemical c2 = Chemical.parse(mol2);
-           c2.aromatize();
-           try{
-        	   c2.generateCoordinates();
-           }catch(Exception e){
-        	   e.printStackTrace();
-           }
-		   assertFalse(c2.toMol().isEmpty());
-		   assertFalse(c2.toSmiles().isEmpty());
-           Optional<int[]> hit = MolSearcherFactory.create(c).get().search(c2);
+           Chemical targetMol = Chemical.parse(mol2);
+           targetMol.aromatize(); //test fails without aromatization of target
+		   assertFalse(targetMol.toMol().isEmpty());
+		   assertFalse(targetMol.toSmiles().isEmpty());
+           Optional<int[]> hit = MolSearcherFactory.create(queryMol).get().search(targetMol);
            assertTrue(hit.isPresent());
        }
        

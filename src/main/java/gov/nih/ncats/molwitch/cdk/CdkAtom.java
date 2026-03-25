@@ -300,9 +300,6 @@ public class CdkAtom implements Atom{
 				.map(t->t.toString())
 				.orElse(null);
 		
-//		if(dd!=nu)
-//		String value = atom.getProperty(CDKConstants.CIP_DESCRIPTOR);
-//		
 		if("R".equals(value) || "M".equals(value)) {
 			return Chirality.R;
 		}
@@ -352,9 +349,7 @@ public class CdkAtom implements Atom{
 
 	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,chirality.toString());
 			logger.info("set property");
-//	        atom.setStereoParity((atom.getStereoParity()+1)%2);
-//	        parent.getContainer().setStereoElements(new ArrayList<>());
-	        
+
 	    //simple removal
 	    }else if(chirality.equals(Chirality.Parity_Either)) {
 			logger.info("changing to 'either'");
@@ -410,8 +405,6 @@ public class CdkAtom implements Atom{
 	    	}
 	        
 	    }
-	    
-//	    parent.cahnIngoldPrelogSupplier.resetCache();
 	}
 
 	@Override
@@ -437,8 +430,6 @@ public class CdkAtom implements Atom{
 	@Override
 	public void setCharge(int charge) {
 		atom.setFormalCharge(charge);
-
-//		recomputeImplicitHydrogens();
 	}
 
 	private void recomputeImplicitHydrogens() {
@@ -456,7 +447,6 @@ public class CdkAtom implements Atom{
 		}else{
 			atom.setMassNumber(mass);
 		}
-//		recomputeImplicitHydrogens();
 	}
 
 	@Override

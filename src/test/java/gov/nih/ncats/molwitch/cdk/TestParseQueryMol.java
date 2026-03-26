@@ -527,6 +527,17 @@ public class TestParseQueryMol {
        }
 
        @Test
+       public void querySmartsFormulaDoesNotThrowWhenAtomsLackAtomicNumbers() throws IOException {
+           String smarts = "[#7,#8]~C1=c2c3c(O[Si]([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
+
+           Chemical queryChemical = Chemical.parse(smarts);
+
+           String formula = queryChemical.getFormula();
+
+           assertNotNull(formula);
+       }
+
+       @Test
        public void ensureAnyBondAndAromatizationInComplexExampleFromSmartsWorksForSubstructureSearch() throws IOException {
            String querySmarts= "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
 		   querySmarts ="C~c1c(O)c2c(O)ccc([#7,#8])c2c3C(=O)C(C)(O)Oc13";

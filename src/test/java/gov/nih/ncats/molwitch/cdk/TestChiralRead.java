@@ -290,6 +290,7 @@ public class TestChiralRead {
 			assertTrue(opChi.isPresent());
 			assertEquals(Chirality.R, opChi.get());
 	   	}
+
 		@Test
 	   	public void testAxialStereoMarkedS() throws Exception {
 			Chemical c1=Chemical.parse("\n"
@@ -564,6 +565,7 @@ public class TestChiralRead {
 			
 			assertEquals("SSSR", sdfChiral);
 	   	}
+
 		@Test
 	   	public void testSetChiralityOnUnsetCaseWorksS() throws Exception {
 			Chemical c1=Chemical.parse("\n"
@@ -671,6 +673,7 @@ public class TestChiralRead {
 			
 			assertEquals("R", sdfChiral);
 	   	}
+
 		@Test
 	   	public void testSulfoxideStereoPossible() throws Exception {
 			Chemical c1=Chemical.parse("\n" + 
@@ -696,6 +699,7 @@ public class TestChiralRead {
 			
 			assertEquals("Parity_Either", sdfChiral);
 	   	}
+
 		@Test
 	   	public void testRemoveNonDescriptHydrogensDoesntRemoveStereoInformationOnMol() throws Exception {
 
@@ -988,7 +992,6 @@ public class TestChiralRead {
 		@Test
 	   	public void testHavingBondTableOrderChangedShouldKeepSameStereo() throws Exception {
 
-			
 	   		Chemical mol=Chemical.parse("\n"
 	   				+ "   JSDraw212042310502D\n"
 	   				+ "\n"
@@ -1095,12 +1098,10 @@ public class TestChiralRead {
 	   				"  2  8  1  0  0  0  0\n" + 
 	   				"M  END");
 	   		Chemical mol2= Chemical.createFromSmiles(mol.toSmiles());
-	   		
-			
+
 			assertFalse(mol2.hasCoordinates());
 	   	}
 		
-	  	
 	  	@Test
 	   	public void testMethaneRemoveNonDescriptHydrogensMakesRightSmiles() throws Exception {
 	   		Chemical mol=Chemical.parse("\n" + 
@@ -1224,8 +1225,8 @@ public class TestChiralRead {
 			assertFalse(opChi.isPresent());
 	   	}
 
-	@Test
-	public void testSimpleChirality() throws Exception {
+		@Test
+		public void testSimpleChirality() throws Exception {
 		Chemical c1=Chemical.parse("\n" +
 				"  \n" +
 				"\n" +

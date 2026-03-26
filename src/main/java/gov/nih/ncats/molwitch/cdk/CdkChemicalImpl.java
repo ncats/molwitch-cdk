@@ -1245,7 +1245,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    Map<IAtom, Integer> nullImplicitHydrogenAtoms = new HashMap<>();
 	    List<String> nullImplicitHydrogenAtomDescriptions = new ArrayList<>();
 	    boolean has3dCoords = true;
+		boolean okToCreateAll = true;
         for(IAtom atom : container.atoms()){
+			if (atom.getAtomicNumber() == null || AtomRef.deref(atom) instanceof IQueryAtom) {
+				okToCreateAll = false;
+			}
             if(atom.getImplicitHydrogenCount() == null){
                 nullImplicitHydrogenAtoms.put(atom, null);
                 CdkAtom cdkAtom = getCdkAtomFor(atom);
@@ -1278,16 +1282,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             ));
         }
         try {
-            StereoElementFactory stereoElementFactory;
-            if(has3dCoords){
-                stereoElementFactory = StereoElementFactory.using3DCoordinates(container);
-            }else{
-                stereoElementFactory = StereoElementFactory.using2DCoordinates(container);
-            }
 
-            List<IStereoElement> stereo = stereoElementFactory.createAll();
-
-            container.setStereoElements(stereo);
+			if(okToCreateAll) {
+				StereoElementFactory stereoElementFactory =
+						has3dCoords ? StereoElementFactory.using3DCoordinates(container)
+						: StereoElementFactory.using2DCoordinates(container);
+				List<IStereoElement> stereo = stereoElementFactory.createAll();
+				container.setStereoElements(stereo);
+			} else {
+				container.setStereoElements(Collections.emptyList());
+			}
         } finally {
             for(IAtom atom : nullImplicitHydrogenAtoms.keySet()){
                 atom.setImplicitHydrogenCount(null);
@@ -1359,6 +1363,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		IAtom hAtom = null;
 		for (IAtom iAtom : container.atoms()) {
 			if(CdkUtil.isPseudoAtom(iAtom)){
+				continue;
+			}
+			if(AtomRef.deref(iAtom) instanceof IQueryAtom){
+				continue;
+			}
+			if(iAtom.getAtomicNumber() == null){
 				continue;
 			}
 			formula.addIsotope(iAtom);

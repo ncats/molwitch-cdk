@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 
+import gov.nih.ncats.molwitch.MolwitchException;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
@@ -800,5 +801,36 @@ public class TestParseQueryMol {
 		assertEquals(0, c.getAllStereocenters().size());
 		assertNotNull(c.getMass());
 	}
-	   	
+
+	@Test
+	public void parseMolAndGenerateCoordinates() throws IOException {
+		String mol = IOUtils.toString(
+				this.getClass().getResourceAsStream("/mols/K8LYW7G4RP.mol"),
+				"UTF-8"
+		);
+
+		Chemical chemFromMol = Chemical.parseMol(mol);
+
+		boolean generatedCoordsFromMol= false;
+		try {
+			chemFromMol.generateCoordinates();
+			generatedCoordsFromMol = true;
+		} catch (MolwitchException ex){
+			System.err.println("Error generating coordinates");
+		}
+		assertTrue(generatedCoordsFromMol);
+
+		String smiles = "c1c(cnc(c1C(=O)O)O)F";
+		Chemical chemFromSmiles = Chemical.parse(smiles);
+		boolean generatedCoordsFromSmiles= false;
+		try {
+			chemFromSmiles.generateCoordinates();
+			generatedCoordsFromSmiles = true;
+		} catch (MolwitchException ex){
+			System.err.println("Error generating coordinates");
+		}
+		assertTrue(generatedCoordsFromSmiles);
+	}
+
+
 }

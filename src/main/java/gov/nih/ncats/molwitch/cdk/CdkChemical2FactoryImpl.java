@@ -71,7 +71,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
 	private SmilesParser preserveAromaticSmilesParser;
 	private SmilesParser kekuleSmilesParser;
-
+	private static Logger logger = Logger.getLogger("CdkChemical2FactoryImpl");
 
 
 	public CdkChemical2FactoryImpl(){
@@ -133,7 +133,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			return kekuleSmilesParser.parseSmiles(smiles);
 		} catch (InvalidSmilesException e) {
 //			e.printStackTrace();
-			/* From the CDK smiles parser docks:
+			/* From the CDK smiles parser docs:
 			If a kekulé structure could not be assigned this is considered an error.
 			The most common example is the omission of hydrogens on aromatic nitrogens
 			(aromatic pyrrole is specified as '[nH]1cccc1' not 'n1cccc1').
@@ -144,15 +144,20 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			 */
 			try {
 				String fixed = smiles.replace("[n]", "[nH]");
-//				System.out.println("trying " + fixed);
 				return kekuleSmilesParser.parseSmiles(fixed);
 			} catch (InvalidSmilesException e2) {
-				e2.printStackTrace();
+				logger.warning("error parsing input as SMILES; will try preserveAromaticSmilesParser");
 				try {
 					return preserveAromaticSmilesParser.parseSmiles(smiles);
 				}catch(Exception e3){
+					logger.warning("error parsing input as SMILES with preserveAromaticSmilesParser; will try parsing as SMARTS");
+					try{
 						return CdkUtil.parseSmarts(smiles);
-
+					}
+					catch (Exception smartsException){
+						logger.severe("abandoning all hope of parsing " + smiles);
+						return null;
+					}
 				}
 			}
 		}
@@ -237,20 +242,20 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
     @Override
 	public ChemicalImpl create(String unknownFormattedInput) throws IOException {
-//    	System.out.println("trying to parse '"+unknownFormattedInput +"'");
+		logger.fine("going to create a Chemical from " + unknownFormattedInput);
 		if(new BufferedReader(new StringReader(unknownFormattedInput.trim())).lines().count() == 1){
 //			//only 1 line assume smarts or smiles query?
 //
 
-			if( looksLikeSmarts(unknownFormattedInput)) {
+			/*if( looksLikeSmarts(unknownFormattedInput)) {
 				return createFromSmarts(unknownFormattedInput);
-			}
+			}*/
 			//replacing logic that looked at the contents of the input for characters that defined
 			// SMARTS to instead try parsing SMILES first and if that fails, parse as SMARTS
 			try {
 				return createFromSmiles(unknownFormattedInput);
 			} catch (Exception ex) {
-				Logger.getLogger(this.getClass().getName()).info("in create, parsing as SMILES failed; going to parse as SMARTS");
+				logger.info("in create, parsing as SMILES failed; going to parse as SMARTS");
 				return createFromSmarts(unknownFormattedInput);
 			}
 		}
@@ -553,9 +558,12 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		}
 	}
 
+	//crude heuristic
 	public static boolean looksLikeSmarts(String possibleSmartsOrSmiles) {
 		if( possibleSmartsOrSmiles == null || possibleSmartsOrSmiles.length()==0) return false;
-		Pattern smartsPattern = Pattern.compile("\\[.*\\#.*\\]|\\[CX\\d\\]");
-		return smartsPattern.matcher(possibleSmartsOrSmiles).find();
+		Pattern smartsPattern =  Pattern.compile("\\[#\\d+\\]|\\[CX\\d\\]");  //Pattern.compile("\\[.*\\#.*\\]|\\[CX\\d\\]");
+		boolean smartsLike = smartsPattern.matcher(possibleSmartsOrSmiles).find();
+		Logger.getLogger("CdkChemical2FactoryImpl").info("looksLikeSmarts going to return: " + smartsLike);
+		return smartsLike;
 	}
 }

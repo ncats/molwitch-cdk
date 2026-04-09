@@ -1,23 +1,4 @@
-package gov.nih.ncats.molwitch.cdk;/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2025.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
+package gov.nih.ncats.molwitch.cdk;
 
 import gov.nih.ncats.molwitch.Chemical;
 import org.junit.Test;
@@ -25,22 +6,70 @@ import org.openscience.cdk.interfaces.IBond;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
 import static org.junit.Assert.*;
 
 public class TestAromatizeWeirdStructures {
+    private static Logger logger = Logger.getLogger("TestAromatizeWeirdStructures");
 
-    @Test
+    @Test()
     public void doesntErrorOut() throws Exception{
         Chemical c = Chemical.parse("O=C([C@H](Cc1c2ccccc2[n]c1)N)O");
         c.aromatize();
         List<IBond> unsetBonds = c.bonds().map(CdkBond::getIBondFor).filter(b-> b.getOrder() == IBond.Order.UNSET).collect(Collectors.toList());
+        logger.finest(String.format("c.toSmiles(): %s", c.toSmiles()));
         assertTrue(c.toSmiles().contains("[nH]"));
         assertTrue(unsetBonds.toString(), unsetBonds.isEmpty());
     }
-    
+
+    @Test
+    public void doesNotErrorAsMolfile() throws Exception {
+        String inputMol = "\n" +
+                "  ACCLDraw02052620062D\n" +
+                "\n" +
+                " 15 16  0  0  1  0  0  0  0  0999 V2000\n" +
+                "   14.5277   -8.9699    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   13.0536  -10.9113    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   11.4485  -10.3810    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   10.5323  -10.2847    0.0000 N   0  0  3  0  0  0  0  0  0  0  0  0\n" +
+                "   10.3411   -9.3840    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "    9.5432   -8.9234    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "    9.5432   -8.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   10.3411   -7.5415    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   11.1389   -8.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   11.1389   -8.9234    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   11.8232   -9.5394    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   12.7237   -9.3498    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   13.3396  -10.0356    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n" +
+                "   14.2416   -9.8456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                "   14.8572  -10.5310    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+                " 14  1  1  0  0  0  0\n" +
+                " 13  2  1  1  0  0  0\n" +
+                "  3 11  2  0  0  0  0\n" +
+                "  4  3  1  0  0  0  0\n" +
+                "  5  4  1  0  0  0  0\n" +
+                "  5 10  1  0  0  0  0\n" +
+                "  6  5  2  0  0  0  0\n" +
+                "  7  6  1  0  0  0  0\n" +
+                "  8  7  2  0  0  0  0\n" +
+                "  9  8  1  0  0  0  0\n" +
+                " 10  9  2  0  0  0  0\n" +
+                " 11 10  1  0  0  0  0\n" +
+                " 12 11  1  0  0  0  0\n" +
+                " 13 12  1  0  0  0  0\n" +
+                " 14 13  1  0  0  0  0\n" +
+                " 15 14  2  0  0  0  0\n" +
+                "M  END\n";
+        Chemical c = Chemical.parseMol(inputMol);
+        c.aromatize();
+        List<IBond> unsetBonds = c.bonds().map(CdkBond::getIBondFor).filter(b-> b.getOrder() == IBond.Order.UNSET).collect(Collectors.toList());
+        assertTrue(c.toSmiles().contains("[nH]"));
+        assertTrue(unsetBonds.isEmpty());
+    }
+
     @Test
     public void testKekulize5MemberCopy() throws IOException {
         String m = "\n"
@@ -67,7 +96,6 @@ public class TestAromatizeWeirdStructures {
         chem.aromatize();
         chem=chem.copy();
         String molb = chem.toMol();
-        System.out.println(molb);
         assertTrue("Aromatized 5 membered ring should have aromatic bonds",
                 molb.contains("  3  4  4  0  0  0  0\n"
                         + "  4  5  4  0  0  0  0\n"
@@ -173,7 +201,7 @@ public class TestAromatizeWeirdStructures {
                 "M  END";
 
         String key = Chemical.parseMol(mol).toInchi().getKey();
-        System.out.println(key);
+        logger.fine(key);
         assertNotNull(key);
     }
 }

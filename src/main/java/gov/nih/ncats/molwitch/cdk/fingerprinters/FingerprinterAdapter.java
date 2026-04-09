@@ -38,7 +38,6 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IBond.Order;
-import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 import gov.nih.ncats.common.sneak.Sneak;
@@ -161,9 +160,7 @@ class FingerprinterAdapter implements Fingerprinter {
 		// IF IAtomContainer is a query container, it simply doesn't produce
 		// ANY fingerprint, and something needs to be done.
 
-		if(iac instanceof QueryAtomContainer) {
-		    iac = CdkUtil.getSimplifiedContainer(iac);
-		}
+		iac = CdkUtil.getSimplifiedContainer(iac);
 		
 		try {
 		    IBitFingerprint bitFingerprint = delegate.getBitFingerprint(iac);

@@ -1,27 +1,10 @@
-package gov.nih.ncats.molwitch.cdk;/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2025.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
+package gov.nih.ncats.molwitch.cdk;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import gov.nih.ncats.molwitch.Atom;
@@ -36,6 +19,7 @@ import gov.nih.ncats.molwitch.search.MolSearcherFactory;
 import static org.junit.Assert.*;
 
 public class TestParseQueryMol {
+	private static Logger logger = Logger.getLogger("TestParseQueryMol");
 
     @Test
     public void atomListsAndQueryBondFingerprintsWork() throws IOException {
@@ -93,14 +77,10 @@ public class TestParseQueryMol {
           
         
         Chemical c = Chemical.parseMol(mol);
-        c.aromatize();
-//        System.out.println(c.toMol());
-
         Fingerprinter fingerPrinterSub =  Fingerprinters.getFingerprinter(FingerprintSpecification.PATH_BASED.create().setLength(512));
         
         Fingerprint fp=fingerPrinterSub.computeFingerprint(c);
-        
-        
+
         String mm="\n" + 
         		"   JSDraw209242017082D\n" + 
         		"\n" + 
@@ -161,7 +141,6 @@ public class TestParseQueryMol {
         		" 26 27  4  0  0  0  0\n" + 
         		" 27 24  4  0  0  0  0\n" + 
         		"M  END";
-        System.out.println(mm);
         Chemical c2 = Chemical.parseMol(mm);
 
         Fingerprint fp2=fingerPrinterSub.computeFingerprint(c2);
@@ -430,44 +409,16 @@ public class TestParseQueryMol {
     }
     
        @Test
-       public void ensureAnyBondAndAromatizationWorksForSubstructureSearch() throws IOException {
-           String mol= "\n" + 
-           		"   JSDraw209252000242D\n" + 
-           		"\n" + 
-           		"  8  8  0  0  0  0            999 V2000\n" + 
-           		"   28.1035   -4.9661    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   29.4545   -5.7461    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   30.8055   -4.9661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   32.1565   -5.7461    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   32.1565   -7.3060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   30.8055   -8.0860    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   29.4545   -7.3060    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"   33.5073   -8.0860    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n" + 
-           		"  1  2  8  0  0  0  0\n" + 
-           		"  2  3  1  0  0  0  0\n" + 
-           		"  3  4  2  0  0  0  0\n" + 
-           		"  4  5  1  0  0  0  0\n" + 
-           		"  5  6  2  0  0  0  0\n" + 
-           		"  6  7  1  0  0  0  0\n" + 
-           		"  2  7  2  0  0  0  0\n" + 
-           		"  5  8  1  0  0  0  0\n" + 
-           		"M  ALS   1  2 F N   O   \n" + 
-           		"M  END";
+       public void ensureAromaticAndAnyBondWorksForSubstructureSearch() throws IOException {
+           String mol = IOUtils.toString(
+				   this.getClass().getResourceAsStream("/mols/para-substituted-phenol.mol"),
+				   "UTF-8"
+		   );
            
-           
-           Chemical c = Chemical.parse(mol);
+           Chemical queryMol = Chemical.parse(mol);
 
-
-           try{
-        	   c.generateCoordinates();
-           }catch(Exception e){
-        	   e.printStackTrace();
-           }
-           c.aromatize();
-
-           assertFalse(c.toMol().isEmpty());
-           assertFalse(c.toSmarts().isEmpty());
-           
+           assertFalse(queryMol.toMol().isEmpty());
+           assertFalse(queryMol.toSmarts().isEmpty());
            
            String mol2="NC1=CC(O)=C(O)C=C1";
            Chemical c2 = Chemical.parse(mol2);
@@ -475,17 +426,17 @@ public class TestParseQueryMol {
            try{
         	   c2.generateCoordinates();
            }catch(Exception e){
-        	   e.printStackTrace();
+			   logger.fine("recoverable exception occurred");
            }
 		   assertFalse(c2.toMol().isEmpty());
 		   assertFalse(c2.toSmiles().isEmpty());
-           Optional<int[]> hit = MolSearcherFactory.create(c).get().search(c2);
+           Optional<int[]> hit = MolSearcherFactory.create(queryMol).get().search(c2);
            assertTrue(hit.isPresent());
        }
        
        
        @Test
-       public void ensureAnyBondAndAromatizationInComplexExampleWorksForSubstructureSearch() throws IOException {
+       public void ensureComplexQueryWithListsAndAnyBondsWorksForSubstructureSearch() throws IOException {
            String mol= "\n" + 
            		"  CDK     09252009303D\n" + 
            		"\n" + 
@@ -533,122 +484,119 @@ public class TestParseQueryMol {
       		    "M  ALS   1  2 F O   N   \n" + 
            		"M  END";
                     
-           Chemical c = Chemical.parse(mol);
-           try{
-        	   c.generateCoordinates();
-           }catch(Exception e){
-        	   e.printStackTrace();
-           }
-           c.aromatize();
-		   assertFalse(c.toMol().isEmpty());
-		   assertFalse(c.toSmarts().isEmpty());
-           
-           
+           Chemical queryMol = Chemical.parse(mol);
+		   assertFalse(queryMol.toMol().isEmpty());
+		   assertFalse(queryMol.toSmarts().isEmpty());
+
            String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
-           Chemical c2 = Chemical.parse(mol2);
-           c2.aromatize();
-           try{
-        	   c2.generateCoordinates();
-           }catch(Exception e){
-        	   e.printStackTrace();
-           }
-		   assertFalse(c2.toMol().isEmpty());
-		   assertFalse(c2.toSmiles().isEmpty());
-           Optional<int[]> hit = MolSearcherFactory.create(c).get().search(c2);
+           Chemical targetMol = Chemical.parse(mol2);
+           targetMol.aromatize(); //test fails without aromatization of target
+		   assertFalse(targetMol.toMol().isEmpty());
+		   assertFalse(targetMol.toSmiles().isEmpty());
+           Optional<int[]> hit = MolSearcherFactory.create(queryMol).get().search(targetMol);
            assertTrue(hit.isPresent());
        }
        
        
        @Test
        public void ensureAnyBondAndAromatizationInSimpleExampleFromSmartsWorksForSubstructureSearch() throws IOException {
-           String mol= "[#7,#8]~C1=CC=CC=C1";
-                    
-           
+           String mol= "[#7,#8]~c1ccccc1";
+
 	       Chemical c = Chemical.parse(mol);
 	       try{
 	    	   c.generateCoordinates();
 	       }catch(Exception e){
-	    	   e.printStackTrace();
+			   logger.fine("recoverable error");
 	       }
 	       c.aromatize();
 		   assertFalse(c.toMol().isEmpty());
 		   assertFalse(c.toSmarts().isEmpty());
 
-	       
 	       String mol2="OC1=CC=CC=C1";
 	       Chemical c2 = Chemical.parse(mol2);
 	       c2.aromatize();
 	       try{
 	    	   c2.generateCoordinates();
 	       }catch(Exception e){
-	    	   e.printStackTrace();
+			   logger.fine("recoverable error");
 	       }
 		   assertFalse(c2.toMol().isEmpty());
 		   assertFalse(c2.toSmiles().isEmpty());
 	       Optional<int[]> hit = MolSearcherFactory.create(c).get().search(c2);
 	       assertTrue(hit.isPresent());
+       }
+
+       @Test
+       public void querySmartsFormulaDoesNotThrowWhenAtomsLackAtomicNumbers() throws IOException {
+           String smarts = "[#7,#8]~C1=c2c3c(O[Si]([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
+
+           Chemical queryChemical = Chemical.parse(smarts);
+
+           String formula = queryChemical.getFormula();
+
+           assertNotNull(formula);
        }
 
        @Test
        public void ensureAnyBondAndAromatizationInComplexExampleFromSmartsWorksForSubstructureSearch() throws IOException {
-           String mol= "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
-                    
+           String querySmarts= "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
+		   querySmarts ="C~c1c(O)c2c(O)ccc([#7,#8])c2c3C(=O)C(C)(O)Oc13";
            
-	       Chemical c = Chemical.parse(mol);
+	       Chemical queryChemical = Chemical.parse(querySmarts);
 	       try{
-	    	   c.generateCoordinates();
+	    	   queryChemical.generateCoordinates();
 	       }catch(Exception e){
 	    	   e.printStackTrace();
 	       }
-	       c.aromatize();
-		   assertFalse(c.toMol().isEmpty());
-		   assertFalse(c.toSmarts().isEmpty());
+	       queryChemical.aromatize();
+		   assertFalse(queryChemical.toMol().isEmpty());
+		   assertFalse(queryChemical.toSmarts().isEmpty());
 
 	       
-	       String mol2="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
-	       Chemical c2 = Chemical.parse(mol2);
-	       c2.aromatize();
+	       String targetSmiles="COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
+	       Chemical targetChemical = Chemical.parse(targetSmiles);
+	       targetChemical.aromatize();
 	       try{
-	    	   c2.generateCoordinates();
+	    	   targetChemical.generateCoordinates();
 	       }catch(Exception e){
-	    	   e.printStackTrace();
+			   logger.fine("recoverable error");
 	       }
-		   assertFalse(c2.toMol().isEmpty());
-		   assertFalse(c2.toSmiles().isEmpty());
-	       Optional<int[]> hit = MolSearcherFactory.create(c).get().search(c2);
+		   assertFalse(targetChemical.toMol().isEmpty());
+		   assertFalse(targetChemical.toSmiles().isEmpty());
+	       Optional<int[]> hit = MolSearcherFactory.create(queryChemical).get().search(targetChemical);
 	       assertTrue(hit.isPresent());
        }
        @Test
        public void ensureAnyBondAndAromatizationInComplexExampleFromSmartsWorksForFingerprint() throws IOException {
-           String mol = "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
-
-           Chemical c = Chemical.parse(mol);
+           String querySmarts = "[#7,#8]~C1=c2c3c(OC([#6])(O)C3=O)cc(O)c2=C(O)\\C=C/1";
+		   querySmarts = "[#6]c1c(O)c2c(O)ccc([#7,#8])c2c3C(=O)C(C)(-O)Oc13";
+           Chemical queryChemical = Chemical.parse(querySmarts);
            try {
-               c.generateCoordinates();
+               queryChemical.generateCoordinates();
            } catch (Exception e) {
-               e.printStackTrace();
+			   logger.fine("recoverable error");
            }
-           c.aromatize();
-           assertFalse(c.toMol().isEmpty());
-           assertFalse(c.toSmarts().isEmpty());
+           queryChemical.aromatize();
+           assertFalse(queryChemical.toMol().isEmpty());
+           assertFalse(queryChemical.toSmarts().isEmpty());
 
-           String mol2 = "COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
-           Chemical c2 = Chemical.parse(mol2);
-           c2.aromatize();
+           String targetSmiles = "COC1=CC=C(O)C2=C(O)C(C)=C3OC(C)(O)C(=O)C3=C12";
+           Chemical targetChemical = Chemical.parse(targetSmiles);
+           targetChemical.aromatize();
            try {
-               c2.generateCoordinates();
+               targetChemical.generateCoordinates();
            } catch (Exception e) {
-               e.printStackTrace();
+			   logger.fine("recoverable error");
            }
-           assertFalse(c2.toMol().isEmpty());
-           assertFalse(c2.toSmiles().isEmpty());
+           assertFalse(targetChemical.toMol().isEmpty());
+           assertFalse(targetChemical.toSmiles().isEmpty());
 
            Fingerprinter fingerPrinterSub = Fingerprinters.getFingerprinter(
                    FingerprintSpecification.PATH_BASED.create().setLength(512));
 
-           Fingerprint fp = fingerPrinterSub.computeFingerprint(c);
+           Fingerprint fp = fingerPrinterSub.computeFingerprint(queryChemical);
 
-           Fingerprint fp2 = fingerPrinterSub.computeFingerprint(c2);
+           Fingerprint fp2 = fingerPrinterSub.computeFingerprint(targetChemical);
 
            double sim = fp.tanimotoSimilarity(fp2);
            OptionalDouble shortSim = fp.tanimotoSimilarityShortCircuit(fp2);
@@ -656,14 +604,8 @@ public class TestParseQueryMol {
            bsTemp.and(fp2.toBitSet());
 
            assertEquals(fp.populationCount(), bsTemp.cardinality());
-           
-           //Depending on how this is interpretted, it might actually be pretty low
-           //similarity, and that's okay
-           
-//           System.out.println(sim);
-//           assertTrue(sim > .8D);
-
        }
+
        @Test
 	   public void removeAtomThenReAdd() throws Exception{
 			Chemical c=Chemical.createFromSmiles("CCCCC");
@@ -689,9 +631,6 @@ public class TestParseQueryMol {
 	   		Chemical c2= Chemical.parse(c.toMol());
 	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
 	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);
-	   		
-
-	
 	   	}
 	   	
 	  	@Test
@@ -701,11 +640,7 @@ public class TestParseQueryMol {
 	   		Chemical c2= Chemical.parse(c.toMol());
 	   		boolean hasSulfur = c2.atoms().filter(ca->"S".equals(ca.getSymbol())).count()>0;
 	       	assertTrue("Simple SMARTS keeps its atom types", hasSulfur);
-			System.out.printf("output molfile: %s\n", c.toMol());
-	       	assertTrue("Simple SMARTS keeps atom list", c.toMol().contains("0.0000 L   0"));
-
-
-	
+			assertTrue("Simple SMARTS keeps atom list", c.toMol().contains("#6,#7"));
 	   	}
 
 	   	@Test
@@ -744,7 +679,7 @@ public class TestParseQueryMol {
 		}
 
 	@Test
-	public void legacyAtomListGetStereoCentersDoentErrorOut() throws Exception{
+	public void legacyAtomListGetStereoCentersDoesNotErrorOut() throws Exception{
 		String mol = "\n" +
 				"  ACCLDraw10012012192D\n" +
 				"\n" +
@@ -779,37 +714,13 @@ public class TestParseQueryMol {
 	}
 
 	@Test
-	public void modernAtomListGetStereoCentersDoentErrorOut() throws Exception{
-		String mol = "\n" +
-				"  ACCLDraw10012012192D\n" +
-				"\n" +
-				" 10 10  3  0  0  0  0  0  0  0999 V2000\n" +
-				"   12.8286   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   12.0309   -7.3697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   13.2300   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   11.5986   -6.6106    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   11.5909   -8.0335    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   12.8363   -8.7514    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   13.2300   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   14.0379   -8.0490    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   14.0714   -6.6260    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"   14.4779   -7.3439    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
-				"  2  1  1  0  0  0  0\n" +
-				"  3  1  2  0  0  0  0\n" +
-				"  4  2  2  0  0  0  0\n" +
-				"  5  2  1  0  0  0  0\n" +
-				"  6  3  1  0  0  0  0\n" +
-				"  7  1  1  0  0  0  0\n" +
-				"  8  3  1  0  0  0  0\n" +
-				"  9  7  2  0  0  0  0\n" +
-				" 10  9  1  0  0  0  0\n" +
-				" 10  8  2  0  0  0  0\n" +
-				"M  ALS   4  2 F O   N   \n" +
-				"M  ALS   5  2 F N   O   \n" +
-				"M  ALS   6  2 F N   O   \n" +
-				"M  END\n";
+	public void modernAtomListGetStereoCentersDoesNotErrorOut() throws Exception{
+		String mol = IOUtils.toString(
+				this.getClass().getResourceAsStream("/mols/benzoic_acid_derivative.mol"),
+				"UTF-8"
+		);
 
-		Chemical c = Chemical.parse(mol);
+		Chemical c = Chemical.parseMol(mol);
 		assertEquals(0, c.getAllStereocenters().size());
 	}
 

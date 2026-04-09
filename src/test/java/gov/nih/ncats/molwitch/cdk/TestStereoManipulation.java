@@ -110,7 +110,7 @@ public class TestStereoManipulation {
     }
 
     @Test
-    public void testpermuteEpimers() throws IOException {
+    public void testPermuteEpimers() throws IOException {
         List<TestMol> testMols = generateEpimericTestMolSet();
         testMols.forEach(m-> {
             System.out.printf("Starting test for %s\n", m.getMolfileName());
@@ -209,13 +209,13 @@ public class TestStereoManipulation {
     }
     private List<MolEquivalenceTestData> generateEquivalenceTestData() throws IOException {
         return Arrays.asList(
-                new MolEquivalenceTestData(Chemical.parseMol("CCCCCNC"),
-                        Chemical.parseMol("CCCCCNC"), true),
-                new MolEquivalenceTestData(Chemical.parseMol("CCCCCNC"), Chemical.parseMol("CCCCCNCC"), false),
-                new MolEquivalenceTestData(Chemical.parseMol("CC(O)CCCNC"), Chemical.parseMol("CC(O)CCCNC"), true),
-                new MolEquivalenceTestData(Chemical.parseMol("C[C@H](O)CCCNC"), Chemical.parseMol("C[C@@H](O)CCCNC"), false),
-                new MolEquivalenceTestData(Chemical.parseMol("C[C@@H](O)CCCNC"), Chemical.parseMol("C[C@H](O)CCCNC"), false),
-                new MolEquivalenceTestData(Chemical.parseMol("C[C@@H](O)CCOCNC"), Chemical.parseMol("C[C@@H](O)CCOCNC"), true)
+                new MolEquivalenceTestData(Chemical.parse("CCCCCNC"),
+                        Chemical.parse("CCCCCNC"), true),
+                new MolEquivalenceTestData(Chemical.parse("CCCCCNC"), Chemical.parse("CCCCCNCC"), false),
+                new MolEquivalenceTestData(Chemical.parse("CC(O)CCCNC"), Chemical.parse("CC(O)CCCNC"), true),
+                new MolEquivalenceTestData(Chemical.parse("C[C@H](O)CCCNC"), Chemical.parse("C[C@@H](O)CCCNC"), false),
+                new MolEquivalenceTestData(Chemical.parse("C[C@@H](O)CCCNC"), Chemical.parse("C[C@H](O)CCCNC"), false),
+                new MolEquivalenceTestData(Chemical.parse("C[C@@H](O)CCOCNC"), Chemical.parse("C[C@@H](O)CCOCNC"), true)
         );
     }
 }

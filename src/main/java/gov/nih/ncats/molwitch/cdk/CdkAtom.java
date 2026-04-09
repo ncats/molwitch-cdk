@@ -1,23 +1,3 @@
-/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2025.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
 
 package gov.nih.ncats.molwitch.cdk;
 
@@ -35,8 +15,6 @@ import java.util.regex.Pattern;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.SingleElectron;
@@ -55,15 +33,15 @@ import gov.nih.ncats.molwitch.Bond.BondType;
 import gov.nih.ncats.molwitch.Bond.Stereo;
 import gov.nih.ncats.molwitch.Chirality;
 import uk.ac.ebi.beam.Element;
+import java.util.logging.Logger;
 
 public class CdkAtom implements Atom{
 	
 	private static final Pattern validLabelPattern = Pattern.compile("^R\\d+$");
 	 
-
 	private static IsotopeFactory isotopeFactory;
 
-	private static final Logger logger = LogManager.getLogger(CdkAtom.class);
+	private static Logger logger = Logger.getLogger("CdkAtom");
 
 	static {
 		try {
@@ -168,6 +146,12 @@ public class CdkAtom implements Atom{
 
 	@Override
 	public String getSymbol() {
+		if(isPseudoAtom()) {
+			Optional<String> alias = getAlias();
+			if(alias.isPresent() && !alias.get().isEmpty()) {
+				return alias.get();
+			}
+		}
 		return atom.getSymbol();
 	}
 	
@@ -309,16 +293,13 @@ public class CdkAtom implements Atom{
 	public Chirality getChirality() {
 		if(!parent.cahnIngoldPrelogSupplier.hasRun()) {
 			//forces running CIP rules
-		
-			parent.getTetrahedrals();
+			parent.cahnIngoldPrelogSupplier.get();
+			//parent.getTetrahedrals();
 		}
  		String value= Optional.ofNullable(atom.getProperty(CDKConstants.CIP_DESCRIPTOR))
 				.map(t->t.toString())
 				.orElse(null);
 		
-//		if(dd!=nu)
-//		String value = atom.getProperty(CDKConstants.CIP_DESCRIPTOR);
-//		
 		if("R".equals(value) || "M".equals(value)) {
 			return Chirality.R;
 		}
@@ -343,7 +324,7 @@ public class CdkAtom implements Atom{
 
 	@Override
 	public void setChirality(Chirality chirality) {
-		logger.info(String.format("setChirality called on atom %s, changing chirality to %s",
+		logger.fine(String.format("setChirality called on atom %s, changing chirality to %s",
 				this, chirality));
 	    Chirality chir=getChirality();
 	    if(chir==chirality)return;
@@ -368,9 +349,7 @@ public class CdkAtom implements Atom{
 
 	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,chirality.toString());
 			logger.info("set property");
-//	        atom.setStereoParity((atom.getStereoParity()+1)%2);
-//	        parent.getContainer().setStereoElements(new ArrayList<>());
-	        
+
 	    //simple removal
 	    }else if(chirality.equals(Chirality.Parity_Either)) {
 			logger.info("changing to 'either'");
@@ -426,8 +405,6 @@ public class CdkAtom implements Atom{
 	    	}
 	        
 	    }
-	    
-//	    parent.cahnIngoldPrelogSupplier.resetCache();
 	}
 
 	@Override
@@ -453,8 +430,6 @@ public class CdkAtom implements Atom{
 	@Override
 	public void setCharge(int charge) {
 		atom.setFormalCharge(charge);
-
-//		recomputeImplicitHydrogens();
 	}
 
 	private void recomputeImplicitHydrogens() {
@@ -472,7 +447,6 @@ public class CdkAtom implements Atom{
 		}else{
 			atom.setMassNumber(mass);
 		}
-//		recomputeImplicitHydrogens();
 	}
 
 	@Override

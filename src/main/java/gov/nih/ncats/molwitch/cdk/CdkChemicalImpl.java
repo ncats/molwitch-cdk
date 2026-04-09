@@ -49,7 +49,6 @@ import javax.vecmath.Tuple2d;
 
 import gov.nih.ncats.molwitch.inchi.InChiResult;
 import gov.nih.ncats.molwitch.inchi.Inchi;
-import org.apache.logging.log4j.LogManager;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.CDKConstants;
@@ -74,6 +73,7 @@ import org.openscience.cdk.interfaces.IBond.Order;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.interfaces.IDoubleBondStereochemistry;
 import org.openscience.cdk.interfaces.IMolecularFormula;
+import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.interfaces.IRing;
 import org.openscience.cdk.interfaces.IRingSet;
 import org.openscience.cdk.interfaces.IStereoElement;
@@ -81,10 +81,8 @@ import org.openscience.cdk.interfaces.ITetrahedralChirality;
 import org.openscience.cdk.interfaces.ITetrahedralChirality.Stereo;
 import org.openscience.cdk.isomorphism.matchers.Expr;
 import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
-import org.openscience.cdk.isomorphism.matchers.IQueryAtomContainer;
 import org.openscience.cdk.isomorphism.matchers.IQueryBond;
 import org.openscience.cdk.isomorphism.matchers.QueryAtom;
-import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.cdk.isomorphism.matchers.QueryBond;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.ringsearch.AllRingsFinder;
@@ -121,6 +119,7 @@ import gov.nih.ncats.molwitch.MolwitchException;
 import gov.nih.ncats.molwitch.SGroup;
 import gov.nih.ncats.molwitch.SGroup.SGroupBracket;
 import gov.nih.ncats.molwitch.SGroup.SGroupType;
+import uk.ac.ebi.beam.Element;
 import gov.nih.ncats.molwitch.Stereocenter;
 import gov.nih.ncats.molwitch.TetrahedralChirality;
 import gov.nih.ncats.molwitch.isotopes.Isotope;
@@ -130,7 +129,7 @@ import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import static org.openscience.cdk.geometry.cip.CIPToolMod.getSizeOfLargestRingSystem;
 
 public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
-
+	private static final Logger logger = Logger.getLogger("CdkChemicalImpl");
 
 	private final ConcurrentHashMap<IAtom, CdkAtom> atoms = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<IBond, CdkBond> bonds = new ConcurrentHashMap<>();
@@ -138,15 +137,16 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	private IAtomContainer container;
 	
 	private boolean isAromatic;
-	private static IChemObjectBuilder CHEM_OBJECT_BUILDER = SilentChemObjectBuilder.getInstance();
-	private CDKHydrogenAdder hydrogenAdder;
+	private static final IChemObjectBuilder CHEM_OBJECT_BUILDER = SilentChemObjectBuilder.getInstance();
+	private final CDKHydrogenAdder hydrogenAdder;
+
+	private static final String EITHER_STEREO ="EITHER";
 
 	//this parameter allows us to control whether to use the newer (more accurate but prohibitively slow in some complex
 	// chemical systems) or the older (faster but incorrect, in some cases) methods of atom labelling.
 	// The default value is 7, a guess and a setter allows a calling routine to change this cutoff
 	private static int complexityCutoff = 7;
 
-	private static final org.apache.logging.log4j.Logger logger = LogManager.getLogger(CdkChemicalImpl.class);
 	public static int getComplexityCutoff() {
 		return CdkChemicalImpl.complexityCutoff;
 	}
@@ -167,14 +167,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	//  this should typically be set to values < 10
 	private static int maxUndefinedStereoCenters = 5;
 
-//	CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(SilentChemObjectBuilder.getInstance());
-
-    Map<Integer, Map<Integer, CdkBond>> bondMap = new HashMap<>();
-
-    private final Aromaticity      aromaticity = new Aromaticity(ElectronDonation.daylight(), Cycles.or(Cycles.all(), Cycles.all(6)));
+    private final Aromaticity aromaticity = new Aromaticity(ElectronDonation.daylight(), Cycles.or(Cycles.all(), Cycles.all(6)));
     
-    private final static int[] mostStable = new int[119];
-    private final static BitSet cdkMissing = new BitSet();
+    private static final int[] mostStable = new int[119];
+	private static final BitSet cdkMissing = new BitSet();
 
 	private boolean deepChirality = true;
 
@@ -232,7 +228,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     	try {
     		percieveAtomTypeAndConfigureNonQueryAtoms();
     	}catch(CDKException e) {
-    		
+			//we want execution to continue
     	}
     	
     	return 1;
@@ -246,25 +242,22 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             makeStereoElms() ;
         }catch(Exception e) {
             //TODO: log exception here. It usually happens because of query atoms
+			logger.warning(String.format("error calling makeStereoElms: %s", e.getMessage()));
         }
             withModifiedForm(c->{
                CdkChemicalImpl cimp = (CdkChemicalImpl) c.getImpl();
-//               cimp.
-               
                //Due to a bug in CDK, this doesn't work as expected
                //CIPTool.label(cimp.getContainer());
-               //We currently have to use a modified form for now
+               //   We currently have to use a modified form for now
 				if( isComplex) {
-					logger.trace("This molecule is considered complex");
 					CIPTool.label(cimp.getContainer());
 				} else {
-					logger.trace("This molecule is considered NOT complex");
 					try {
 						//The call to label generates an Exception down in the bowels of CDK for *some* structures.
 						// trapping it in a try/catch allows the process to continue
 						CIPToolMod.label(cimp.getContainer());
 					} catch (NoSuchAtomException ex) {
-						logger.warn("Error in call to CIPToolMod.label. Processing will continue");
+						logger.warning("Error in call to CIPToolMod.label. Processing will continue");
 					}
 				}
 
@@ -297,9 +290,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                return 1;
                
             });
-//            CIPTool.label(container);
-//	    	container;
-	    	
+
 	    	this.doWithQueryFixes(()->{
 	    	Stereocenters  centers   = Stereocenters.of(container);
 	    	List<Integer> potentialSet = new ArrayList<>();
@@ -309,8 +300,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					case Non:
 						break;
 					case Para:
-//						System.out.println("H");
-//						break;
 					case Potential:
 						IAtom ai3=container.getAtom(i);
 						// This is a weird kind of case where it really depends
@@ -334,13 +323,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 							
 							boolean hasStereo = cat.getBonds().stream()
 					        .filter(b->b.getBondType().equals(BondType.SINGLE))
-					        .filter(b->!b.getStereo().equals(Bond.Stereo.NONE))
-					        .findAny().isPresent();
+					        .anyMatch(b->!b.getStereo().equals(Bond.Stereo.NONE));
 							if(!hasStereo) {
 								potentialSet.add(i);
 								undefinedSet.add(i);
 								if(!deepChirality) {
-									container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+									container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, EITHER_STEREO);
 								}
 							}
 						}
@@ -355,10 +343,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 							//we have to go through the container because some atom implementations
                             //throw unsupport operation exceptions if we ask them for their bonds
 							for(IBond ib:container.getConnectedBondsList(ai)){
-								if(!Order.SINGLE.equals(ib.getOrder()) 
-										
-//								&& !Order.DOUBLE.equals(ib.getOrder())
-										){
+								if(!Order.SINGLE.equals(ib.getOrder())){
 									bailout=true;
 									break;
 								}								
@@ -368,10 +353,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 								// axial cases are a little weird here
 								// in general CDK marks all SP2-hybrid entries in rings
 								// of < 9 as true stereocenters. I don't know why.
-								
-//								System.out.println("It's real but ...");
-//								System.out.println(centers.elementType(i) + ":" + centers.stereocenterType(i) + ":" + ai.getSymbol());
-								
+
 								continue;
 							}
 							if("N".equals(ai.getSymbol())){
@@ -381,7 +363,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 								}
 							}
 							
-							container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+							container.getAtom(i).setProperty(CDKConstants.CIP_DESCRIPTOR, EITHER_STEREO);
 							undefinedSet.add(i);
 						}
 						break;
@@ -390,14 +372,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    		}
 	    	}
 
-				/*logger.trace(String.format("number of potential centers: %d; number of undefined center: %d\n",
-						potentialSet.size(), undefinedSet.size()));*/
 	    	//TODO fix for potential cases
-//	    	container.getAtom(i);
-	    	
-//	    	BitSet.valueOf(null);
-	    	
-	    	
+
 	    	if(deepChirality && !potentialSet.isEmpty() && undefinedSet.size() <= maxUndefinedStereoCenters) {
 	    		CdkChemicalImpl cimp2=this.deepCopy();
 	    		cimp2.setDeepChirality(false);
@@ -408,7 +384,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    		cimp2.setDirty();
 					BitSet bs= BitSet.valueOf(new long[] {ii});
 		    		for(int ks=0;ks<undefinedSet.size();ks++) {
-	//	    			int rs = Integer.
 		    			if(bs.get(ks)) {
 		    				c22.getAtom(undefinedSet.get(ks))
 		    				.setChirality(Chirality.R);
@@ -419,24 +394,23 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    		}
 		    		for(int ks=0;ks<undefinedSet.size();ks++) {
 		    			Chirality c=c22.getAtom(undefinedSet.get(ks)).getChirality();
-//		    			System.out.print(c.toString());
+						//logger.fine(c.toString());
 		    			if(c.isDefined()) {
 		    				isDefinable.add(undefinedSet.get(ks));
 		    			}
 		    		}
-//		    		System.out.println();
 		    		if(isDefinable.size()==undefinedSet.size()) {
 		    			break;
 		    		}
 		    	}
 		    	for(int pi:potentialSet) {
 		    		if(isDefinable.contains(pi)) {
-		    			container.getAtom(pi).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");	
+		    			container.getAtom(pi).setProperty(CDKConstants.CIP_DESCRIPTOR, EITHER_STEREO);
 		    		}
 		    	}	    
 	    	} else {
 				for(int pi:potentialSet) {
-					container.getAtom(pi).setProperty(CDKConstants.CIP_DESCRIPTOR, "EITHER");
+					container.getAtom(pi).setProperty(CDKConstants.CIP_DESCRIPTOR, EITHER_STEREO);
 				}
 			}
 	    	
@@ -465,13 +439,11 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 					}
 					return 1;
 				} catch (CDKException | IllegalArgumentException e) {
-					/*logger.trace(String.format("Error processing rigs in molecule with formula %s (%s; ring size limit %d)",
-							this.getFormula(), e.getMessage(), Math.min(container.getAtomCount(),12)));*/
+					logger.warning(String.format("Error processing rigs in molecule with formula %s (%s; ring size limit %d)",
+							this.getFormula(), e.getMessage(), Math.min(container.getAtomCount(),12)));
 					return 0;
 				}
-		    	
 
-		
     });
 
 
@@ -484,13 +456,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	}
 	public CdkChemicalImpl(IAtomContainer container, ChemicalSource source) {
 
-//		for(int i=0; i< container.getAtomCount(); i++){
-//			IAtom a = container.getAtom(i);
-//			if(a.getSymbol().startsWith("_R")){
-//				container.setAtom(i, new PseudoAtom(a));
-//			}
-//		}
-	    if(!(container instanceof IQueryAtomContainer)){
+	    if(true){
 	        boolean isQuery =false;
 	        for(IAtom a : container.atoms()){
 	            if(AtomRef.deref(a) instanceof IQueryAtom){
@@ -505,9 +471,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
                         break;
                     }
                 }
-            }
-	        if(isQuery){
-	            container = new QueryAtomContainer(container, CHEM_OBJECT_BUILDER);
             }
         }
 		this.container = container;
@@ -526,7 +489,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		for(Atom a : s.getPeripheralAtoms()) {
 		    if(a==null)continue;
 		    a=getAtom(a.getAtomIndexInParent());
-//		    System.out.println("A:"+a);
 			for(Bond b : a.getBonds()) {
 				gov.nih.ncats.molwitch.Bond.Stereo oldStereo = b.getStereo();
 				gov.nih.ncats.molwitch.Bond.Stereo newStereo = oldStereo.flip();
@@ -542,7 +504,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		for(Atom a : s.getPeripheralAtoms()) {
 			if(a==null)continue;
 			a=getAtom(a.getAtomIndexInParent());
-//		    System.out.println("A:"+a);
 			for(Bond b : a.getBonds()) {
 				gov.nih.ncats.molwitch.Bond.Stereo oldStereo = b.getStereo();
 				gov.nih.ncats.molwitch.Bond.Stereo newStereo = oldStereo.flip();
@@ -579,12 +540,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				Optional<CdkChemicalImpl> clone2 = createChiralClone(potentialChiralCenter, Bond.Stereo.DOWN);
 				if( clone2.isPresent()) results.add(new Chemical(clone2.get()));
 			}
-
-			/*logger.info(String.format("chirality for atom at x %f.2 y %f.2, %s %s",
-			potentialChiralCenter.getCenterAtom().getAtomCoordinates().getX(),
-					potentialChiralCenter.getCenterAtom().getAtomCoordinates().getY(),
-					potentialChiralCenter.getCenterAtom().getSymbol(),
-			potentialChiralCenter.getChirality()));*/
 		}
 		return results;
 	}
@@ -592,7 +547,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	@Override
 	public List<Chemical> permuteEpimersAndEnantiomers() {
 		List<Chemical> epimers = permuteEpimers();
-		if( epimers.size()>0) {
+		if( !epimers.isEmpty()) {
 			return epimers;
 		}
 
@@ -615,7 +570,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				.filter(b->b.getStereo().equals(Bond.Stereo.NONE))
 				.findFirst();
 		if( flippableBond.isEmpty() ) {
-			logger.warn("unable to find a single unmarked bond to flip for center ");
+			logger.warning("unable to find a single unmarked bond to flip for center ");
 			return Optional.empty();
 		}
 		if(flippableBond.get().getAtom1().getAtomIndexInParent()==centralAtom.getAtomIndexInParent()){
@@ -712,26 +667,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	    // TODO: debug CDK directly to fix
 	    //
 	    
-//		try {
-//		    Chemical wc = (new Chemical(this));
-//		    String b = wc.toMol();
-//		    Chemical p =Chemical.parse(b);
-//		    wc.getPropertyIterator().forEachRemaining(ew->{
-//		        if(ew.getValue()!=null) {
-//		            p.setProperty(ew.getKey(), ew.getValue());
-//		        }
-//		    });
-//
-//            CdkChemicalImpl imp=(CdkChemicalImpl) p.getImpl();
-//            //It's unclear if this is necessary
-//		    for(int i=0;i<this.container.getAtomCount();i++) {
-//		        imp.container.getAtom(i).setImplicitHydrogenCount(this.container.getAtom(i).getImplicitHydrogenCount());
-//		    }
-//			return new CdkChemicalImpl(imp.container,source);
-//		} catch (Exception e) {
-//			throw new IllegalStateException(e);
-//		}
-	    
         try {
             return new CdkChemicalImpl(container.clone(), source);
         } catch (CloneNotSupportedException e) {
@@ -743,13 +678,19 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 	@Override
 	public Atom addAtom(String symbol) {
-		IAtom atom = CHEM_OBJECT_BUILDER.newAtom();
-		atom.setSymbol(symbol);
+		IAtom atom;
+		if(Element.ofSymbol(symbol) != null) {
+			atom = CHEM_OBJECT_BUILDER.newAtom();
+			atom.setSymbol(symbol);
+		}else {
+			IPseudoAtom pseudoAtom = CHEM_OBJECT_BUILDER.newInstance(IPseudoAtom.class);
+			pseudoAtom.setAtomicNumber(0);
+			pseudoAtom.setLabel(symbol);
+			pseudoAtom.setSymbol(symbol);
+			atom = pseudoAtom;
+		}
 		return addAtom(atom);
 	}
-
-	
-
 
 	@Override
 	public void addChemical(ChemicalImpl<CdkChemicalImpl> other) {
@@ -771,7 +712,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		IAtom a = CdkUtil.getChemObjectBuilder().newAtom();
 		a.setSymbol(isotope.getSymbol());
 		a.setAtomicNumber(isotope.getAtomicNumber());
-		a.setExactMass(Double.valueOf(isotope.getMassNumber()));
+		a.setExactMass((double) isotope.getMassNumber());
 		//TODO how to set the values with ranges/intervals?
 		a.setNaturalAbundance(isotope.getRelativeAtomicMass().getValue().doubleValue());
 		return addAtom(a);
@@ -823,7 +764,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 	        for (int i = 0; i < atomCount; i++) {
 	            Atom atom = getAtom(i);
 	            Integer implicitNum = atom.getImplicitHCount();
-	            if(implicitNum !=null && implicitNum.intValue() >0){
+	            if(implicitNum >0){
 	            	return true;
 	            }
 	        }
@@ -1301,23 +1242,61 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 
 	private void makeStereoElms() {
+	    Map<IAtom, Integer> nullImplicitHydrogenAtoms = new HashMap<>();
+	    List<String> nullImplicitHydrogenAtomDescriptions = new ArrayList<>();
 	    boolean has3dCoords = true;
+		boolean okToCreateAll = true;
         for(IAtom atom : container.atoms()){
+			if (atom.getAtomicNumber() == null || AtomRef.deref(atom) instanceof IQueryAtom) {
+				okToCreateAll = false;
+			}
+            if(atom.getImplicitHydrogenCount() == null){
+                nullImplicitHydrogenAtoms.put(atom, null);
+                CdkAtom cdkAtom = getCdkAtomFor(atom);
+                nullImplicitHydrogenAtomDescriptions.add(String.format(
+                        "idx=%d,sym=%s,charge=%d,bonds=%d,query=%s,pseudo=%s,rgroup=%s",
+                        indexOf(cdkAtom),
+                        cdkAtom.getSymbol(),
+                        cdkAtom.getCharge(),
+                        cdkAtom.getBondCount(),
+                        cdkAtom.isQueryAtom(),
+                        cdkAtom.isPseudoAtom(),
+                        cdkAtom.isRGroupAtom()
+                ));
+                atom.setImplicitHydrogenCount(0);
+            }
             if(atom.getPoint3d() ==null){
                 has3dCoords=false;
-                break;
             }
         }
-        StereoElementFactory stereoElementFactory;
-        if(has3dCoords){
-            stereoElementFactory = StereoElementFactory.using3DCoordinates(container);
-        }else{
-            stereoElementFactory = StereoElementFactory.using2DCoordinates(container);
+        if(!nullImplicitHydrogenAtomDescriptions.isEmpty()){
+            String moleculeName = container.getTitle();
+            if(moleculeName == null || moleculeName.trim().isEmpty()){
+                moleculeName = "<unnamed>";
+            }
+            logger.warning(String.format(
+                    "makeStereoElms found %d atoms with null implicit H count in molecule '%s': %s",
+                    nullImplicitHydrogenAtomDescriptions.size(),
+                    moleculeName,
+                    String.join("; ", nullImplicitHydrogenAtomDescriptions)
+            ));
         }
+        try {
 
-        List<IStereoElement> stereo = stereoElementFactory.createAll();
-
-        container.setStereoElements(stereo);
+			if(okToCreateAll) {
+				StereoElementFactory stereoElementFactory =
+						has3dCoords ? StereoElementFactory.using3DCoordinates(container)
+						: StereoElementFactory.using2DCoordinates(container);
+				List<IStereoElement> stereo = stereoElementFactory.createAll();
+				container.setStereoElements(stereo);
+			} else {
+				container.setStereoElements(Collections.emptyList());
+			}
+        } finally {
+            for(IAtom atom : nullImplicitHydrogenAtoms.keySet()){
+                atom.setImplicitHydrogenCount(null);
+            }
+        }
 	}
 
 	static int aromStatus(IAtomContainer mol) {
@@ -1384,6 +1363,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		IAtom hAtom = null;
 		for (IAtom iAtom : container.atoms()) {
 			if(CdkUtil.isPseudoAtom(iAtom)){
+				continue;
+			}
+			if(AtomRef.deref(iAtom) instanceof IQueryAtom){
+				continue;
+			}
+			if(iAtom.getAtomicNumber() == null){
 				continue;
 			}
 			formula.addIsotope(iAtom);
@@ -1680,7 +1665,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
 			hydrogenAdder.addImplicitHydrogens(container);
 		} catch (CDKException e) {
-//			e.printStackTrace();
 		    throw new RuntimeException(e);
 		}
 	}
@@ -1818,13 +1802,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		int[][] g = GraphUtil.toAdjList(container);
 		long[] inv =Canon.basicInvariants(container, g);
 		return new CdkGraphInvariant(inv);
-//		try {
-//			return new CdkGraphInvariant(InChINumbersTools.(container));
-//		} catch (CDKException e) {
-//			e.printStackTrace();
-//			//TODO should we throw an exception?
-//			return null;
-//		}
 	}
 
 
@@ -1971,13 +1948,12 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		if("R".equals(value)) {
 			return Chirality.R;
 		}
-		if("EITHER".equals(value)) {
+		if(EITHER_STEREO.equals(value)) {
 			return Chirality.Parity_Either;
 		}
 		if("NONE".equals(value)) {
 			return Chirality.Non_Chiral;
 		}
-//		System.out.println("stereo is not S or R but it's '" + value +"'");
 		return Chirality.Unknown;
 	}
 	private static Chirality convertCdkStereoToChirality(Stereo stereoType) {
@@ -2588,9 +2564,9 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		AtomicInteger counter = new AtomicInteger(0);
 		this.getSGroups().forEach(sg->{
 			if(sg.getBrackets().size() != 2 ){
-				logger.warn("Expecting SGroups to have 2 brackets.  This one has " + sg.getBrackets().size());
+				logger.warning("Expecting SGroups to have 2 brackets.  This one has " + sg.getBrackets().size());
 			}
-			logger.trace(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
+			logger.fine(String.format("looking at SGroup %d with %d atoms bracket 0 x: %.2f; y: %.2f; bracket 1 x: %.2f; y: %.2f\n",
 					counter.incrementAndGet(), sg.getAtoms().count(), sg.getBrackets().get(0).getPoint1().getX(), sg.getBrackets().get(0).getPoint1().getY(),
 					 sg.getBrackets().get(1).getPoint1().getX(), sg.getBrackets().get(1).getPoint1().getY()));
 			List<Double> xValues = new ArrayList<>();
@@ -2616,13 +2592,13 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				logger.info(String.format("	atom %d", i));
 				Atom atom = this.getAtom(i);
 				if( !sg.getAtoms().anyMatch( a-> a.equals(atom))){
-					logger.trace(String.format("atom %s %d\n",
+					logger.fine(String.format("atom %s %d\n",
 							atom.getSymbol(), i));
 					if((atom.getAtomCoordinates().getX() >= lowerX && atom.getAtomCoordinates().getX() <= upperX)
 						&& (atom.getAtomCoordinates().getY() >= lowerY && atom.getAtomCoordinates().getY() <= upperY)){
 						String message = String.format("atom %s (%d) is within the bounds of an SGroup but not part of the SGroup",
 								atom.getSymbol(), i);
-						logger.warn(message);
+						logger.warning(message);
 						messages.add(message);
 					}
 				}

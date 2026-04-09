@@ -22,6 +22,8 @@
 package gov.nih.ncats.molwitch.cdk;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
@@ -44,7 +46,6 @@ public class QueryAtomPerceptor {
 			IAtom deref = AtomRef.deref(atom);
 			if(deref instanceof QueryAtom ){
 				Expr expr= ((QueryAtom)deref).getExpression();
-//				System.out.println(expr.type());
 				if(expr.type() == Expr.Type.ELEMENT || expr.type() == Expr.Type.ALIPHATIC_ELEMENT || expr.type() == Expr.Type.AROMATIC_ELEMENT){
 					int atomicNumber = expr.value();
 					IElement element = Isotopes.getInstance().getElement(atomicNumber);
@@ -52,6 +53,32 @@ public class QueryAtomPerceptor {
 					atom.setSymbol(element.getSymbol());
 					if(expr.type() == Expr.Type.AROMATIC_ELEMENT){
 						atom.setIsAromatic(true);
+					}
+				}else if(expr.type() == Expr.Type.OR){
+					//Handle [#7,#8]
+					List<org.openscience.cdk.isomorphism.matchers.Expr> leaves = new ArrayList<>();
+					CdkUtil.getLeafNodes(expr, leaves);
+					if(!leaves.isEmpty()){
+						org.openscience.cdk.isomorphism.matchers.Expr first = leaves.get(0);
+						if(first.type() == Expr.Type.ELEMENT || first.type() == Expr.Type.ALIPHATIC_ELEMENT || first.type() == Expr.Type.AROMATIC_ELEMENT){
+							int atomicNumber = first.value();
+							IElement element = Isotopes.getInstance().getElement(atomicNumber);
+							atom.setAtomicNumber(atomicNumber);
+							atom.setSymbol(element.getSymbol());
+						}
+					}
+				}else if(expr.type() == Expr.Type.AND){
+					//Handle [#6] or other AND expressions
+					List<org.openscience.cdk.isomorphism.matchers.Expr> leaves = new ArrayList<>();
+					CdkUtil.getLeafNodes(expr, leaves);
+					if(!leaves.isEmpty()){
+						org.openscience.cdk.isomorphism.matchers.Expr first = leaves.get(0);
+						if(first.type() == Expr.Type.ELEMENT || first.type() == Expr.Type.ALIPHATIC_ELEMENT || first.type() == Expr.Type.AROMATIC_ELEMENT){
+							int atomicNumber = first.value();
+							IElement element = Isotopes.getInstance().getElement(atomicNumber);
+							atom.setAtomicNumber(atomicNumber);
+							atom.setSymbol(element.getSymbol());
+						}
 					}
 				}
 			}
@@ -75,6 +102,8 @@ public class QueryAtomPerceptor {
 							break;
 					}
 					
+				}else if(expr.type().name().equals("ANY")){
+					bond.setOrder(Order.SINGLE);
 				}
 				if(expr.type() == Expr.Type.SINGLE_OR_AROMATIC){
 					//this is probably an aromatic ring?

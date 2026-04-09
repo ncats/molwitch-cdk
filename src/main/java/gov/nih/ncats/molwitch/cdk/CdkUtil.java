@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.AtomRef;
 import org.openscience.cdk.BondRef;
 import org.openscience.cdk.aromaticity.Aromaticity;
@@ -45,7 +45,6 @@ import org.openscience.cdk.interfaces.IPseudoAtom;
 import org.openscience.cdk.isomorphism.matchers.Expr;
 import org.openscience.cdk.isomorphism.matchers.Expr.Type;
 import org.openscience.cdk.isomorphism.matchers.QueryAtom;
-import org.openscience.cdk.isomorphism.matchers.QueryAtomContainer;
 import org.openscience.cdk.isomorphism.matchers.QueryBond;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smarts.Smarts;
@@ -197,8 +196,8 @@ public class CdkUtil {
 	    }
 	}
 	public static IAtomContainer getSimplifiedContainer(IAtomContainer iac) {
-	    if(iac instanceof QueryAtomContainer) {
-            QueryAtomContainer qac = (QueryAtomContainer)iac;
+	    if(iac instanceof AtomContainer) {
+            IAtomContainer qac = iac;
             CdkChemicalImpl cci = new CdkChemicalImpl(qac, (ChemicalSource)null);
             Chemical cq = new Chemical(cci);
             Chemical qq=cq.copy();
@@ -255,87 +254,84 @@ public class CdkUtil {
 		IAtom deref = AtomRef.deref(atom);
 		return deref instanceof IPseudoAtom;
 	}
-    public static QueryAtomContainer asQueryAtomContainer(IAtomContainer ia){
-    	QueryAtomContainer qac=QueryAtomContainer.create(ia);
-    	
-    	for(int i=0;i<qac.getBondCount();i++){
-    		QueryBond ib=(QueryBond)qac.getBond(i);
-    		
-    		IBond ibo=ia.getBond(i);
-    		ibo = BondRef.deref(ibo);
-    		if(ibo instanceof QueryBond){
-    			ib.setExpression(((QueryBond)ibo).getExpression());
+	public static IAtomContainer asQueryAtomContainer(IAtomContainer ia){
+		IAtomContainer qac=new AtomContainer();
 
-    			boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
-    			                      ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC;
-    			
-    			if(ibo.isAromatic() && !moreGoingon){
-    				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
-    			}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
-					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
-    			}
-    		}else{
-    			if(!ibo.isAromatic()){
-    				if(ibo.getOrder()==null || ibo.getOrder().equals(Order.UNSET)){
-    					ib.setExpression(new Expr(Expr.Type.TRUE));
-    				}else{
-    					ib.setExpression(new Expr(Expr.Type.ALIPHATIC_ORDER,ibo.getOrder().numeric()));
-    				}
-    			}else{
-    				ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
-    			}
-    			
-    		}
-    		if(ib.getExpression().type().equals(Expr.Type.STEREOCHEMISTRY)){
-    			ib.setExpression(new Expr(Expr.Type.TRUE));
-    		}
-    	}        	
-    	for(int i=0;i<qac.getAtomCount();i++){
-    		QueryAtom iat=(QueryAtom)qac.getAtom(i);
-    		
-    		IAtom iao=ia.getAtom(i);
-    		iao = AtomRef.deref(iao);
-    		if(iao instanceof QueryAtom){
-    			
-    			iat.setExpression(((QueryAtom)iao).getExpression());
-    			iat.setSymbol(getSymbolForAtomExpression(iat.getExpression()));
-    			if(iat.getExpression().type().equals(Expr.Type.ALIPHATIC_ELEMENT) ||
-    					iat.getExpression().type().equals(Expr.Type.ELEMENT)||
-    					iat.getExpression().type().equals(Expr.Type.AROMATIC_ELEMENT)){
-    				iat.setAtomicNumber(iat.getExpression().value());
-    				iat.setSymbol(PeriodicTable.getSymbol(iat.getExpression().value()));
-    			}
-    			
-    		}else{
-    		    Integer an = iao.getAtomicNumber();
-    			if(an==null || an ==0){
-    				iat.setSymbol("A");
-    			}else{
-    				iat.setExpression(new Expr(Expr.Type.ELEMENT,iao.getAtomicNumber()));
-    				iat.setSymbol(iao.getSymbol());
-    			}
-    		}
-    		if(iao.getCharge()!=null){
-    			iat.setCharge(iao.getCharge());
-    		}
-    		if(iao.getMassNumber()!=null){
-    			iat.setMassNumber(iat.getMassNumber());
-    		}
+		for(int i=0;i<ia.getAtomCount();i++){
+			IAtom iao=ia.getAtom(i);
+			iao = AtomRef.deref(iao);
+			QueryAtom iat;
+			if(iao instanceof QueryAtom){
+				iat = new QueryAtom(qac.getBuilder());
+				iat.setSymbol(iao.getSymbol());
+				iat.setExpression(((QueryAtom)iao).getExpression());
+				iat.setSymbol(getSymbolForAtomExpression(iat.getExpression()));
+				if(iat.getExpression().type().equals(Expr.Type.ALIPHATIC_ELEMENT) ||
+						iat.getExpression().type().equals(Expr.Type.ELEMENT)||
+						iat.getExpression().type().equals(Expr.Type.AROMATIC_ELEMENT)){
+					iat.setAtomicNumber(iat.getExpression().value());
+					iat.setSymbol(PeriodicTable.getSymbol(iat.getExpression().value()));
+				}
+
+			}else{
+				iat = new QueryAtom(qac.getBuilder());
+				iat.setSymbol(iao.getSymbol());
+				Integer an = iao.getAtomicNumber();
+				if(an==null || an ==0){
+					iat.setSymbol("A");
+				}else{
+					iat.setExpression(new Expr(Expr.Type.ELEMENT,iao.getAtomicNumber()));
+					iat.setSymbol(iao.getSymbol());
+				}
+			}
+			if(iao.getCharge()!=null){
+				iat.setCharge(iao.getCharge());
+			}
+			if(iao.getMassNumber()!=null){
+				iat.setMassNumber(iat.getMassNumber());
+			}
 
 			iat.setPoint2d(iao.getPoint2d());
-    	}
-    	IAtom[] iatoms = new IAtom[qac.getAtomCount()];
-    	for(int i=0;i<iatoms.length;i++) {
-    	    iatoms[i]=qac.getAtom(i);
-    	}
-    	IBond[] ibonds = new IBond[qac.getBondCount()];
-        for(int i=0;i<ibonds.length;i++) {
-            ibonds[i]=qac.getBond(i);
-        }
-    	qac.setAtoms(iatoms);
-    	qac.setBonds(ibonds);
-    	return qac;
-    }
+			qac.addAtom(iat);
+		}
+
+		for(int i=0;i<ia.getBondCount();i++){
+			IBond ibo=ia.getBond(i);
+			ibo = BondRef.deref(ibo);
+			QueryBond ib;
+			if(ibo instanceof QueryBond){
+				ib = new QueryBond(qac.getAtom(ia.indexOf(ibo.getAtom(0))), qac.getAtom(ia.indexOf(ibo.getAtom(1))), qac.getBuilder());
+				ib.setExpression(((QueryBond)ibo).getExpression());
+
+				boolean moreGoingon = ib.getExpression().type()==Type.SINGLE_OR_AROMATIC ||
+						ib.getExpression().type()==Type.DOUBLE_OR_AROMATIC;
+
+				if(ibo.isAromatic() && !moreGoingon){
+					ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
+				}else if(ib.getExpression().type().equals(Expr.Type.ORDER)){
+					ib.getExpression().setPrimitive(Expr.Type.ALIPHATIC_ORDER, ib.getExpression().value());
+				}
+			}else{
+				ib = new QueryBond(qac.getAtom(ia.indexOf(ibo.getAtom(0))), qac.getAtom(ia.indexOf(ibo.getAtom(1))), qac.getBuilder());
+				if(!ibo.isAromatic()){
+					if(ibo.getOrder()==null || ibo.getOrder().equals(Order.UNSET)){
+						ib.setExpression(new Expr(Expr.Type.TRUE));
+					}else{
+						ib.setExpression(new Expr(Expr.Type.ALIPHATIC_ORDER,ibo.getOrder().numeric()));
+					}
+				}else{
+					ib.setExpression(new Expr(Expr.Type.IS_AROMATIC));
+				}
+
+			}
+			if(ib.getExpression().type().equals(Expr.Type.STEREOCHEMISTRY)){
+				ib.setExpression(new Expr(Expr.Type.TRUE));
+			}
+			qac.addBond(ib);
+		}
+		
+		return qac;
+	}
     
     public static boolean isSubtleQueryBond(IBond b) {
         if(b instanceof QueryBond) {

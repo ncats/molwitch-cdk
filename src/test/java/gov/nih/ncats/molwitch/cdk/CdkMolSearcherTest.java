@@ -105,4 +105,21 @@ public class CdkMolSearcherTest {
         } );
         Assert.assertNotNull(result.getMessage());
     }
+
+    @Test
+    public void ImidazoleShouldMatch4XXR6FT8ZA() throws Exception {
+        String imidazoleQuerySmiles = "C1=CN=CN1";
+
+        Chemical queryChemical = Chemical.parse(imidazoleQuerySmiles);
+        CdkMolSearcher searcher = new CdkMolSearcher(queryChemical);
+
+        String targetMol = IOUtils.toString(
+                this.getClass().getResourceAsStream("/mols/4XXR6FT8ZA.mol"),
+                "UTF-8"
+        );
+        Chemical targetChemical = Chemical.parseMol(targetMol);
+        Optional<int[]> hitMapping = searcher.search(targetChemical);
+        Assert.assertEquals(5, hitMapping.get().length);
+    }
+
 }

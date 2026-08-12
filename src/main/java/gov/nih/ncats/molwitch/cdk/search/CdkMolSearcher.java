@@ -1,24 +1,3 @@
-/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2025.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
-
 package gov.nih.ncats.molwitch.cdk.search;
 
 import gov.nih.ncats.molwitch.Chemical;
@@ -35,6 +14,7 @@ import org.openscience.cdk.isomorphism.matchers.IQueryAtom;
 import org.openscience.cdk.isomorphism.matchers.IQueryBond;
 import org.openscience.cdk.smarts.SmartsPattern;
 
+import java.util.Collections;
 import java.util.Optional;
 
 public class CdkMolSearcher implements MolSearcher {
@@ -50,32 +30,40 @@ public class CdkMolSearcher implements MolSearcher {
     }
     public CdkMolSearcher(Chemical chemical){
         IAtomContainer container= CdkUtil.toAtomContainer(chemical);
-        IAtomContainer query;
-        if(hasQueryAtomsOrBonds(container)){
-            query  = CdkUtil.asQueryAtomContainer(container);
-        }else{
-            query = container;
-        }
+        IAtomContainer query = hasQueryAtomsOrBonds(container)
+                ? CdkUtil.asQueryAtomContainer(container)
+                : withoutStereo(container);
         pattern = Pattern.findSubstructure(query);
     }
-    
+
+    private static IAtomContainer withoutStereo(IAtomContainer container) {
+        try {
+            IAtomContainer copy = container.clone();
+            copy.setStereoElements(Collections.emptyList());
+            return copy;
+        } catch (CloneNotSupportedException e) {
+            throw new IllegalStateException("Could not copy query molecule", e);
+        }
+    }
+
     private static boolean hasQueryAtomsOrBonds(IAtomContainer container){
         for(IAtom a : container.atoms()){
-            
-            IAtom aa=AtomRef.deref(a);
+
+            IAtom aa= AtomRef.deref(a);
             if(aa instanceof IQueryAtom || aa instanceof IPseudoAtom){
                 return true;
             }
         }
 
         for(IBond b : container.bonds()){
-            IBond ib=BondRef.deref(b);
+            IBond ib= BondRef.deref(b);
             if(ib instanceof IQueryBond){
                 return true;
             }
         }
         return false;
     }
+
     @Override
     public Optional<int[]> search(Chemical targetChemical) {
         IAtomContainer target = CdkUtil.toAtomContainer(targetChemical);

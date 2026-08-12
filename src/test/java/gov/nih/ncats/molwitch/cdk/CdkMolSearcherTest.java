@@ -2,6 +2,7 @@ package gov.nih.ncats.molwitch.cdk;
 
 import gov.nih.ncats.molwitch.Chemical;
 import gov.nih.ncats.molwitch.cdk.search.CdkMolSearcher;
+import gov.nih.ncats.molwitch.io.ChemFormat;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -76,6 +77,30 @@ public class CdkMolSearcherTest {
         Chemical benzoicAcidHit = Chemical.parseMol(mol);
         Optional<int[]> hitMapping = searcher.search(benzoicAcidHit);
         Assert.assertEquals(6, hitMapping.get().length);
+    }
+
+    @Test
+    public void chemQueryWithStereoFindsStructureIndexerStoredTarget() throws Exception {
+        String mol = IOUtils.toString(
+                this.getClass().getResourceAsStream("/mols/d8a979a7-f6b7-423a-be7b-c62e8651eb92.mol"),
+                "UTF-8"
+        );
+
+        Chemical queryChemical = Chemical.parseMol(mol);
+        queryChemical.aromatize();
+
+        Chemical indexedTarget = Chemical.parseMol(mol);
+        indexedTarget.makeHydrogensImplicit();
+        indexedTarget.aromatize();
+        indexedTarget.makeHydrogensExplicit();
+        indexedTarget = Chemical.parseMol(indexedTarget.toMol(new ChemFormat.MolFormatSpecification()
+                .setKekulization(ChemFormat.KekulizationEncoding.FORCE_AROMATIC)));
+        CdkMolSearcher searcher = new CdkMolSearcher(queryChemical);
+
+        Optional<int[]> hitMapping = searcher.search(indexedTarget);
+
+        Assert.assertTrue(hitMapping.isPresent());
+        Assert.assertEquals(queryChemical.getAtomCount(), hitMapping.get().length);
     }
 
     @Test

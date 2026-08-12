@@ -28,11 +28,14 @@ public class CdkMolSearcher implements MolSearcher {
             throw new RuntimeException(e);
         }
     }
-    public CdkMolSearcher(Chemical chemical){
-        IAtomContainer container= CdkUtil.toAtomContainer(chemical);
+    public CdkMolSearcher(Chemical chemical) {
+        IAtomContainer container = CdkUtil.toAtomContainer(chemical);
         IAtomContainer query = hasQueryAtomsOrBonds(container)
                 ? CdkUtil.asQueryAtomContainer(container)
                 : withoutStereo(container);
+
+        normalizeAromaticBondAtoms(query);
+
         pattern = Pattern.findSubstructure(query);
     }
 
@@ -76,6 +79,15 @@ public class CdkMolSearcher implements MolSearcher {
         } catch (Throwable e) {
             e.printStackTrace();
             return Optional.empty();
+        }
+    }
+
+    private static void normalizeAromaticBondAtoms(IAtomContainer mol) {
+        for (IBond bond : mol.bonds()) {
+            if (bond.isAromatic()) {
+                bond.getBegin().setIsAromatic(true);
+                bond.getEnd().setIsAromatic(true);
+            }
         }
     }
 }

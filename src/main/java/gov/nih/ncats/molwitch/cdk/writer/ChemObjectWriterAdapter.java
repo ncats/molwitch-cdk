@@ -1,24 +1,3 @@
-/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2026.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
-
 package gov.nih.ncats.molwitch.cdk.writer;
 
 import java.io.Closeable;
@@ -27,15 +6,19 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IChemObject;
 import org.openscience.cdk.io.IChemObjectWriter;
+import org.openscience.cdk.io.MDLV2000Writer;
+import org.openscience.cdk.io.SDFWriter;
 import org.openscience.cdk.io.formats.IResourceFormat;
 import org.openscience.cdk.io.listener.IChemObjectIOListener;
 import org.openscience.cdk.io.setting.IOSetting;
 
 public class ChemObjectWriterAdapter<T extends IChemObject> implements IChemObjectWriter, Closeable{
+	private static Logger logger = Logger.getLogger("ChemObjectWriterAdapter");
 
 	private final IChemObjectWriter delegate;
 	private final Function<T, T> adapter;
@@ -115,6 +98,15 @@ public class ChemObjectWriterAdapter<T extends IChemObject> implements IChemObje
 	@SuppressWarnings("unchecked")
 	@Override
 	public void write(IChemObject object) throws CDKException {
+		if( delegate instanceof MDLV2000Writer) {
+			logger.info("in write, will cast");
+			((MDLV2000Writer) delegate).customizeJob();
+		} else if( delegate instanceof SDFWriter) {
+			logger.info("in write, will cast as SDFWriter");
+			((SDFWriter) delegate).customizeJob();
+		} else {
+			logger.info("in write, cast NOT valid. Object is a " + delegate.getClass().getName());
+		}
 		delegate.write(adapter.apply((T)object));
 		
 	}

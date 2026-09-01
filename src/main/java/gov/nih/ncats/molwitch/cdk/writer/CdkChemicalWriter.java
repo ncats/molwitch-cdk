@@ -1,27 +1,8 @@
-/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2025.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
-
 package gov.nih.ncats.molwitch.cdk.writer;
 
 import java.io.IOException;
+import java.util.Properties;
+import java.util.logging.Logger;
 
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.IChemObjectWriter;
@@ -30,8 +11,11 @@ import gov.nih.ncats.molwitch.cdk.CdkChemicalImpl;
 import gov.nih.ncats.molwitch.cdk.CdkUtil;
 import gov.nih.ncats.molwitch.spi.ChemicalImpl;
 import gov.nih.ncats.molwitch.spi.ChemicalWriterImpl;
+import org.openscience.cdk.io.SDFWriter;
+import org.openscience.cdk.io.listener.PropertiesListener;
 
 public class CdkChemicalWriter implements ChemicalWriterImpl{
+	private static Logger logger = Logger.getLogger("CdkChemicalWriter");
 
 	private final IChemObjectWriter writer;
 
@@ -48,8 +32,9 @@ public class CdkChemicalWriter implements ChemicalWriterImpl{
 	public void write(ChemicalImpl impl) throws IOException {
 		CdkChemicalImpl chem =(CdkChemicalImpl)impl;
 		IAtomContainer mol =CdkUtil.getUsableFormOfAtomContainer(chem.getContainer());
-		
-		
+		Properties sdfWriterProps = new Properties();
+		sdfWriterProps.put("WriteAromaticBondTypes", "true");
+		writer.addChemObjectIOListener(new PropertiesListener(sdfWriterProps));
 		try {
 			writer.write(mol);
 		}catch(Throwable e) {

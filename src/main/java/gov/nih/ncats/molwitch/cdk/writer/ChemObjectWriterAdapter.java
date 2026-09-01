@@ -12,6 +12,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IChemObject;
 import org.openscience.cdk.io.IChemObjectWriter;
 import org.openscience.cdk.io.MDLV2000Writer;
+import org.openscience.cdk.io.SDFWriter;
 import org.openscience.cdk.io.formats.IResourceFormat;
 import org.openscience.cdk.io.listener.IChemObjectIOListener;
 import org.openscience.cdk.io.setting.IOSetting;
@@ -98,7 +99,13 @@ public class ChemObjectWriterAdapter<T extends IChemObject> implements IChemObje
 	@Override
 	public void write(IChemObject object) throws CDKException {
 		if( delegate instanceof MDLV2000Writer) {
-			((MDLV2000Writer)delegate).customizeJob();
+			logger.info("in write, will cast");
+			((MDLV2000Writer) delegate).customizeJob();
+		} else if( delegate instanceof SDFWriter) {
+			logger.info("in write, will cast as SDFWriter");
+			((SDFWriter) delegate).customizeJob();
+		} else {
+			logger.info("in write, cast NOT valid. Object is a " + delegate.getClass().getName());
 		}
 		delegate.write(adapter.apply((T)object));
 		

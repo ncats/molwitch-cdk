@@ -99,13 +99,9 @@ public class ChemObjectWriterAdapter<T extends IChemObject> implements IChemObje
 	@Override
 	public void write(IChemObject object) throws CDKException {
 		if( delegate instanceof MDLV2000Writer) {
-			logger.info("in write, will cast");
 			((MDLV2000Writer) delegate).customizeJob();
 		} else if( delegate instanceof SDFWriter) {
-			logger.info("in write, will cast as SDFWriter");
 			((SDFWriter) delegate).customizeJob();
-		} else {
-			logger.info("in write, cast NOT valid. Object is a " + delegate.getClass().getName());
 		}
 		delegate.write(adapter.apply((T)object));
 		

@@ -328,13 +328,12 @@ public class CdkAtom implements Atom{
 				this, chirality));
 	    Chirality chir=getChirality();
 	    if(chir==chirality)return;
-		logger.info("changing chirality");
+		logger.fine("changing chirality");
 	    //simple inversion
 	    if(((chirality==Chirality.R || chirality==Chirality.r)  && (chir==Chirality.S||chir==Chirality.s)) ||
 	       ((chirality==Chirality.S || chirality==Chirality.s)  && (chir==Chirality.R||chir==Chirality.r)) 
 	            ) {
-			logger.info("handling R/S change");
-	        this.getBonds().stream()
+			this.getBonds().stream()
 	        .filter(b->b.getBondType().equals(BondType.SINGLE))
 	        .filter(b->!b.getStereo().equals(Stereo.NONE))
 	        .forEach(bb->{
@@ -343,16 +342,14 @@ public class CdkAtom implements Atom{
 	                    (bb.getAtom2().equals(this) && (bbs.equals(Stereo.UP_INVERTED) || bbs.equals(Stereo.DOWN_INVERTED)))
 	                    ) {
 	                bb.setStereo(bbs.flip());
-					logger.info("flipped bond " + bb);
 	            }
 	        });
 
 	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,chirality.toString());
-			logger.info("set property");
 
 	    //simple removal
 	    }else if(chirality.equals(Chirality.Parity_Either)) {
-			logger.info("changing to 'either'");
+			logger.fine("changing to 'either'");
 	        this.getBonds().stream()
             .filter(b->b.getBondType().equals(BondType.SINGLE))
             .filter(b->!b.getStereo().equals(Stereo.NONE))
@@ -367,43 +364,36 @@ public class CdkAtom implements Atom{
 
 	        atom.setProperty(CDKConstants.CIP_DESCRIPTOR,"EITHER");
 	    }else if(chirality.isDefined() && (chir.isEither() || chir == Chirality.Non_Chiral)) {
-			logger.info("atom starts out non chiral");
+			logger.fine("atom starts out non chiral");
 	    	Optional<? extends Bond> sBond = this.getBonds().stream()
             	.filter(b->b.getBondType().equals(BondType.SINGLE))
             	.filter(b->b.getStereo().equals(Stereo.NONE))
             	.findFirst();
 			if( sBond.isPresent() ) {
-				logger.info(String.format("located sBond between atoms %s and %s",
+				logger.fine(String.format("located sBond between atoms %s and %s",
 						sBond.get().getAtom1(), sBond.get().getAtom2() ));
 			}
             sBond.ifPresent(b->{
             	if(b.getAtom1().getAtomIndexInParent()==this.getAtomIndexInParent()){
-					logger.info("set bond up");
+					logger.fine("set bond up");
             		b.setStereo(Stereo.UP);
             	}else {
-					logger.info("set bond up inverted");
+					logger.fine("set bond up inverted");
             		b.setStereo(Stereo.UP_INVERTED);
             	}
-				logger.info(getStereoConfig());
             });
 
-			logger.info("reset cache");
+			logger.fine("reset cache");
 	    	parent.cahnIngoldPrelogSupplier.resetCache();
 	    	Chirality co=this.getChirality();
 	    	if((co.isRForm() && chirality.isRForm()) || 
 	    			(co.isSForm() && chirality.isSForm())
 	    			) {
-	    		//do nothing
-				logger.info("do nothing");
-	    	}else if((co.isSForm() && chirality.isRForm()) || 
+	    	}else if((co.isSForm() && chirality.isRForm()) ||
 	    			(co.isRForm() && chirality.isSForm())
 	    			) {
 	    		setChirality(chirality);
-	    	}else {
-	    		//could not set
-				logger.info("no secondary thing to set");
 	    	}
-	        
 	    }
 	}
 

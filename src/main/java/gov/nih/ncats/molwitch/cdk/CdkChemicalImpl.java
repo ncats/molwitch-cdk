@@ -394,7 +394,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		    		}
 		    		for(int ks=0;ks<undefinedSet.size();ks++) {
 		    			Chirality c=c22.getAtom(undefinedSet.get(ks)).getChirality();
-						//logger.fine(c.toString());
 		    			if(c.isDefined()) {
 		    				isDefinable.add(undefinedSet.get(ks));
 		    			}
@@ -513,7 +512,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 						b.setStereo(newStereo);
 						flippedBonds.add(b);
 					} else {
-						logger.info("skipping bond because we have flipped it already");
+						logger.fine("skipping bond because we have flipped it already");
 					}
 				}
 			}
@@ -557,7 +556,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 				return Arrays.asList(new Chemical(this), enantiomer);
 			}
         } catch (IOException | MolwitchException e) {
-			Logger.getLogger(this.getClass().getName()).warning("Error checking chemical equivalence");
+			logger.warning("Error checking chemical equivalence");
 		}
 		return Collections.singletonList(new Chemical(this));
 	}
@@ -1338,11 +1337,8 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 			
 //			e.printStackTrace();
 		}
-       
-		
+
 	}
-
-
 
 
 	@Override
@@ -1414,8 +1410,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
     	
         Chemical c = new Chemical(this);
 
-//        if(true)return calc.apply(c);
-        
         List<Tuple<Runnable,Runnable>> operations = new ArrayList<>();
 
 
@@ -1523,7 +1517,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             }       
 
             try {
-//                Chemical useC = Chemical.parse(c.toSd());
                   Chemical useC = c;
                 return calc.apply(useC);
             } catch (Exception e) {
@@ -1716,55 +1709,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
             return cc;
         } catch (CDKException e) {
             
-//            return atom.getImplicitHydrogenCount();
             throw new RuntimeException("error computing implicit H count for atom " +atom, e);
         }
-	    
-	    //compute it
-	    
-	    
-//		try {
-//		    
-//		    //TODO: This pipeline needs to be rewritten. It doesn't make sense.
-//		    // ...? This logic doesn't make sense.
-//		    
-//			CDKAtomTypeMatcher matcher = CDKAtomTypeMatcher.getInstance(CHEM_OBJECT_BUILDER);
-//			 IAtomType type = matcher.findMatchingAtomType(container, atom);
-//			
-//			 AtomTypeManipulator.configure(atom, type);
-//			//includes explicit and implicit Hs
-//			 Integer neighborCount = atom.getFormalNeighbourCount();
-//			 if(neighborCount ==null){
-//				 neighborCount = 0;
-//			 }
-//			 double implicitH = neighborCount;
-////			 System.out.println(implicitH + "  " + atom);
-//			 for(IBond bond : container.getConnectedBondsList(atom)){
-////			 	System.out.println("\t"+bond.getOrder());
-//			     if(bond.isAromatic()) {
-//			         implicitH-=1.5;
-//			     }else {
-//    				 switch(bond.getOrder()){
-//    				 	case SINGLE : implicitH--; break;
-//    				 	case DOUBLE : implicitH-=2; break;
-//    				 	case TRIPLE : implicitH-=3; break;
-//    				 	
-//    				 	//???
-//    				 	//WHY?
-//    				 	case QUADRUPLE :implicitH-=4; break;  
-//    				 	case QUINTUPLE :implicitH-=5; break;
-//    				 	case SEXTUPLE :implicitH-=6; break;
-//    				 	default : // ? TODO do we subtract 1?
-//    				 }
-//			     }
-//			 }
-////			 System.out.println(implicitH);
-//			atom.setImplicitHydrogenCount(Math.max(0, (int)implicitH));
-//			return Math.max(0, (int)implicitH);
-//			 
-//		}catch(CDKException e){
-//			throw new RuntimeException("error computing implicit H count for atom " +atom, e);
-//		}
+
+
 	}
 	
 	@Override
@@ -2095,8 +2043,7 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 		public Stream<Bond> getBonds() {
 			return sgroup.getBonds().stream().map(b-> getCdkBondFor(b));
 		}
-		
-		
+
 
 		@Override
 		public boolean bracketsTrusted() {
@@ -2238,43 +2185,6 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 		@Override
 		public Optional<String> getSubscript() {
-		    /*
-		    public static final int ST_SUPERATOM = 0;
-    public static final int ST_MULTIPLE = 1;
-    public static final int ST_SRU = 2;
-    public static final int ST_MONOMER = 3;
-    public static final int ST_MER = 4;
-    public static final int ST_COPOLYMER = 5;
-    public static final int ST_CROSSLINK = 6;
-    public static final int ST_MODIFICATION = 7;
-    public static final int ST_MIXTURE = 8;
-    public static final int ST_FORMULATION = 9;
-    public static final int ST_DATA = 10;
-    public static final int ST_ANY = 11;
-    public static final int ST_GENERIC = 12;
-    public static final int ST_COMPONENT = 13;
-
-    public static final int SST_ALTERNATING = 1;
-    public static final int SST_RANDOM = 2;
-    public static final int SST_BLOCK = 3;
-		    public String getSubscript() {
-        if (this.sgroupType == ST_COMPONENT) {
-            return this.sgroupSubscript == null ? "c" : this.sgroupSubscript;
-        } else if (this.sgroupType == ST_MIXTURE) {
-            return "mix";
-        } else if (this.sgroupType == ST_FORMULATION) {
-            return "f";
-        } else if (this.sgroupSubscript != null) {
-            return this.sgroupSubscript;
-        } else if (this.sgroupType == ST_DATA) {
-            return "";
-        } else if (this.sgroupSubType == SST_RANDOM) {
-            return "ran";
-        } else {
-            return this.sgroupType == ST_SRU ? "n" : "";
-        }
-    }
-		     */
 
 		    //try to match old jchem
             String actualSubscriptValue = sgroup.getSubscript();
@@ -2586,10 +2496,10 @@ public class CdkChemicalImpl implements ChemicalImpl<CdkChemicalImpl>{
 
 			double lowerY = yValues.stream().sorted().findFirst().get();
 			double upperY = yValues.stream().sorted(Comparator.reverseOrder()).findFirst().get();
-			logger.info(String.format("looking at SGroup bracket coords lowerX: %.2f; upperX: %.2f; lowerY: %.2f, upperY %.2f",
+			logger.fine(String.format("looking at SGroup bracket coords lowerX: %.2f; upperX: %.2f; lowerY: %.2f, upperY %.2f",
 					lowerX, upperX, lowerY, upperY));
 			for(int i = 0; i < this.getAtomCount(); i++) {
-				logger.info(String.format("	atom %d", i));
+				logger.fine(String.format("	atom %d", i));
 				Atom atom = this.getAtom(i);
 				if( !sg.getAtoms().anyMatch( a-> a.equals(atom))){
 					logger.fine(String.format("atom %s %d\n",

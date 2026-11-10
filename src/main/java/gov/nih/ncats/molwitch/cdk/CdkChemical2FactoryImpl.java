@@ -1,24 +1,3 @@
-/*
- * NCATS-MOLWITCH-CDK
- *
- * Copyright (c) 2025.
- *
- * This work is free software; you can redistribute it and/or modify it under the terms of the
- * GNU Lesser General Public License as published by the Free Software Foundation;
- * either version 2.1 of the License, or (at your option) any later version.
- *
- * This work is distributed in the hope that it will be useful, but without any warranty;
- * without even the implied warranty of merchantability or fitness for a particular purpose.
- * See the GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this library;
- *  if not, write to:
- *
- *  the Free Software Foundation, Inc.
- *  59 Temple Place, Suite 330
- *  Boston, MA 02111-1307 USA
- */
-
 package gov.nih.ncats.molwitch.cdk;
 
 import java.io.BufferedReader;
@@ -255,7 +234,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 			try {
 				return createFromSmiles(unknownFormattedInput);
 			} catch (Exception ex) {
-				logger.info("in create, parsing as SMILES failed; going to parse as SMARTS");
+				logger.fine("in create, parsing as SMILES failed; going to parse as SMARTS");
 				return createFromSmarts(unknownFormattedInput);
 			}
 		}
@@ -545,15 +524,15 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 
 	@Override
 	public void applyParameters(Map<String, Object> params){
-		Logger.getLogger(this.getClass().getName()).fine("in CdkChemical2FactoryImpl.applyParameters");
+		logger.fine("in CdkChemical2FactoryImpl.applyParameters");
 		if( params.get("complexityCutoff") != null) {
 			CdkChemicalImpl.setComplexityCutoff((Integer) params.get("complexityCutoff"));
-			Logger.getLogger(this.getClass().getName()).fine(
+			logger.fine(
 					String.format("complexityCutoff: %s\n", params.get("complexityCutoff")));
 		}
 		if( params.get("maxUndefinedStereoCenters") != null ) {
 			CdkChemicalImpl.setMaxUndefinedStereoCenters((Integer)params.get("maxUndefinedStereoCenters"));
-			Logger.getLogger(this.getClass().getName()).fine(
+			logger.fine(
 					String.format("maxUndefinedStereoCenters: %s\n", params.get("maxUndefinedStereoCenters")));
 		}
 	}
@@ -563,7 +542,7 @@ public class CdkChemical2FactoryImpl implements ChemicalImplFactory{
 		if( possibleSmartsOrSmiles == null || possibleSmartsOrSmiles.length()==0) return false;
 		Pattern smartsPattern =  Pattern.compile("\\[#\\d+\\]|\\[CX\\d\\]");  //Pattern.compile("\\[.*\\#.*\\]|\\[CX\\d\\]");
 		boolean smartsLike = smartsPattern.matcher(possibleSmartsOrSmiles).find();
-		Logger.getLogger("CdkChemical2FactoryImpl").info("looksLikeSmarts going to return: " + smartsLike);
+		logger.finer("looksLikeSmarts going to return: " + smartsLike);
 		return smartsLike;
 	}
 }
